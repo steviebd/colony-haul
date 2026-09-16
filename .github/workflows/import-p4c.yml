@@ -1,0 +1,26 @@
+name: import-p4c
+on:
+  push:
+    paths:
+      - '.github/workflows/import-p4c.yml'
+  workflow_dispatch:
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import Pass 4c Unity files
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://n.uguu.se/MridQgMR.tgz" -o /tmp/p.tgz
+          tar -xzf /tmp/p.tgz -C "$GITHUB_WORKSPACE"
+          rm -f .github/workflows/import-p4c.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git status
+          git diff --cached --stat
+          git commit -m "Unity slice: runner-cut recovery, splice teach, and BRACE shrug."
+          git push
