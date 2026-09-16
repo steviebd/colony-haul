@@ -133,6 +133,52 @@ namespace ColonyHaul
             }
         }
 
+        public int OpeningStep()
+        {
+            var gate = OpeningGate();
+            if (gate == "farm") return 1;
+            if (gate == "route") return 2;
+            if (T < 28f) return 3;
+            return 0;
+        }
+
+        public string OpeningCoach()
+        {
+            switch (OpeningStep())
+            {
+                case 1: return "1 / 3  Farm — click the glowing south pad";
+                case 2: return "2 / 3  Mag-rail — click the Hub to finish the line";
+                case 3: return "3 / 3  Haulers are rolling — keep that rail spliced";
+                case 0: return null;
+                default: throw new ArgumentOutOfRangeException(nameof(OpeningStep), OpeningStep(), null);
+            }
+        }
+
+        public int LiveTowers()
+        {
+            var n = 0;
+            foreach (var b in Buildings.Values)
+                if ((b.Type == BuildingType.Kinetic || b.Type == BuildingType.Splash) && b.BuildLeft <= 0) n++;
+            return n;
+        }
+
+        public float GunSecondsLeft()
+        {
+            var towers = LiveTowers();
+            var drain = 0.44f;
+            if (towers > 0)
+                drain += towers * (Balance.TowerIdlePower + Balance.KineticPowerShot / Balance.KineticCooldown);
+            return Power / drain;
+        }
+
+        public float ProducerFill(Building b)
+        {
+            if (b.Type == BuildingType.Mine) return b.Buffer[Resource.Ore] / 22f;
+            if (b.Type == BuildingType.Farm) return b.Buffer[Resource.Food] / 22f;
+            if (b.Type == BuildingType.Power) return b.Buffer[Resource.Power] / 22f;
+            return 0f;
+        }
+
         void Emit(SimEventKind kind, string nodeId = null, float x = 0, float z = 0,
             float fromX = 0, float fromZ = 0, float toX = 0, float toZ = 0,
             float amount = 0, Resource? resource = null, int wave = 0,
