@@ -93,6 +93,7 @@ namespace ColonyHaul
             var cut = game.ActiveCut();
             if (game.Surging) GUI.contentColor = new Color(0.45f, 0.9f, 1f);
             else if (cut != null) GUI.contentColor = new Color(1f, 0.55f, 0.32f);
+            else if (game.BraceInbound() != null) GUI.contentColor = new Color(0.45f, 0.9f, 1f);
             else if (game.HoldOrder == HoldOrder.Power) GUI.contentColor = new Color(0.4f, 0.75f, 1f);
             else if (game.HoldOrder == HoldOrder.Food) GUI.contentColor = new Color(0.5f, 0.85f, 0.48f);
             else if (game.WaveIndex >= 5) GUI.contentColor = new Color(1f, 0.42f, 0.38f);
@@ -101,6 +102,8 @@ namespace ColonyHaul
                 subCopy = "BRACE · Hub shrugs hits · " + GameSim.CeilSecs(game.SurgeLeft) + "s";
             else if (cut != null)
                 subCopy = "HAUL CUT · splice the orange rail · " + GameSim.CeilSecs(cut.SabotagedUntil - game.T) + "s";
+            else if (game.BraceInbound() != null)
+                subCopy = game.BraceInboundCopy();
             else if (game.HoldOrder == HoldOrder.Power)
                 subCopy = "GUNS ORDER · haulers rush Power · H flips";
             else if (game.HoldOrder == HoldOrder.Food)
@@ -132,7 +135,7 @@ namespace ColonyHaul
         static void DrawLogistics(GameSim game)
         {
             GUI.backgroundColor = new Color(0.05f, 0.09f, 0.11f, 0.88f);
-            GUI.Box(new Rect(Screen.width - 292, 88, 280, 148), "");
+            GUI.Box(new Rect(Screen.width - 292, 88, 280, 172), "");
             GUI.backgroundColor = Color.white;
             var cut = game.ActiveCut();
             string haul;
@@ -162,6 +165,12 @@ namespace ColonyHaul
             GUI.Label(new Rect(Screen.width - 280, 152, 256, 20), guns);
             GUI.Label(new Rect(Screen.width - 280, 172, 256, 20), LarderCopy(game));
             GUI.Label(new Rect(Screen.width - 280, 192, 256, 20), game.HoldOrderCopy());
+            var brace = game.BraceInboundCopy();
+            string raidRead;
+            if (brace != null) raidRead = brace;
+            else if (game.LiveTowers() > 0 || game.RaidLive) raidRead = game.GunLockCopy();
+            else raidRead = "Combat haul BRACEs the Hub";
+            GUI.Label(new Rect(Screen.width - 280, 212, 256, 20), raidRead);
         }
 
         static string LaneChip(string tag, int n, bool hot)

@@ -111,6 +111,22 @@ namespace ColonyHaul
             r.material.color = color;
         }
 
+        public static LineRenderer MakeLine(Transform parent, string name, float startW, float endW)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            var lr = go.AddComponent<LineRenderer>();
+            lr.useWorldSpace = true;
+            lr.startWidth = startW;
+            lr.endWidth = endW;
+            var shader = Shader.Find("Hidden/Internal-Colored")
+                ?? Shader.Find("Sprites/Default")
+                ?? Shader.Find("Unlit/Color")
+                ?? Shader.Find("Standard");
+            if (shader != null) lr.material = new Material(shader);
+            return lr;
+        }
+
         public static Color BuildingColor(BuildingType type)
         {
             switch (type)

@@ -26,7 +26,12 @@ namespace ColonyHaul
         readonly Dictionary<string, LineRenderer> _trails = new Dictionary<string, LineRenderer>();
         readonly Dictionary<string, LineRenderer> _intents = new Dictionary<string, LineRenderer>();
         readonly Dictionary<string, Transform> _shadows = new Dictionary<string, Transform>();
+        readonly Dictionary<string, LineRenderer> _locks = new Dictionary<string, LineRenderer>();
+        readonly Dictionary<string, Transform> _forecasts = new Dictionary<string, Transform>();
+        readonly Dictionary<string, Transform> _cargoTags = new Dictionary<string, Transform>();
         readonly HashSet<string> _stuckShown = new HashSet<string>();
+        readonly HashSet<string> _bracePinged = new HashSet<string>();
+        LineRenderer _braceLine;
         Transform _root;
         Camera _cam;
         float _acc;
@@ -93,13 +98,19 @@ namespace ColonyHaul
             ClearMap(_buffers);
             ClearMap(_nodes);
             ClearMap(_shadows);
+            ClearMap(_forecasts);
             ClearTrails();
             ClearIntents();
+            ClearLocks();
+            ClearForecasts();
+            ClearCargoTags();
+            ClearBraceLine();
             _hubFlash = 0f;
             _hubBraceFlash = false;
             _coreAlarm = false;
             _surgeBannered = false;
             _stuckShown.Clear();
+            _bracePinged.Clear();
             _juice.CutAlarm(false);
             _buildingScale.Clear();
             _acc = 0f;
@@ -151,6 +162,7 @@ namespace ColonyHaul
             }
             if (!_game.Surging) _surgeBannered = false;
             _juice.CutAlarm(_game.ActiveCut() != null && _game.Phase == Phase.Playing);
+            PingBraceInbound();
             _juice.Tick(_cam, events);
             _hubFlash = Mathf.Max(0f, _hubFlash - Time.deltaTime);
             SyncAtmosphere();
@@ -291,7 +303,8 @@ namespace ColonyHaul
                 var routeGlow = _game.RouteFrom == n.Id || (cut != null && (cut.A == n.Id || cut.B == n.Id));
                 var inbound = n.Kind == NodeKind.Spawn &&
                     (_game.IncomingAt(n.Id) > 0 ||
-                     (Array.IndexOf(_game.NextWaveSpawns(), n.Id) >= 0 && _game.NextWaveIn < 10f));
+                     (Array.IndexOf(_game.NextWaveSpawns(), n.Id) >= 0 &&
+                      (_game.NextWaveIn < 10f || _game.WaveForecastLive)));
                 var hotLane = _game.HottestLane();
                 var chokeHot = n.Kind == NodeKind.Choke &&
                     ((n.Id == "choke_e" && hotLane == "east") ||
@@ -331,7 +344,10 @@ namespace ColonyHaul
                         : _game.HoldOrder == HoldOrder.Food ? "CREW"
                         : hubGlow ? "2 HUB" : "HUB");
                 else if (n.Kind == NodeKind.Spawn)
-                    MesaView.SetLabel(mark, inbound ? "IN " + _game.IncomingAt(n.Id) : "RAID");
+                {
+                    var forecast = _game.SpawnForecastCopy(n.Id);
+                    MesaView.SetLabel(mark, forecast ?? (inbound ? "IN " + _game.IncomingAt(n.Id) : "RAID"));
+                }
                 else if (n.Kind == NodeKind.Choke)
                     MesaView.SetLabel(mark, splashWest ? "SPLASH" : ChokeLabel(n.Id, near, chokeHot));
                 else if (n.Kind == NodeKind.Pad)
@@ -445,8 +461,12 @@ namespace ColonyHaul
             }
 
             SyncHaulers();
+            SyncCargoTags();
             SyncTrails();
             SyncRunnerIntents();
+            SyncGunLocks();
+            SyncBraceLine();
+            SyncForecasts();
             SyncEnemies();
             SyncShadows();
         }
@@ -468,6 +488,7 @@ namespace ColonyHaul
         void SyncHaulers()
         {
             var live = new HashSet<string>();
+            var inboundHaul = _game.BraceInbound();
             foreach (var h in _game.Haulers)
             {
                 live.Add(h.Id);
@@ -482,6 +503,7 @@ namespace ColonyHaul
                 }
                 tr.position = new Vector3(h.X, 0.58f, h.Z);
                 var blocked = _game.HaulerBlocked(h);
+                var inbound = inboundHaul != null && inboundHaul.Id == h.Id;
                 if (blocked)
                 {
                     if (_stuckShown.Add(h.Id)) _juice.Stuck(h.X, h.Z);
@@ -489,12 +511,14 @@ namespace ColonyHaul
                 else if (_stuckShown.Remove(h.Id) && h.Path.Count > 0)
                     _juice.Rolling(h.X, h.Z);
                 var waitPulse = h.Wait > 0 || blocked ? 1f + 0.16f * Mathf.Abs(Mathf.Sin(Time.time * 9f)) : 1f;
+                if (inbound) waitPulse *= 1f + 0.12f * Mathf.Abs(Mathf.Sin(Time.time * 7f));
                 tr.localScale = Vector3.one * ((h.CargoAmount > 0 ? 0.5f : 0.38f) * waitPulse);
                 var cargo = h.CargoAmount <= 0 ? new Color(0.31f, 0.8f, 0.77f)
                     : h.CargoKind == Resource.Food ? new Color(0.5f, 0.85f, 0.45f)
                     : h.CargoKind == Resource.Power ? new Color(0.35f, 0.7f, 1f)
                     : new Color(0.94f, 0.64f, 0.23f);
                 if (blocked) cargo = Color.Lerp(cargo, new Color(1f, 0.5f, 0.22f), 0.62f);
+                if (inbound) cargo = Color.Lerp(cargo, new Color(0.45f, 0.9f, 1f), 0.4f);
                 MesaView.Tint(tr.gameObject, cargo);
             }
             Prune(_haulers, live);
@@ -524,6 +548,8 @@ namespace ColonyHaul
                     c = Color.Lerp(c, new Color(1f, 0.82f, 0.45f), 0.35f * Mathf.Abs(Mathf.Sin(Time.time * 14f)));
                 if (e.SlowUntil > _game.T)
                     c = Color.Lerp(c, new Color(0.35f, 0.88f, 1f), 0.62f);
+                if (_game.LockedOn(e))
+                    c = Color.Lerp(c, Color.white, 0.28f + 0.12f * Mathf.Abs(Mathf.Sin(Time.time * 11f)));
                 if (e.Flash > 0f) c = Color.white;
                 MesaView.Tint(tr.gameObject, c);
                 if (e.Type == EnemyType.Runner)
@@ -565,11 +591,17 @@ namespace ColonyHaul
                 if (range <= 0f) continue;
                 var node = _game.Nodes[b.NodeId];
                 live.Add(b.Id);
-                EnsureRing(b.Id, node, range, b.Type == BuildingType.Splash
-                    ? new Color(0.94f, 0.63f, 0.38f, 0.35f)
-                    : b.Type == BuildingType.Hub
-                        ? new Color(0.9f, 0.78f, 0.58f, 0.28f)
-                        : new Color(0.55f, 0.9f, 0.88f, 0.32f));
+                var locked = _game.TowerLock(b) != null;
+                var dry = _game.PowerBrownout && (b.Type == BuildingType.Kinetic || b.Type == BuildingType.Splash || b.Type == BuildingType.Hub);
+                Color ringColor;
+                if (b.Type == BuildingType.Splash)
+                    ringColor = new Color(0.94f, 0.63f, 0.38f, locked ? 0.55f : 0.35f);
+                else if (b.Type == BuildingType.Hub)
+                    ringColor = new Color(0.9f, 0.78f, 0.58f, locked ? 0.45f : 0.28f);
+                else
+                    ringColor = new Color(0.55f, 0.9f, 0.88f, locked ? 0.52f : 0.32f);
+                if (dry) ringColor = Color.Lerp(ringColor, new Color(1f, 0.28f, 0.22f, 0.5f), 0.55f);
+                EnsureRing(b.Id, node, range, ringColor);
             }
             if (_game.SelectedTool == Tool.Kinetic || _game.SelectedTool == Tool.Splash)
             {
@@ -597,6 +629,12 @@ namespace ColonyHaul
                 live.Add("surge-shield");
                 var pulse = 3.6f + 0.35f * Mathf.Abs(Mathf.Sin(Time.time * 8f));
                 EnsureRing("surge-shield", hubNode, pulse, new Color(0.4f, 0.9f, 1f, 0.42f));
+            }
+            if (!_game.Surging && _game.BraceInbound() != null && _game.Nodes.TryGetValue("hub", out var inboundHub))
+            {
+                live.Add("brace-inbound");
+                var pulse = 3.2f + 0.4f * Mathf.Abs(Mathf.Sin(Time.time * 7f));
+                EnsureRing("brace-inbound", inboundHub, pulse, new Color(0.45f, 0.9f, 1f, 0.32f));
             }
             if (!_game.Surging && _game.HoldOrder != HoldOrder.Auto && _game.Nodes.TryGetValue("hub", out var holdHub))
             {
@@ -812,6 +850,192 @@ namespace ColonyHaul
             }
         }
 
+        void PingBraceInbound()
+        {
+            var h = _game.BraceInbound();
+            if (h == null)
+            {
+                _bracePinged.Clear();
+                return;
+            }
+            var eta = _game.HaulEtaToHub(h);
+            if (eta < 0f || eta > 2.4f) return;
+            if (!_bracePinged.Add(h.Id)) return;
+            _juice.BraceComing(h.X, h.Z);
+        }
+
+        void SyncGunLocks()
+        {
+            var live = new HashSet<string>();
+            foreach (var b in _game.Buildings.Values)
+            {
+                var target = _game.TowerLock(b);
+                if (target == null) continue;
+                if (!_game.Nodes.TryGetValue(b.NodeId, out var node)) continue;
+                live.Add(b.Id);
+                if (!_locks.TryGetValue(b.Id, out var lr))
+                {
+                    lr = MesaView.MakeLine(_root, "lock", 0.09f, 0.02f);
+                    _locks[b.Id] = lr;
+                }
+                lr.positionCount = 2;
+                lr.SetPosition(0, new Vector3(node.X, 1.15f, node.Z));
+                lr.SetPosition(1, new Vector3(target.X, 0.85f, target.Z));
+                Color color;
+                if (_game.PowerBrownout)
+                    color = new Color(1f, 0.35f, 0.28f, 0.85f);
+                else if (b.Type == BuildingType.Splash)
+                    color = new Color(0.94f, 0.63f, 0.38f, 0.88f);
+                else if (b.Type == BuildingType.Hub)
+                    color = new Color(0.9f, 0.78f, 0.5f, 0.8f);
+                else
+                    color = new Color(0.45f, 0.95f, 0.9f, 0.88f);
+                lr.startColor = color;
+                lr.endColor = color;
+                lr.enabled = true;
+            }
+            var dead = new List<string>();
+            foreach (var kv in _locks)
+                if (!live.Contains(kv.Key)) dead.Add(kv.Key);
+            foreach (var id in dead)
+            {
+                if (_locks[id] != null) Destroy(_locks[id].gameObject);
+                _locks.Remove(id);
+            }
+        }
+
+        void SyncBraceLine()
+        {
+            var h = _game.BraceInbound();
+            if (h == null)
+            {
+                if (_braceLine != null) _braceLine.enabled = false;
+                return;
+            }
+            if (_braceLine == null)
+                _braceLine = MesaView.MakeLine(_root, "brace-line", 0.12f, 0.04f);
+            _braceLine.enabled = true;
+            _braceLine.positionCount = 2;
+            _braceLine.SetPosition(0, new Vector3(h.X, 0.72f, h.Z));
+            _braceLine.SetPosition(1, new Vector3(0f, 0.9f, 0f));
+            var pulse = 0.55f + 0.35f * Mathf.Abs(Mathf.Sin(Time.time * 8f));
+            var color = new Color(0.45f, 0.9f, 1f, pulse);
+            _braceLine.startColor = color;
+            _braceLine.endColor = color;
+        }
+
+        void SyncCargoTags()
+        {
+            var live = new HashSet<string>();
+            foreach (var h in _game.Haulers)
+            {
+                if (h.CargoAmount <= 0) continue;
+                live.Add(h.Id);
+                if (!_cargoTags.TryGetValue(h.Id, out var tag))
+                {
+                    var go = new GameObject("cargo");
+                    go.transform.SetParent(_root, false);
+                    var tm = go.AddComponent<TextMesh>();
+                    tm.anchor = TextAnchor.MiddleCenter;
+                    tm.alignment = TextAlignment.Center;
+                    tm.fontSize = 42;
+                    tm.characterSize = 0.055f;
+                    tag = go.transform;
+                    _cargoTags[h.Id] = tag;
+                }
+                tag.position = new Vector3(h.X, 1.22f, h.Z);
+                tag.rotation = Quaternion.Euler(90f, 45f, 0f);
+                var tm2 = tag.GetComponent<TextMesh>();
+                if (h.CargoKind == Resource.Food)
+                {
+                    tm2.text = "FOOD";
+                    tm2.color = new Color(0.5f, 0.85f, 0.48f);
+                }
+                else if (h.CargoKind == Resource.Power)
+                {
+                    tm2.text = "PWR";
+                    tm2.color = new Color(0.4f, 0.75f, 1f);
+                }
+                else
+                {
+                    tm2.text = "ORE";
+                    tm2.color = new Color(0.94f, 0.64f, 0.23f);
+                }
+            }
+            Prune(_cargoTags, live);
+        }
+
+        void SyncForecasts()
+        {
+            var live = new HashSet<string>();
+            if (_game.WaveForecastLive)
+            {
+                foreach (var spawnId in _game.NextWaveSpawns())
+                {
+                    if (!_game.Nodes.TryGetValue(spawnId, out var spawn)) continue;
+                    var types = new[] { EnemyType.Grunt, EnemyType.Brute, EnemyType.Runner };
+                    var slot = 0;
+                    foreach (var type in types)
+                    {
+                        var n = _game.NextWaveCount(spawnId, type);
+                        if (n <= 0) continue;
+                        var id = spawnId + "-" + type;
+                        live.Add(id);
+                        if (!_forecasts.TryGetValue(id, out var ghost))
+                        {
+                            var go = GameObject.CreatePrimitive(MesaView.EnemyPrim(type));
+                            go.name = "forecast";
+                            go.transform.SetParent(_root, false);
+                            var col = go.GetComponent<Collider>();
+                            if (col != null) Destroy(col);
+                            ghost = go.transform;
+                            _forecasts[id] = ghost;
+                        }
+                        var outward = new Vector3(spawn.X, 0f, spawn.Z);
+                        if (outward.sqrMagnitude < 0.01f) outward = Vector3.right;
+                        outward.Normalize();
+                        var side = Vector3.Cross(Vector3.up, outward);
+                        var offset = outward * 1.15f + side * ((slot - 1) * 0.55f);
+                        ghost.position = new Vector3(spawn.X + offset.x, 0.7f, spawn.Z + offset.z);
+                        var scale = MesaView.EnemyScale(type) * (0.72f + 0.04f * n);
+                        var pulse = 0.85f + 0.15f * Mathf.Abs(Mathf.Sin(Time.time * 4f + slot));
+                        ghost.localScale = scale * pulse;
+                        var c = MesaView.EnemyColor(type);
+                        c.a = 0.45f;
+                        MesaView.Tint(ghost.gameObject, c * 0.55f);
+                        slot++;
+                    }
+                }
+            }
+            Prune(_forecasts, live);
+        }
+
+        void ClearLocks()
+        {
+            foreach (var lr in _locks.Values)
+                if (lr != null) Destroy(lr.gameObject);
+            _locks.Clear();
+        }
+
+        void ClearForecasts()
+        {
+            ClearMap(_forecasts);
+        }
+
+        void ClearCargoTags()
+        {
+            ClearMap(_cargoTags);
+        }
+
+        void ClearBraceLine()
+        {
+            if (_braceLine != null)
+            {
+                Destroy(_braceLine.gameObject);
+                _braceLine = null;
+            }
+        }
+
         void DrawWorldBars()
         {
             if (_cam == null) return;
@@ -845,6 +1069,21 @@ namespace ColonyHaul
                         ? Color.Lerp(new Color(0.55f, 0.08f, 0.08f), new Color(1f, 0.32f, 0.22f), hp)
                         : Color.Lerp(new Color(0.85f, 0.18f, 0.16f), new Color(0.9f, 0.78f, 0.5f), hp);
                     GUI.Box(new Rect(hx - 42f, hy, 84f * hp, 9f), "");
+                    GUI.backgroundColor = Color.white;
+                }
+            }
+            var inbound = _game.BraceInbound();
+            if (inbound != null)
+            {
+                var isp = _cam.WorldToScreenPoint(new Vector3(inbound.X, 1.55f, inbound.Z));
+                if (isp.z > 0f)
+                {
+                    var ix = isp.x;
+                    var iy = Screen.height - isp.y;
+                    var eta = _game.HaulEtaToHub(inbound);
+                    var chip = eta <= 0.35f ? "BRACE NOW" : "BRACE " + GameSim.CeilSecs(eta) + "s";
+                    GUI.backgroundColor = new Color(0.12f, 0.42f, 0.55f, 0.9f);
+                    GUI.Box(new Rect(ix - 46f, iy - 14f, 92f, 22f), chip);
                     GUI.backgroundColor = Color.white;
                 }
             }

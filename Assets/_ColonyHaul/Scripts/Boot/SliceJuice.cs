@@ -106,6 +106,13 @@ namespace ColonyHaul
             Punch(0.45f);
         }
 
+        public void BraceComing(float x, float z)
+        {
+            SpawnPip(x, z, "INBOUND", new Color(0.45f, 0.9f, 1f));
+            Spokes(x, z, 1.4f, new Color(0.45f, 0.9f, 1f));
+            SpawnBurst(x, z, new Color(0.45f, 0.9f, 1f, 0.4f), 2.6f);
+        }
+
         public void HubHit(bool braced)
         {
             if (braced)

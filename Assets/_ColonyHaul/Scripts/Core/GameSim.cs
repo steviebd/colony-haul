@@ -274,6 +274,196 @@ namespace ColonyHaul
             }
         }
 
+        // Presentation query. Counts must match Pack() in TickWaves.
+        public int NextWaveCount(string spawnId, EnemyType type)
+        {
+            if (WaveIndex >= Balance.WavesToWin) return 0;
+            var next = WaveIndex + 1;
+            switch (next)
+            {
+                case 1:
+                    return spawnId == "spawn_e" && type == EnemyType.Grunt ? 4 : 0;
+                case 2:
+                    if (spawnId == "spawn_n" && type == EnemyType.Grunt) return 5;
+                    if (spawnId == "spawn_e" && type == EnemyType.Runner) return 1;
+                    return 0;
+                case 3:
+                    if (spawnId == "spawn_w" && type == EnemyType.Grunt) return 4;
+                    if (spawnId == "spawn_e" && type == EnemyType.Brute) return 2;
+                    return 0;
+                case 4:
+                    if (spawnId == "spawn_e" && type == EnemyType.Grunt) return 6;
+                    if (spawnId == "spawn_n" && type == EnemyType.Runner) return 2;
+                    if (spawnId == "spawn_w" && type == EnemyType.Brute) return 1;
+                    return 0;
+                case 5:
+                    if (spawnId == "spawn_n" && type == EnemyType.Grunt) return 5;
+                    if (spawnId == "spawn_e" && type == EnemyType.Brute) return 3;
+                    if (spawnId == "spawn_w" && type == EnemyType.Runner) return 3;
+                    return 0;
+                case 6:
+                    if (spawnId == "spawn_e" && type == EnemyType.Grunt) return 8;
+                    if (spawnId == "spawn_n" && type == EnemyType.Brute) return 4;
+                    if (spawnId == "spawn_w" && type == EnemyType.Runner) return 4;
+                    return 0;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(next), next, null);
+            }
+        }
+
+        public bool WaveForecastLive =>
+            Phase == Phase.Playing && WaveIndex < Balance.WavesToWin && NextWaveIn <= 14f && IncomingRaiders == 0;
+
+        public string SpawnForecastCopy(string spawnId)
+        {
+            var inbound = IncomingAt(spawnId);
+            if (inbound > 0) return "IN " + inbound;
+            if (!WaveForecastLive) return null;
+            var g = NextWaveCount(spawnId, EnemyType.Grunt);
+            var b = NextWaveCount(spawnId, EnemyType.Brute);
+            var r = NextWaveCount(spawnId, EnemyType.Runner);
+            if (g + b + r <= 0) return null;
+            var bits = "";
+            if (g > 0) bits += g + "G";
+            if (b > 0) bits += (bits.Length > 0 ? " " : "") + b + "B";
+            if (r > 0) bits += (bits.Length > 0 ? " " : "") + r + "R";
+            return bits + " · " + CeilSecs(NextWaveIn) + "s";
+        }
+
+        public Enemy BestTarget(float x, float z, float range, bool hubGun)
+        {
+            Enemy target = null;
+            if (hubGun)
+            {
+                var best = range;
+                foreach (var e in Enemies)
+                {
+                    var dx = x - e.X;
+                    var dz = z - e.Z;
+                    var d = (float)Math.Sqrt(dx * dx + dz * dz);
+                    if (d <= best)
+                    {
+                        best = d;
+                        target = e;
+                    }
+                }
+                return target;
+            }
+            var bestScore = float.PositiveInfinity;
+            foreach (var e in Enemies)
+            {
+                var dx = x - e.X;
+                var dz = z - e.Z;
+                var d = (float)Math.Sqrt(dx * dx + dz * dz);
+                if (d > range) continue;
+                var pri = e.Type == EnemyType.Brute ? 0 : e.Type == EnemyType.Grunt ? 1 : 2;
+                var score = pri * 100f + d;
+                if (score < bestScore)
+                {
+                    bestScore = score;
+                    target = e;
+                }
+            }
+            return target;
+        }
+
+        public Enemy TowerLock(Building b)
+        {
+            if (b == null || b.BuildLeft > 0) return null;
+            if (b.Type == BuildingType.Hub)
+            {
+                var hub = Nodes["hub"];
+                return BestTarget(hub.X, hub.Z, 3.4f, true);
+            }
+            if (b.Type != BuildingType.Kinetic && b.Type != BuildingType.Splash) return null;
+            var node = Nodes[b.NodeId];
+            var range = b.Type == BuildingType.Kinetic ? Balance.KineticRange : Balance.SplashRange;
+            return BestTarget(node.X, node.Z, range, false);
+        }
+
+        public bool LockedOn(Enemy e)
+        {
+            if (e == null) return false;
+            foreach (var b in Buildings.Values)
+            {
+                var locked = TowerLock(b);
+                if (locked != null && locked.Id == e.Id) return true;
+            }
+            return false;
+        }
+
+        public int GunsLocked()
+        {
+            var n = 0;
+            foreach (var b in Buildings.Values)
+                if (TowerLock(b) != null) n++;
+            return n;
+        }
+
+        public string GunLockCopy()
+        {
+            var n = GunsLocked();
+            if (n <= 0) return PowerBrownout && LiveTowers() > 0 ? "Guns aimed — DRY" : "No lock";
+            if (PowerBrownout) return "LOCK · " + n + (n == 1 ? " gun DRY" : " guns DRY");
+            return "LOCK · " + n + (n == 1 ? " gun tracking" : " guns tracking");
+        }
+
+        public float HaulEtaToHub(Hauler h)
+        {
+            if (h == null || h.CargoAmount <= 0) return -1f;
+            if (h.NodeId == "hub" && h.Path.Count == 0)
+                return h.Wait > 0f ? h.Wait : 0f;
+            if (h.Path.Count == 0) return -1f;
+            var last = h.Path[h.Path.Count - 1];
+            if (last != "hub") return -1f;
+            var cx = h.X;
+            var cz = h.Z;
+            var remain = 0f;
+            for (var i = 0; i < h.Path.Count; i++)
+            {
+                if (!Nodes.TryGetValue(h.Path[i], out var n)) return -1f;
+                var dx = n.X - cx;
+                var dz = n.Z - cz;
+                remain += (float)Math.Sqrt(dx * dx + dz * dz);
+                cx = n.X;
+                cz = n.Z;
+            }
+            return remain / Balance.HaulerSpeed + Math.Max(0f, h.Wait);
+        }
+
+        public Hauler BraceInbound()
+        {
+            if (Phase != Phase.Playing || !RaidLive || Surging) return null;
+            Hauler best = null;
+            var bestEta = float.PositiveInfinity;
+            foreach (var h in Haulers)
+            {
+                if (h.CargoAmount <= 0) continue;
+                if (HaulerBlocked(h)) continue;
+                var eta = HaulEtaToHub(h);
+                if (eta < 0f) continue;
+                if (eta < bestEta)
+                {
+                    bestEta = eta;
+                    best = h;
+                }
+            }
+            return best;
+        }
+
+        public string BraceInboundCopy()
+        {
+            var h = BraceInbound();
+            if (h == null) return null;
+            var eta = HaulEtaToHub(h);
+            string kind;
+            if (h.CargoKind == Resource.Power) kind = "Power";
+            else if (h.CargoKind == Resource.Food) kind = "Food";
+            else kind = "Ore";
+            if (eta <= 0.35f) return "BRACE NOW · " + kind + " at Hub";
+            return "BRACE IN " + CeilSecs(eta) + "s · " + kind + " on the rail";
+        }
+
         public static float RangeOf(BuildingType type)
         {
             switch (type)
