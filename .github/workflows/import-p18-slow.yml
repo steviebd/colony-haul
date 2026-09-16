@@ -1,0 +1,41 @@
+name: import-p18-slow
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/import-p18-slow.yml'
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import Pass 18 files
+        env:
+          TARBALL: https://n.uguu.se/mbySMpjp.tgz
+        run: |
+          set -euo pipefail
+          curl -fsSL "$TARBALL" -o /tmp/p18.tgz
+          tar xzf /tmp/p18.tgz
+          git config user.name "cursoragent"
+          git config user.email "cursoragent@cursor.com"
+          git add \
+            Assets/_ColonyHaul/Scripts/Core/GameSim.cs \
+            Assets/_ColonyHaul/Scripts/Boot/SliceHud.cs \
+            Assets/_ColonyHaul/Scripts/Boot/SliceJuice.cs \
+            Assets/_ColonyHaul/Scripts/Boot/VerticalSliceBootstrap.cs \
+            README.md
+          if git diff --cached --quiet; then
+            echo "no file changes"
+          else
+            git commit -m "Unity slice: SLOW names Barrier on the armed hottest lane."
+          fi
+          rm -f .github/workflows/import-p18-slow.yml
+          git add .github/workflows/import-p18-slow.yml
+          if git diff --cached --quiet; then
+            echo "workflow already gone"
+          else
+            git commit -m "Drop Pass 18 import workflow."
+          fi
+          git push
