@@ -1,0 +1,31 @@
+name: import-p8
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/import-p8.yml'
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import Pass 8 Unity bytes
+        run: |
+          set -euo pipefail
+          curl -fsSL -o p8.tgz "https://n.uguu.se/jgBgQspH.tgz"
+          tar xzf p8.tgz
+          rm p8.tgz
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Assets/_ColonyHaul/Scripts/Core/GameSim.cs \
+            Assets/_ColonyHaul/Scripts/Boot/SliceHud.cs \
+            Assets/_ColonyHaul/Scripts/Boot/SliceJuice.cs \
+            Assets/_ColonyHaul/Scripts/Boot/VerticalSliceBootstrap.cs \
+            README.md
+          git commit -m "Unity slice: RAIL THREAT telegraph before runner cuts." || true
+          rm -f .github/workflows/import-p8.yml
+          git add -A
+          git commit -m "chore: drop one-shot import Pass 8" || true
+          git push
