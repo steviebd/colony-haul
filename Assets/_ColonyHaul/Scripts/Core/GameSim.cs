@@ -806,6 +806,45 @@ namespace ColonyHaul
             return "CLEAR · food ~" + CeilSecs(FoodSecondsLeft()) + "s · guns ~" + CeilSecs(GunSecondsLeft()) + "s";
         }
 
+        public bool L2Ready()
+        {
+            return Phase == Phase.Playing && CanAfford(Tool.Upgrade);
+        }
+
+        public bool L2ReadyWorld()
+        {
+            return L2Ready()
+                && !WaveClearLive()
+                && !GunsLow()
+                && !GunsDry()
+                && HubChewers() == 0
+                && HubClosers() == 0
+                && ActiveCut() == null;
+        }
+
+        public string L2ReadyTitle()
+        {
+            if (!L2Ready()) return null;
+            return "L2 READY · U raises Hub · Splash next";
+        }
+
+        public string L2ReadyCopy()
+        {
+            if (!L2Ready()) return null;
+            return "L2 READY — U spends ore / food / pwr · Splash unlocks";
+        }
+
+        public string L2ReadyFlash()
+        {
+            return "L2 READY — press U · Splash next";
+        }
+
+        public string L2ReadyChip()
+        {
+            if (!L2Ready()) return null;
+            return "L2 READY";
+        }
+
         public Hauler BlockedLoadedHauler()
         {
             foreach (var h in Haulers)

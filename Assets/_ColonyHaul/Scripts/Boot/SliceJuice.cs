@@ -182,6 +182,15 @@ namespace ColonyHaul
             Punch(0.18f);
         }
 
+        public void L2Ready()
+        {
+            SpawnPip(0f, 0f, "L2", new Color(1f, 0.86f, 0.42f));
+            Spokes(0f, 0f, 1.8f, new Color(1f, 0.86f, 0.42f));
+            SpawnBurst(0f, 0f, new Color(1f, 0.82f, 0.38f, 0.45f), 3.6f);
+            Punch(0.24f);
+            _audio.PlayOneShot(_deposit, 0.5f);
+        }
+
         public void HubHit(bool braced)
         {
             if (braced)

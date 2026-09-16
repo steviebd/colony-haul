@@ -100,6 +100,7 @@ namespace ColonyHaul
             else if (game.GunsLow()) GUI.contentColor = new Color(1f, 0.62f, 0.28f);
             else if (game.OfflinePad() != null) GUI.contentColor = new Color(0.92f, 0.62f, 0.28f);
             else if (game.SittingStock() != null) GUI.contentColor = new Color(0.95f, 0.78f, 0.32f);
+            else if (game.L2Ready()) GUI.contentColor = new Color(1f, 0.86f, 0.42f);
             else if (game.Surging) GUI.contentColor = new Color(0.45f, 0.9f, 1f);
             else if (game.BraceInbound() != null) GUI.contentColor = new Color(0.45f, 0.9f, 1f);
             else if (game.HoldOrder == HoldOrder.Power) GUI.contentColor = new Color(0.4f, 0.75f, 1f);
@@ -124,6 +125,8 @@ namespace ColonyHaul
                 subCopy = game.OfflineTitle();
             else if (game.SittingStock() != null)
                 subCopy = game.SittingTitle();
+            else if (game.L2Ready())
+                subCopy = game.L2ReadyTitle();
             else if (game.Surging)
                 subCopy = "BRACE · Hub shrugs hits · " + GameSim.CeilSecs(game.SurgeLeft) + "s";
             else if (game.BraceInbound() != null)
@@ -171,6 +174,8 @@ namespace ColonyHaul
                 haul = game.OfflineCopy();
             else if (game.SittingStock() != null)
                 haul = game.SittingCopy();
+            else if (game.L2Ready())
+                haul = game.L2ReadyCopy();
             else haul = "Haul " + game.HaulersLoaded + " loaded · " + (game.Haulers.Count - game.HaulersLoaded) + " idle";
             GUI.Label(new Rect(Screen.width - 280, 92, 256, 20), haul);
             var lanes = game.Lanes();
@@ -203,6 +208,7 @@ namespace ColonyHaul
             else if (dry != null) raidRead = dry;
             else if (clear != null) raidRead = clear;
             else if (game.GunsLowCopy() != null) raidRead = game.GunsLowCopy();
+            else if (game.L2ReadyCopy() != null) raidRead = game.L2ReadyCopy();
             else if (brace != null) raidRead = brace;
             else if (game.LiveTowers() > 0 || game.RaidLive) raidRead = game.GunLockCopy();
             else raidRead = "Combat haul BRACEs the Hub";
@@ -305,12 +311,17 @@ namespace ColonyHaul
                 if (coachFarm) GUI.backgroundColor = new Color(0.2f * pulse, 0.85f * pulse, 0.38f);
                 if (coachRoute) GUI.backgroundColor = new Color(0.95f * pulse, 0.82f * pulse, 0.28f);
                 if (midPulse) GUI.backgroundColor = PulseColor(tool.Tool, pulse);
+                var l2Ready = game.L2Ready() && tool.Tool == Tool.Upgrade && gate == null
+                    && game.ActiveCut() == null && !game.GunsLow() && !game.GunsDry()
+                    && game.HubChewers() == 0 && game.HubClosers() == 0;
+                if (l2Ready) GUI.backgroundColor = PulseColor(Tool.Upgrade, pulse);
                 if (splashFresh) GUI.backgroundColor = PulseColor(Tool.Splash, pulse);
                 if (locked) GUI.backgroundColor = new Color(0.12f, 0.12f, 0.12f);
                 var label = (selected ? "▶ " : "") + tool.Label;
                 if (coachFarm) label = "▶ 1 Farm — south pad";
                 if (coachRoute) label = "▶ 2 Route — click Hub";
                 if (midPulse) label = "▶ " + tool.Label;
+                if (l2Ready) label = "▶ Hub L2 — Splash next";
                 if (splashFresh) label = "▶ Splash — WEST choke";
                 if (shortStock && !midPulse) label = tool.Label + "  · short";
                 if (locked) label = "Splash  · locked Hub L2";
