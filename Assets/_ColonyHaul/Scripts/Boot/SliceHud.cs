@@ -92,11 +92,14 @@ namespace ColonyHaul
             var cut = game.ActiveCut();
             if (game.Surging) GUI.contentColor = new Color(0.45f, 0.9f, 1f);
             else if (cut != null) GUI.contentColor = new Color(1f, 0.55f, 0.32f);
+            else if (game.WaveIndex >= 5) GUI.contentColor = new Color(1f, 0.42f, 0.38f);
             string subCopy;
             if (game.Surging)
                 subCopy = "BRACE · Hub shrugs hits · " + GameSim.CeilSecs(game.SurgeLeft) + "s";
             else if (cut != null)
                 subCopy = "HAUL CUT · splice the orange rail · " + GameSim.CeilSecs(cut.SabotagedUntil - game.T) + "s";
+            else if (game.WaveIndex >= 5)
+                subCopy = "LAST RAIDS · hold the mesa";
             else
                 subCopy = "Mesa 7 · dusk cycle · Unity slice";
             GUI.Label(new Rect(24, 36, 340, 18), subCopy);

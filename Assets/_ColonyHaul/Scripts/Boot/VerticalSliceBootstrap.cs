@@ -153,6 +153,7 @@ namespace ColonyHaul
             _juice.CutAlarm(_game.ActiveCut() != null && _game.Phase == Phase.Playing);
             _juice.Tick(_cam, events);
             _hubFlash = Mathf.Max(0f, _hubFlash - Time.deltaTime);
+            SyncAtmosphere();
             SyncView(false);
         }
 
@@ -171,6 +172,13 @@ namespace ColonyHaul
                     break;
                 case SimEventKind.Wave:
                     _hud.WaveCall(_game.WaveBannerCopy(), _game.WaveIndex >= 5 ? 4.2f : 3.2f);
+                    foreach (var n in _game.Nodes.Values)
+                    {
+                        if (n.Kind != NodeKind.Spawn) continue;
+                        var incoming = _game.IncomingAt(n.Id);
+                        if (incoming <= 0) continue;
+                        _juice.Inbound(n.X, n.Z, incoming);
+                    }
                     break;
                 case SimEventKind.Upgrade:
                     if (_game.HubLevel >= 2) _hud.Flash("Hub Level 2 — Splash unlocked · WEST choke", 2.6f, new Color(0.94f, 0.63f, 0.38f, 0.95f));
@@ -244,6 +252,21 @@ namespace ColonyHaul
                 if (d < bestD) { bestD = d; best = n.Id; }
             }
             return best;
+        }
+
+        void SyncAtmosphere()
+        {
+            var dusk = new Color(0.07f, 0.18f, 0.22f);
+            var raid = new Color(0.2f, 0.05f, 0.06f);
+            float heat = 0f;
+            if (_game.Phase == Phase.Playing)
+            {
+                if (_game.WaveIndex >= 5) heat = 0.5f + 0.18f * Mathf.Abs(Mathf.Sin(Time.time * 1.7f));
+                else if (_game.Enemies.Count > 0) heat = 0.16f;
+            }
+            RenderSettings.fogColor = Color.Lerp(dusk, raid, heat);
+            if (_cam != null)
+                _cam.backgroundColor = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), raid, heat * 0.7f);
         }
 
         void SyncView(bool _)

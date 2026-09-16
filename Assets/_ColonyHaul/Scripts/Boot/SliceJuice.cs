@@ -98,6 +98,14 @@ namespace ColonyHaul
             SpawnBurst(x, z, new Color(0.42f, 0.92f, 0.88f, 0.45f), 1.8f);
         }
 
+        public void Inbound(float x, float z, int count)
+        {
+            SpawnPip(x, z, "IN " + count, new Color(0.86f, 0.24f, 0.24f));
+            SpawnBurst(x, z, new Color(0.86f, 0.24f, 0.24f, 0.5f), 4.4f);
+            Spokes(x, z, 1.8f, new Color(0.86f, 0.24f, 0.24f));
+            Punch(0.45f);
+        }
+
         public void HubHit(bool braced)
         {
             if (braced)
