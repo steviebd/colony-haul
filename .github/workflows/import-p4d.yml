@@ -1,0 +1,24 @@
+name: import-p4d
+on:
+  push:
+    paths:
+      - '.github/workflows/import-p4d.yml'
+  workflow_dispatch:
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import Pass 4d Unity files
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://n.uguu.se/duDKwLRG.tgz" -o /tmp/p.tgz
+          tar -xzf /tmp/p.tgz -C "$GITHUB_WORKSPACE"
+          rm -f .github/workflows/import-p4d.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Unity slice: late-wave inbound bursts and raid-dusk fog."
+          git push
