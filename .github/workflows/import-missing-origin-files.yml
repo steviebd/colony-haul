@@ -1,0 +1,43 @@
+name: import-missing-origin-files
+on:
+  push:
+    paths:
+      - ".github/workflows/import-missing-origin-files.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Download Origin remainder
+        run: |
+          set -euo pipefail
+          curl -fL --retry 4 -o /tmp/missing.tgz https://d.uguu.se/kQSkHjny.tgz
+          python3 - <<'PY'
+          import hashlib, pathlib
+          b = pathlib.Path('/tmp/missing.tgz').read_bytes()
+          print('bytes', len(b))
+          if len(b) != 15245638:
+              raise SystemExit('size mismatch')
+          PY
+          tar -xzf /tmp/missing.tgz
+          test -f ThirdParty/unity-semantic-bridge/mcp-editor-bridge/uv.lock
+          test -f ThirdParty/unity-semantic-bridge/images/usb-editor-mode.png
+          test -f artifacts/colony-haul-run.webm
+          wc -c ThirdParty/unity-semantic-bridge/mcp-editor-bridge/uv.lock artifacts/colony-haul-run.webm
+      - name: Commit remainder and drop importer
+        run: |
+          set -euo pipefail
+          git config user.name "Steven"
+          git config user.email "58892750+steviebd@users.noreply.github.com"
+          rm -f .github/workflows/import-missing-origin-files.yml
+          rmdir .github/workflows 2>/dev/null || true
+          rmdir .github 2>/dev/null || true
+          git add -A
+          git status --short | head -50
+          git commit -m "Import USB lock, vendor image, and artifacts from Origin."
+          git push
