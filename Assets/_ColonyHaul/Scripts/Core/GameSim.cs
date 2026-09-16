@@ -520,6 +520,76 @@ namespace ColonyHaul
             return remain / Balance.HaulerSpeed + Math.Max(0f, h.Wait);
         }
 
+        public static string CargoTag(Resource? kind)
+        {
+            var k = kind ?? Resource.Ore;
+            switch (k)
+            {
+                case Resource.Ore: return "ORE";
+                case Resource.Food: return "FOOD";
+                case Resource.Power: return "PWR";
+                default: throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
+            }
+        }
+
+        public Hauler HomeInbound()
+        {
+            if (Phase != Phase.Playing || RaidLive) return null;
+            if (OpeningStep() != 0) return null;
+            Hauler best = null;
+            var bestEta = float.PositiveInfinity;
+            foreach (var h in Haulers)
+            {
+                if (h.CargoAmount <= 0) continue;
+                if (HaulerBlocked(h)) continue;
+                var eta = HaulEtaToHub(h);
+                if (eta < 0f) continue;
+                if (eta < bestEta)
+                {
+                    bestEta = eta;
+                    best = h;
+                }
+            }
+            return best;
+        }
+
+        public string HomeInboundTitle()
+        {
+            var h = HomeInbound();
+            if (h == null) return null;
+            var tag = CargoTag(h.CargoKind);
+            var eta = HaulEtaToHub(h);
+            if (eta <= 0.35f) return "HAUL HOME · " + tag + " NOW";
+            return "HAUL HOME · " + tag + " IN " + CeilSecs(eta) + "s";
+        }
+
+        public string HomeInboundCopy()
+        {
+            var h = HomeInbound();
+            if (h == null) return null;
+            var tag = CargoTag(h.CargoKind);
+            var eta = HaulEtaToHub(h);
+            if (eta <= 0.35f) return "HAUL HOME — " + tag + " at the Hub";
+            return "HAUL HOME — " + tag + " in " + CeilSecs(eta) + "s · feeds the next raid";
+        }
+
+        public string HomeInboundChip()
+        {
+            var h = HomeInbound();
+            if (h == null) return null;
+            var tag = CargoTag(h.CargoKind);
+            var eta = HaulEtaToHub(h);
+            if (eta <= 0.35f) return tag + " NOW";
+            return tag + " " + CeilSecs(eta) + "s";
+        }
+
+        public string HomeInboundFlash()
+        {
+            var h = HomeInbound();
+            if (h == null) return "HAUL HOME — keep the rail feeding Hub";
+            return "HAUL HOME — " + CargoTag(h.CargoKind) + " on the rail";
+        }
+
         public Hauler BraceInbound()
         {
             if (Phase != Phase.Playing || !RaidLive || Surging) return null;

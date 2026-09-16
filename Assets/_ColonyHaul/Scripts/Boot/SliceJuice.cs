@@ -113,6 +113,13 @@ namespace ColonyHaul
             SpawnBurst(x, z, new Color(0.45f, 0.9f, 1f, 0.4f), 2.6f);
         }
 
+        public void HaulHome(float x, float z, string tag)
+        {
+            SpawnPip(x, z, string.IsNullOrEmpty(tag) ? "HOME" : tag, new Color(0.86f, 0.72f, 0.38f));
+            Spokes(x, z, 1.3f, new Color(0.86f, 0.72f, 0.38f));
+            Punch(0.14f);
+        }
+
         public void Chew(float x, float z)
         {
             SpawnPip(x, z, "CHEW", new Color(1f, 0.32f, 0.22f));

@@ -37,10 +37,12 @@ namespace ColonyHaul
         readonly HashSet<string> _cutSoonPinged = new HashSet<string>();
         readonly HashSet<string> _powerPinged = new HashSet<string>();
         readonly HashSet<string> _lowPinged = new HashSet<string>();
+        readonly HashSet<string> _homePinged = new HashSet<string>();
         LineRenderer _braceLine;
         LineRenderer _powerLine;
         LineRenderer _offlineLine;
         LineRenderer _sitLine;
+        LineRenderer _homeLine;
         bool _chewPinged;
         bool _closePinged;
         bool _atPadPinged;
@@ -53,6 +55,7 @@ namespace ColonyHaul
         string _slowPinged;
         string _stretchPinged;
         bool _holdReadyPinged;
+        bool _homeFlash;
         Transform _root;
         Camera _cam;
         float _acc;
@@ -131,6 +134,7 @@ namespace ColonyHaul
             ClearPowerLine();
             ClearOfflineLine();
             ClearSitLine();
+            ClearHomeLine();
             _hubFlash = 0f;
             _hubBraceFlash = false;
             _coreAlarm = false;
@@ -153,6 +157,8 @@ namespace ColonyHaul
             _slowPinged = null;
             _stretchPinged = null;
             _holdReadyPinged = false;
+            _homePinged.Clear();
+            _homeFlash = false;
             _juice.CutAlarm(false);
             _buildingScale.Clear();
             _acc = 0f;
@@ -219,6 +225,7 @@ namespace ColonyHaul
             PingSlowChoke();
             PingStretch();
             PingHoldReady();
+            PingHomeInbound();
             _juice.Tick(_cam, events);
             _hubFlash = Mathf.Max(0f, _hubFlash - Time.deltaTime);
             SyncAtmosphere();
@@ -602,6 +609,7 @@ namespace ColonyHaul
             SyncCloses();
             SyncBraceLine();
             SyncPowerLine();
+            SyncHomeLine();
             SyncOfflineLine();
             SyncSitLine();
             SyncForecasts();
@@ -1347,6 +1355,28 @@ namespace ColonyHaul
                 new Color(0.55f, 0.42f, 0.12f, 0.95f));
         }
 
+        void PingHomeInbound()
+        {
+            var h = _game.HomeInbound();
+            if (h == null)
+            {
+                _homePinged.Clear();
+                _homeFlash = false;
+                return;
+            }
+            if (!_homeFlash)
+            {
+                _homeFlash = true;
+                _juice.HaulHome(h.X, h.Z, GameSim.CargoTag(h.CargoKind));
+                _hud.Flash(_game.HomeInboundFlash() ?? "HAUL HOME — keep the rail feeding Hub", 1.6f,
+                    new Color(0.48f, 0.38f, 0.12f, 0.95f));
+            }
+            var eta = _game.HaulEtaToHub(h);
+            if (eta < 0f || eta > 2.4f) return;
+            if (!_homePinged.Add(h.Id)) return;
+            _juice.HaulHome(h.X, h.Z, GameSim.CargoTag(h.CargoKind));
+        }
+
         void SyncGunLocks()
         {
             var live = new HashSet<string>();
@@ -1502,6 +1532,41 @@ namespace ColonyHaul
             var color = new Color(1f, 0.5f, 0.2f, pulse);
             _powerLine.startColor = color;
             _powerLine.endColor = color;
+        }
+
+        void SyncHomeLine()
+        {
+            var h = _game.HomeInbound();
+            var power = _game.PowerInbound() ?? _game.GunsLowInbound();
+            if (h != null && power != null && h.Id == power.Id)
+                h = null;
+            if (h == null)
+            {
+                if (_homeLine != null) _homeLine.enabled = false;
+                return;
+            }
+            if (_homeLine == null)
+                _homeLine = MesaView.MakeLine(_root, "home-line", 0.11f, 0.035f);
+            _homeLine.enabled = true;
+            _homeLine.positionCount = 2;
+            _homeLine.SetPosition(0, new Vector3(h.X, 0.74f, h.Z));
+            _homeLine.SetPosition(1, new Vector3(0f, 0.88f, 0f));
+            var pulse = 0.55f + 0.3f * Mathf.Abs(Mathf.Sin(Time.time * 6f));
+            var color = HomeCargoColor(h.CargoKind, pulse);
+            _homeLine.startColor = color;
+            _homeLine.endColor = color;
+        }
+
+        static Color HomeCargoColor(Resource? kind, float pulse)
+        {
+            var k = kind ?? Resource.Ore;
+            switch (k)
+            {
+                case Resource.Ore: return new Color(0.94f, 0.64f, 0.23f, pulse);
+                case Resource.Food: return new Color(0.5f, 0.85f, 0.48f, pulse);
+                case Resource.Power: return new Color(0.4f, 0.75f, 1f, pulse);
+                default: throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
+            }
         }
 
         void SyncOfflineLine()
@@ -1701,6 +1766,15 @@ namespace ColonyHaul
             }
         }
 
+        void ClearHomeLine()
+        {
+            if (_homeLine != null)
+            {
+                Destroy(_homeLine.gameObject);
+                _homeLine = null;
+            }
+        }
+
         void DrawWorldBars()
         {
             if (_cam == null) return;
@@ -1819,6 +1893,18 @@ namespace ColonyHaul
                     var chip = eta <= 0.35f ? "POWER NOW" : "POWER " + GameSim.CeilSecs(eta) + "s";
                     GUI.backgroundColor = new Color(0.72f, 0.28f, 0.08f, 0.9f);
                     GUI.Box(new Rect(psp.x - 46f, Screen.height - psp.y - 14f, 92f, 22f), chip);
+                    GUI.backgroundColor = Color.white;
+                }
+            }
+            var home = _game.HomeInbound();
+            if (home != null && (power == null || power.Id != home.Id))
+            {
+                var hsp = _cam.WorldToScreenPoint(new Vector3(home.X, 1.55f, home.Z));
+                if (hsp.z > 0f)
+                {
+                    GUI.backgroundColor = HomeCargoColor(home.CargoKind, 0.92f);
+                    GUI.Box(new Rect(hsp.x - 46f, Screen.height - hsp.y - 14f, 92f, 22f),
+                        _game.HomeInboundChip() ?? "HOME");
                     GUI.backgroundColor = Color.white;
                 }
             }
