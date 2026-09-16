@@ -86,19 +86,24 @@ namespace ColonyHaul
             Chip(430, 18, "FOOD", Mathf.FloorToInt(game.Food).ToString(), new Color(0.5f, 0.85f, 0.48f));
             var pwrColor = game.PowerBrownout ? new Color(1f, 0.35f, 0.32f) : new Color(0.4f, 0.75f, 1f);
             Chip(540, 18, "PWR", Mathf.FloorToInt(game.Power).ToString(), pwrColor);
-            Chip(650, 18, "STAFF", game.StaffedProducers() + "/" + game.WorkersTotal, new Color(0.75f, 0.8f, 0.85f));
+            Chip(650, 18, "STAFF", game.StaffedProducers() + "/" + game.WorkersTotal,
+                game.CrewStretched() ? new Color(1f, 0.62f, 0.32f) : new Color(0.75f, 0.8f, 0.85f));
             GUI.Label(new Rect(Screen.width - 280, 18, 260, 20),
                 game.WaveIndex == 0
                     ? $"WAVE 1 / {Balance.WavesToWin} IN {Mathf.CeilToInt(game.NextWaveIn)}S"
                     : $"WAVE {game.WaveIndex} / {Balance.WavesToWin} · {game.Enemies.Count} LIVE");
+            var hubHpColor = game.CoreThin ? new Color(1f, 0.42f, 0.32f) : Color.white;
+            var oldHp = GUI.contentColor;
+            GUI.contentColor = hubHpColor;
             GUI.Label(new Rect(Screen.width - 280, 40, 260, 20),
                 $"Hub HP {Mathf.CeilToInt(game.HubHp)} · L{game.HubLevel} · {game.Haulers.Count} haul");
+            GUI.contentColor = oldHp;
         }
 
         static void DrawLogistics(GameSim game)
         {
             GUI.backgroundColor = new Color(0.05f, 0.09f, 0.11f, 0.88f);
-            GUI.Box(new Rect(Screen.width - 292, 88, 280, 128), "");
+            GUI.Box(new Rect(Screen.width - 292, 88, 280, 148), "");
             GUI.backgroundColor = Color.white;
             var cut = game.ActiveCut();
             var haul = cut != null
@@ -121,6 +126,7 @@ namespace ColonyHaul
             else guns = "Guns ~" + GameSim.CeilSecs(game.GunSecondsLeft()) + "s of fire · " + towers + " live";
             GUI.Label(new Rect(Screen.width - 280, 152, 256, 20), guns);
             GUI.Label(new Rect(Screen.width - 280, 172, 256, 20), LarderCopy(game));
+            GUI.Label(new Rect(Screen.width - 280, 192, 256, 20), game.HoldCopy());
         }
 
         static string LaneChip(string tag, int n, bool hot)
@@ -167,15 +173,17 @@ namespace ColonyHaul
             }
             var watch = game.MidWatch();
             if (watch == null || string.IsNullOrEmpty(watch.Copy)) return;
-            GUI.backgroundColor = new Color(0.07f, 0.14f, 0.18f, 0.92f);
+            GUI.backgroundColor = game.CoreThin
+                ? new Color(0.22f, 0.08f, 0.08f, 0.94f)
+                : new Color(0.07f, 0.14f, 0.18f, 0.92f);
             GUI.Box(new Rect(Screen.width / 2 - 250, 88, 500, 58), "");
             GUI.backgroundColor = Color.white;
-            GUI.Label(new Rect(Screen.width / 2 - 234, 92, 468, 22), "WATCH  " + watch.Copy);
+            GUI.Label(new Rect(Screen.width / 2 - 234, 92, 468, 22),
+                (game.CoreThin ? "CORE  " : "WATCH  ") + watch.Copy);
             var lanes = game.Lanes();
             GUI.Label(new Rect(Screen.width / 2 - 234, 114, 468, 22),
-                "Hot " + game.HottestLane().ToUpperInvariant() +
-                "  ·  E" + lanes.East + " N" + lanes.North + " W" + lanes.West +
-                "  ·  " + LarderCopy(game));
+                game.HoldCopy() +
+                "  ·  E" + lanes.East + " N" + lanes.North + " W" + lanes.West);
         }
 
         static void Chip(float x, float y, string label, string value, Color color)

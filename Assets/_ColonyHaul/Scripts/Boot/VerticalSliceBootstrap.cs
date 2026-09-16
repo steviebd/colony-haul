@@ -29,6 +29,7 @@ namespace ColonyHaul
         Camera _cam;
         float _acc;
         float _hubFlash;
+        bool _coreAlarm;
         bool _pendingRestart;
         bool _pendingDemo;
         bool _pendingManual;
@@ -90,6 +91,7 @@ namespace ColonyHaul
             ClearMap(_shadows);
             ClearTrails();
             _hubFlash = 0f;
+            _coreAlarm = false;
             _buildingScale.Clear();
             _acc = 0f;
             BootMatch();
@@ -132,6 +134,12 @@ namespace ColonyHaul
             HandleInput();
             var events = _game.DrainEvents();
             foreach (var ev in events) Banner(ev);
+            if (_game.CoreThin && !_coreAlarm && _game.Phase == Phase.Playing)
+            {
+                _coreAlarm = true;
+                _hud.Flash("CORE THIN — haul braces the Hub", 2.4f);
+                _juice.Punch(0.7f);
+            }
             _juice.Tick(_cam, events);
             _hubFlash = Mathf.Max(0f, _hubFlash - Time.deltaTime);
             SyncView(false);
@@ -151,7 +159,7 @@ namespace ColonyHaul
                     _hud.Flash("Barrier up — spawn approach slowed", 1.8f);
                     break;
                 case SimEventKind.Wave:
-                    _hud.WaveCall(_game.WaveBannerCopy(), 3.2f);
+                    _hud.WaveCall(_game.WaveBannerCopy(), _game.WaveIndex >= 5 ? 4.2f : 3.2f);
                     break;
                 case SimEventKind.Upgrade:
                     if (_game.HubLevel >= 2) _hud.Flash("Hub Level 2 — Splash unlocked · WEST choke", 2.6f);
@@ -162,7 +170,7 @@ namespace ColonyHaul
                 case SimEventKind.Deposit:
                     break;
                 case SimEventKind.Hit:
-                    if (ev.NodeId == "hub") _hubFlash = 0.4f;
+                    if (ev.NodeId == "hub") _hubFlash = _game.CoreThin ? 0.7f : 0.4f;
                     break;
                 case SimEventKind.Death:
                 case SimEventKind.WarnFood:
@@ -293,6 +301,8 @@ namespace ColonyHaul
                     tint = Color.Lerp(tint, new Color(0.45f, 0.9f, 1f), 0.45f * pulse);
                 if (b.Type == BuildingType.Hub && _game.HubRaising)
                     tint = Color.Lerp(tint, new Color(1f, 0.86f, 0.42f), 0.55f * pulse);
+                if (b.Type == BuildingType.Hub && _game.CoreThin)
+                    tint = Color.Lerp(tint, new Color(0.95f, 0.22f, 0.18f), 0.4f + 0.2f * pulse);
                 if (b.Type == BuildingType.Hub && _hubFlash > 0f)
                     tint = Color.Lerp(tint, new Color(1f, 0.22f, 0.18f), Mathf.Clamp01(_hubFlash * 2.4f));
                 MesaView.Tint(tr.gameObject, tint);
@@ -384,7 +394,8 @@ namespace ColonyHaul
                     _haulers[h.Id] = tr;
                 }
                 tr.position = new Vector3(h.X, 0.58f, h.Z);
-                tr.localScale = Vector3.one * (h.CargoAmount > 0 ? 0.5f : 0.38f);
+                var waitPulse = h.Wait > 0 ? 1f + 0.12f * Mathf.Abs(Mathf.Sin(Time.time * 9f)) : 1f;
+                tr.localScale = Vector3.one * ((h.CargoAmount > 0 ? 0.5f : 0.38f) * waitPulse);
                 var cargo = h.CargoAmount <= 0 ? new Color(0.31f, 0.8f, 0.77f)
                     : h.CargoKind == Resource.Food ? new Color(0.5f, 0.85f, 0.45f)
                     : h.CargoKind == Resource.Power ? new Color(0.35f, 0.7f, 1f)
@@ -636,7 +647,9 @@ namespace ColonyHaul
             var hp = Mathf.Clamp01(_game.HubHp / Balance.HubMaxHp);
             GUI.backgroundColor = new Color(0f, 0f, 0f, 0.7f);
             GUI.Box(new Rect(hx - 42f, hy, 84f, 9f), "");
-            GUI.backgroundColor = Color.Lerp(new Color(0.85f, 0.18f, 0.16f), new Color(0.9f, 0.78f, 0.5f), hp);
+            GUI.backgroundColor = _game.CoreThin
+                ? Color.Lerp(new Color(0.55f, 0.08f, 0.08f), new Color(1f, 0.32f, 0.22f), hp)
+                : Color.Lerp(new Color(0.85f, 0.18f, 0.16f), new Color(0.9f, 0.78f, 0.5f), hp);
             GUI.Box(new Rect(hx - 42f, hy, 84f * hp, 9f), "");
             GUI.backgroundColor = Color.white;
         }

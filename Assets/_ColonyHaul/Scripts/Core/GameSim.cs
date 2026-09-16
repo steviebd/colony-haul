@@ -60,6 +60,47 @@ namespace ColonyHaul
             return n;
         }
 
+        public bool CoreThin => HubHp < 72f;
+
+        public bool CrewStretched()
+        {
+            return ProducerCount() > WorkersTotal;
+        }
+
+        public int CountType(BuildingType type)
+        {
+            var n = 0;
+            foreach (var b in Buildings.Values)
+                if (b.Type == type) n++;
+            return n;
+        }
+
+        public int ProducerCount()
+        {
+            var n = 0;
+            foreach (var b in Buildings.Values)
+                if (b.Type == BuildingType.Mine || b.Type == BuildingType.Farm || b.Type == BuildingType.Power) n++;
+            return n;
+        }
+
+        public string UnstaffedPad()
+        {
+            foreach (var b in Buildings.Values)
+            {
+                if (b.Type != BuildingType.Mine && b.Type != BuildingType.Farm && b.Type != BuildingType.Power) continue;
+                if (!b.Staffed) return b.NodeId;
+            }
+            return null;
+        }
+
+        public string HoldCopy()
+        {
+            if (HubLevel < 2) return "Need Hub L2 to win — Splash rides on it";
+            if (WaveIndex >= Balance.WavesToWin) return "Last raiders — splice cuts, haul Power";
+            var left = Balance.WavesToWin - WaveIndex;
+            return left + (left == 1 ? " wave left · Hub L2 online" : " waves left · Hub L2 online");
+        }
+
         public int IncomingRaiders => _pending.Count;
 
         public bool RaidLive => Enemies.Count > 0 || IncomingRaiders > 0;
@@ -84,8 +125,8 @@ namespace ColonyHaul
                 case 2: return "WAVE 2 — 5 grunts NORTH  ·  runner EAST";
                 case 3: return "WAVE 3 — 4 grunts WEST  ·  2 brutes EAST";
                 case 4: return "WAVE 4 — mixed three lanes  ·  runners + brute";
-                case 5: return "WAVE 5 — brutes EAST  ·  runners WEST  ·  grunts NORTH";
-                case 6: return "WAVE 6 — FULL RAID  ·  all spawns";
+                case 5: return "LAST RAIDS — WAVE 5 — brutes EAST · runners WEST";
+                case 6: return "LAST RAID — WAVE 6 — FULL RAID · all spawns";
                 default: throw new ArgumentOutOfRangeException(nameof(WaveIndex), WaveIndex, null);
             }
         }
@@ -336,6 +377,24 @@ namespace ColonyHaul
                 return Call("Slow the " + hot + " approach — Barrier on the choke", Tool.Barrier);
             if (HubLevel >= 2 && !HasType(BuildingType.Splash) && CanAfford(Tool.Splash))
                 return Call("Splash on the west choke — brutes bunch there", Tool.Splash);
+            if (CoreThin && RaidLive)
+            {
+                if (!NodeArmed(choke) && CanAfford(Tool.Kinetic))
+                    return Call("CORE THIN — Kinetic on the " + hot.ToUpperInvariant() + " choke", Tool.Kinetic);
+                return Call("CORE THIN — keep " + hot + " guns fed, splice any cut", Tool.Route);
+            }
+            if (CrewStretched())
+            {
+                var idle = UnstaffedPad();
+                if (idle != null)
+                    return Call("Crew stretched — " + PadCall(idle) + " is idle. Rail beats a new pad", Tool.Route);
+            }
+            if (WaveIndex >= 3 && CountType(BuildingType.Farm) < 2 && CanAfford(Tool.Farm) && FoodSecondsLeft() < 28f)
+                return Call("Second Farm — late waves chew the larder", Tool.Farm);
+            if (WaveIndex >= 4 && HasType(BuildingType.Splash) && !NodeArmed("choke_n") && CanAfford(Tool.Kinetic) && lanes.North > 0)
+                return Call("North is open — Kinetic on the north choke", Tool.Kinetic);
+            if (WaveIndex >= 5)
+                return Call("HOLD THE MESA — splice every cut, haul Power", Tool.Route);
             return Call(NextWaveCopy(), Tool.None);
         }
 
@@ -873,11 +932,11 @@ namespace ColonyHaul
                 h.Wait = Balance.DepositBusy;
                 h.BusyAt = "hub";
                 Emit(SimEventKind.Deposit, "hub", amount: amount, resource: kind);
-                if (RaidLive)
-                {
-                    _surgeUntil = T + 0.55f;
-                    Emit(SimEventKind.Surge, "hub", amount: amount, resource: kind);
-                }
+                    if (RaidLive)
+                    {
+                        _surgeUntil = T + (HubHp < 72f ? 0.85f : 0.55f);
+                        Emit(SimEventKind.Surge, "hub", amount: amount, resource: kind);
+                    }
                 return;
             }
             if (h.CargoAmount == 0 && Buildings.TryGetValue(h.NodeId, out var b) &&

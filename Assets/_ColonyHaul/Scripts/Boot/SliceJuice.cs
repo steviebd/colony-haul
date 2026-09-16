@@ -161,7 +161,10 @@ namespace ColonyHaul
                     SpawnBurst(ev.X, ev.Z, new Color(0.95f, 0.28f, 0.32f, 0.5f), 2.8f);
                     break;
                 case SimEventKind.Hit:
-                    if (ev.NodeId == "hub") Punch(0.6f);
+                    if (ev.NodeId == "hub")
+                    {
+                        Punch(0.6f);
+                    }
                     break;
                 case SimEventKind.Death:
                     SpawnPip(ev.X, ev.Z, "+" + Mathf.RoundToInt(ev.Amount) + " scrap", new Color(0.94f, 0.64f, 0.23f));

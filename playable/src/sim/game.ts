@@ -550,7 +550,7 @@ export class Game {
       h.wait = BALANCE.depositBusy;
       h.busyAt = 'hub';
       if (this.enemies.length > 0 || this.pending.length > 0) {
-        this.surgeUntil = this.t + 0.55;
+        this.surgeUntil = this.t + (this.hubHp < 72 ? 0.85 : 0.55);
         this.emit({ kind: 'surge', nodeId: 'hub', resource: kind, amount, x: 0, z: 0 });
       }
       return;

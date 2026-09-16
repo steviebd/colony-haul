@@ -35,7 +35,7 @@ Scenes are thin on purpose. `VerticalSliceBootstrap` builds the dusk mesa, pads,
 - Keys `1–7`: Farm, Mine, Power, Route, Kinetic, Splash, Barrier. `U` Hub L2. `D` demo. `R` restart.
 - Left tray is clickable. Splash stays locked until Hub L2.
 - Top-right logistics strip: loaded vs idle haulers, E/N/W lane counts (hottest marked `*`), next-wave copy, gun-fire fuse, and a larder clock (`~Ns of food`). HAUL CUT shows splice countdown.
-- Opening coach: 1 Farm (south pad) → 2 rail to Hub → 3 first hauls. After that, a mid-watch coach names the next readable call (splice, offline pad, east kinetic, brownout, Hub L2, thin larder, hottest ungunned choke, barrier, splash west).
+- Opening coach: 1 Farm (south pad) → 2 rail to Hub → 3 first hauls. After that, a mid-watch coach names the next readable call (splice, Power, Hub L2, Splash west, CORE THIN, second farm, HOLD).
 - Tray: opening Farm/Route still pulse. Mid-watch pulses the called tool. Short-stock tools dim with `· short`. Splash stays locked until Hub L2.
 - Guns draw range rings. Route mode shows a ghost rail. Loaded haulers paint a cargo-colored trail along the remaining rail. Slowed raiders tint cyan. Hottest choke glows and labels EAST/NORTH/WEST pressure. Hub HP sits as a world bar over the core. Grunts are cubes, brutes capsules, runners thin cylinders with ground blobs. Wave banner names the lane mix. Deposits during a raid fire **Rail Surge** (Hub takes less hit damage for a beat). Kills punch the camera and float scrap. Pads stack a buffer pillar as ore/food/power sits uncollected.
 - Win: survive 6 waves **and** Hub Level 2. Lose: Hub HP 0, or food stays at 0 for 14s.
@@ -49,10 +49,11 @@ Tick stays one loop. Seed-7 demo still wins. Mid-game is readable, and a haul du
 1. Mid-watch coach after the Farm-Route-Hub opening — splice, offline pad, east kinetic, brownout, Hub L2, thin larder, hottest ungunned choke, barrier, splash west.
 2. Logistics: E/N/W lane counts with hottest marked, inbound raiders, gun fuse, larder clock. Guns hungry calls out a Power haul without locking tools.
 3. Tray affordability (`· short`) and pulse on the called tool. Splash pulses WEST for 16s after Hub L2.
-4. **Rail Surge** — a deposit while raiders are live briefly cuts Hub hit damage (haul + colony stock + core defense). Cyan burst + SURGE pip.
-5. Combat reads: grunt cube / brute capsule / runner cylinder, ground blobs, thicker tracers, splash burst, lane wave banner.
+4. **Rail Surge** — a deposit while raiders are live briefly cuts Hub hit damage (haul + colony stock + core defense). Lasts longer when the core is thin.
+5. Combat reads: grunt cube / brute capsule / runner cylinder, ground blobs, thicker tracers, splash burst, lane wave banner (LAST RAIDS on 5–6).
 6. Hub L2 raising coach, gold grow, then Splash unlock on the west choke.
-7. Juice on deposit spokes, sabotage CUT, brownout DRY, barrier SLOW, kill punch.
+7. Late watch: CORE THIN, crew stretch / idle pad, second Farm, open north choke, HOLD THE MESA. Staff chip warns when producers outnumber crew. Hold-copy in logistics.
+8. Juice on deposit spokes, sabotage CUT, brownout DRY, barrier SLOW, kill punch. Hub cracks red when thin; waiting haulers throb.
 
 Folder layout: `Assets/_ColonyHaul/{Scripts,Art,Prefabs,Scenes,UI,Audio}`.
 
