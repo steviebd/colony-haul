@@ -845,6 +845,85 @@ namespace ColonyHaul
             return "L2 READY";
         }
 
+        public string OpenChokeId()
+        {
+            if (Phase != Phase.Playing) return null;
+            if (OpeningStep() != 0) return null;
+            var hot = HottestLane();
+            string choke;
+            switch (hot)
+            {
+                case "east": choke = "choke_e"; break;
+                case "west": choke = "choke_w"; break;
+                case "north": choke = "choke_n"; break;
+                default: throw new ArgumentOutOfRangeException(nameof(hot), hot, null);
+            }
+            if (NodeArmed(choke)) return null;
+            if (choke == "choke_w" && SplashFresh()) return null;
+            var lanes = Lanes();
+            int pressure;
+            switch (hot)
+            {
+                case "east": pressure = lanes.East; break;
+                case "west": pressure = lanes.West; break;
+                case "north": pressure = lanes.North; break;
+                default: throw new ArgumentOutOfRangeException(nameof(hot), hot, null);
+            }
+            if (pressure <= 0) return null;
+            return choke;
+        }
+
+        public string OpenChokeLane()
+        {
+            var id = OpenChokeId();
+            if (id == null) return null;
+            switch (id)
+            {
+                case "choke_e": return "EAST";
+                case "choke_n": return "NORTH";
+                case "choke_w": return "WEST";
+                default: throw new ArgumentOutOfRangeException(nameof(id), id, null);
+            }
+        }
+
+        public string OpenChokeTitle()
+        {
+            var lane = OpenChokeLane();
+            if (lane == null) return null;
+            var id = OpenChokeId();
+            if (id == "choke_w" && HubLevel >= 2 && !HasType(BuildingType.Splash))
+            {
+                if (CanAfford(Tool.Splash)) return "OPEN " + lane + " · Splash";
+                return "OPEN " + lane + " · stock Splash";
+            }
+            if (CanAfford(Tool.Kinetic)) return "OPEN " + lane + " · Kinetic";
+            return "OPEN " + lane + " · ore short";
+        }
+
+        public string OpenChokeCopy()
+        {
+            var id = OpenChokeId();
+            var lane = OpenChokeLane();
+            if (id == null || lane == null) return null;
+            var near = EnemiesNear(id, 4.8f);
+            if (near > 0) return "OPEN " + lane + " · " + near + " on the choke";
+            return "OPEN " + lane + " — plant a gun before they pad";
+        }
+
+        public string OpenChokeChip()
+        {
+            var lane = OpenChokeLane();
+            if (lane == null) return null;
+            return "OPEN " + lane;
+        }
+
+        public string OpenChokeFlash()
+        {
+            var lane = OpenChokeLane();
+            if (lane == null) return "OPEN CHOKE — plant a gun";
+            return "OPEN " + lane + " — plant a gun";
+        }
+
         public Hauler BlockedLoadedHauler()
         {
             foreach (var h in Haulers)

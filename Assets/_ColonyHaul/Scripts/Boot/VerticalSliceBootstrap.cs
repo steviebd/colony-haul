@@ -49,6 +49,7 @@ namespace ColonyHaul
         string _offlinePinged;
         string _sitPinged;
         bool _l2ReadyPinged;
+        string _openPinged;
         Transform _root;
         Camera _cam;
         float _acc;
@@ -145,6 +146,7 @@ namespace ColonyHaul
             _offlinePinged = null;
             _sitPinged = null;
             _l2ReadyPinged = false;
+            _openPinged = null;
             _juice.CutAlarm(false);
             _buildingScale.Clear();
             _acc = 0f;
@@ -207,6 +209,7 @@ namespace ColonyHaul
             PingOffline();
             PingSitting();
             PingL2Ready();
+            PingOpenChoke();
             _juice.Tick(_cam, events);
             _hubFlash = Mathf.Max(0f, _hubFlash - Time.deltaTime);
             SyncAtmosphere();
@@ -371,6 +374,8 @@ namespace ColonyHaul
                     c = new Color(0.95f * pulse, 0.78f * pulse, 0.32f);
                 else if (hubGlow || routeGlow) c = MesaView.PadRoute * pulse;
                 else if (splashWest) c = new Color(0.94f * pulse, 0.63f * pulse, 0.38f);
+                else if (_game.OpenChokeId() == n.Id)
+                    c = Color.Lerp(new Color(0.62f, 0.52f, 0.4f), new Color(1f * pulse, 0.38f * pulse, 0.22f), 0.7f);
                 else if (n.Kind == NodeKind.Choke && (chokeHot || near > 0))
                     c = Color.Lerp(new Color(0.62f, 0.52f, 0.4f), MesaView.Spawn * pulse,
                         Mathf.Clamp01(near / 4f + (chokeHot ? 0.35f : 0f)));
@@ -412,7 +417,9 @@ namespace ColonyHaul
                     MesaView.SetLabel(mark, forecast ?? (inbound ? "IN " + _game.IncomingAt(n.Id) : "RAID"));
                 }
                 else if (n.Kind == NodeKind.Choke)
-                    MesaView.SetLabel(mark, splashWest ? "SPLASH" : ChokeLabel(n.Id, near, chokeHot));
+                    MesaView.SetLabel(mark, splashWest ? "SPLASH"
+                        : _game.OpenChokeId() == n.Id ? "OPEN"
+                        : ChokeLabel(n.Id, near, chokeHot));
                 else if (n.Kind == NodeKind.Pad)
                 {
                     if (cut != null && (cut.A == n.Id || cut.B == n.Id))
@@ -747,6 +754,16 @@ namespace ColonyHaul
                 live.Add("teach-splash-w");
                 var glow = 0.18f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 5f));
                 EnsureRing("teach-splash-w", west, Balance.SplashRange, new Color(0.94f, 0.63f, 0.38f, glow));
+            }
+            var openId = _game.OpenChokeId();
+            if (openId != null && _game.Nodes.TryGetValue(openId, out var openNode))
+            {
+                live.Add("open-choke");
+                var openRange = openId == "choke_w" && _game.HubLevel >= 2 && !_game.HasType(BuildingType.Splash)
+                    ? Balance.SplashRange
+                    : Balance.KineticRange;
+                var openGlow = 0.36f + 0.08f * Mathf.Abs(Mathf.Sin(Time.time * 7f));
+                EnsureRing("open-choke", openNode, openRange, new Color(1f, 0.38f, 0.22f, openGlow));
             }
             if (_game.HubChewers() > 0 && !_game.Surging && _game.Nodes.TryGetValue("hub", out var chewHub))
             {
@@ -1221,6 +1238,22 @@ namespace ColonyHaul
             _juice.L2Ready();
             _hud.Flash(_game.L2ReadyFlash() ?? "L2 READY — press U · Splash next", 2.0f,
                 new Color(0.55f, 0.42f, 0.12f, 0.95f));
+        }
+
+        void PingOpenChoke()
+        {
+            var id = _game.OpenChokeId();
+            if (id == null)
+            {
+                _openPinged = null;
+                return;
+            }
+            if (_openPinged == id) return;
+            _openPinged = id;
+            if (!_game.Nodes.TryGetValue(id, out var node)) return;
+            _juice.OpenChoke(node.X, node.Z, _game.OpenChokeLane() ?? "OPEN");
+            _hud.Flash(_game.OpenChokeFlash() ?? "OPEN CHOKE — plant a gun", 1.8f,
+                new Color(0.72f, 0.22f, 0.12f, 0.95f));
         }
 
         void SyncGunLocks()
@@ -1729,6 +1762,18 @@ namespace ColonyHaul
                     GUI.backgroundColor = new Color(0.55f, 0.38f, 0.08f, 0.92f);
                     GUI.Box(new Rect(ssp.x - 50f, Screen.height - ssp.y - 12f, 100f, 22f),
                         _game.SittingChip() ?? "HAUL");
+                    GUI.backgroundColor = Color.white;
+                }
+            }
+            var openId = _game.OpenChokeId();
+            if (openId != null && _game.Nodes.TryGetValue(openId, out var openHud))
+            {
+                var osp = _cam.WorldToScreenPoint(new Vector3(openHud.X, 1.55f, openHud.Z));
+                if (osp.z > 0f)
+                {
+                    GUI.backgroundColor = new Color(0.62f, 0.18f, 0.1f, 0.92f);
+                    GUI.Box(new Rect(osp.x - 50f, Screen.height - osp.y - 12f, 100f, 22f),
+                        _game.OpenChokeChip() ?? "OPEN");
                     GUI.backgroundColor = Color.white;
                 }
             }

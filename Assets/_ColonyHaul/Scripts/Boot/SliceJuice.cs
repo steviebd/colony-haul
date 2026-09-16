@@ -191,6 +191,14 @@ namespace ColonyHaul
             _audio.PlayOneShot(_deposit, 0.5f);
         }
 
+        public void OpenChoke(float x, float z, string lane)
+        {
+            SpawnPip(x, z, string.IsNullOrEmpty(lane) ? "OPEN" : lane, new Color(1f, 0.42f, 0.32f));
+            Spokes(x, z, 1.6f, new Color(1f, 0.42f, 0.32f));
+            SpawnBurst(x, z, new Color(1f, 0.38f, 0.22f, 0.45f), 3.2f);
+            Punch(0.22f);
+        }
+
         public void HubHit(bool braced)
         {
             if (braced)

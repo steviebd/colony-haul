@@ -101,6 +101,7 @@ namespace ColonyHaul
             else if (game.OfflinePad() != null) GUI.contentColor = new Color(0.92f, 0.62f, 0.28f);
             else if (game.SittingStock() != null) GUI.contentColor = new Color(0.95f, 0.78f, 0.32f);
             else if (game.L2Ready()) GUI.contentColor = new Color(1f, 0.86f, 0.42f);
+            else if (game.OpenChokeId() != null) GUI.contentColor = new Color(1f, 0.42f, 0.32f);
             else if (game.Surging) GUI.contentColor = new Color(0.45f, 0.9f, 1f);
             else if (game.BraceInbound() != null) GUI.contentColor = new Color(0.45f, 0.9f, 1f);
             else if (game.HoldOrder == HoldOrder.Power) GUI.contentColor = new Color(0.4f, 0.75f, 1f);
@@ -127,6 +128,8 @@ namespace ColonyHaul
                 subCopy = game.SittingTitle();
             else if (game.L2Ready())
                 subCopy = game.L2ReadyTitle();
+            else if (game.OpenChokeId() != null)
+                subCopy = game.OpenChokeTitle();
             else if (game.Surging)
                 subCopy = "BRACE · Hub shrugs hits · " + GameSim.CeilSecs(game.SurgeLeft) + "s";
             else if (game.BraceInbound() != null)
@@ -209,6 +212,7 @@ namespace ColonyHaul
             else if (clear != null) raidRead = clear;
             else if (game.GunsLowCopy() != null) raidRead = game.GunsLowCopy();
             else if (game.L2ReadyCopy() != null) raidRead = game.L2ReadyCopy();
+            else if (game.OpenChokeCopy() != null) raidRead = game.OpenChokeCopy();
             else if (brace != null) raidRead = brace;
             else if (game.LiveTowers() > 0 || game.RaidLive) raidRead = game.GunLockCopy();
             else raidRead = "Combat haul BRACEs the Hub";
@@ -315,6 +319,14 @@ namespace ColonyHaul
                     && game.ActiveCut() == null && !game.GunsLow() && !game.GunsDry()
                     && game.HubChewers() == 0 && game.HubClosers() == 0;
                 if (l2Ready) GUI.backgroundColor = PulseColor(Tool.Upgrade, pulse);
+                var openGun = game.OpenChokeId() != null && gate == null && game.ActiveCut() == null
+                    && !game.L2Ready() && !game.GunsLow() && !game.GunsDry();
+                var openSplash = openGun && game.OpenChokeId() == "choke_w"
+                    && game.HubLevel >= 2 && !game.HasType(BuildingType.Splash) && tool.Tool == Tool.Splash;
+                var openKinetic = openGun && !openSplash && tool.Tool == Tool.Kinetic
+                    && !(game.OpenChokeId() == "choke_w" && game.HubLevel >= 2 && !game.HasType(BuildingType.Splash));
+                if (openSplash) GUI.backgroundColor = PulseColor(Tool.Splash, pulse);
+                if (openKinetic) GUI.backgroundColor = PulseColor(Tool.Kinetic, pulse);
                 if (splashFresh) GUI.backgroundColor = PulseColor(Tool.Splash, pulse);
                 if (locked) GUI.backgroundColor = new Color(0.12f, 0.12f, 0.12f);
                 var label = (selected ? "▶ " : "") + tool.Label;
@@ -322,8 +334,11 @@ namespace ColonyHaul
                 if (coachRoute) label = "▶ 2 Route — click Hub";
                 if (midPulse) label = "▶ " + tool.Label;
                 if (l2Ready) label = "▶ Hub L2 — Splash next";
+                if (openKinetic) label = "▶ Kinetic — OPEN " + (game.OpenChokeLane() ?? "");
+                if (openSplash) label = "▶ Splash — OPEN WEST";
                 if (splashFresh) label = "▶ Splash — WEST choke";
-                if (shortStock && !midPulse) label = tool.Label + "  · short";
+                if (shortStock && !midPulse && !l2Ready && !openKinetic && !openSplash && !splashFresh)
+                    label = tool.Label + "  · short";
                 if (locked) label = "Splash  · locked Hub L2";
                 if (GUI.Button(new Rect(20, y, 204, 40), label + "\n" + tool.Hint))
                 {
