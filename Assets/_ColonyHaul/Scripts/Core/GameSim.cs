@@ -122,6 +122,20 @@ namespace ColonyHaul
             return "HP " + CeilSecs(HubHp);
         }
 
+        public bool WaveClockLive()
+        {
+            return Phase == Phase.Playing
+                && WaveIndex < Balance.WavesToWin
+                && NextWaveIn > 0f
+                && !WaveClearLive();
+        }
+
+        public string WaveClockChip()
+        {
+            if (!WaveClockLive()) return null;
+            return "W" + (WaveIndex + 1) + " " + CeilSecs(NextWaveIn) + "s";
+        }
+
         public bool CrewStretched()
         {
             return ProducerCount() > WorkersTotal;

@@ -2020,6 +2020,20 @@ namespace ColonyHaul
                             _game.HubHpChip() ?? "HP");
                         GUI.backgroundColor = Color.white;
                     }
+                    if (_game.WaveClockLive())
+                    {
+                        Color clockColor;
+                        if (_game.PackInLive() || _game.NextWaveIn <= 8f)
+                            clockColor = new Color(0.72f, 0.42f, 0.08f, 0.92f);
+                        else if (_game.RaidLive)
+                            clockColor = new Color(0.48f, 0.18f, 0.14f, 0.88f);
+                        else
+                            clockColor = new Color(0.12f, 0.38f, 0.36f, 0.88f);
+                        GUI.backgroundColor = clockColor;
+                        GUI.Box(new Rect(hx - 102f, hy - 5f, 56f, 18f),
+                            _game.WaveClockChip() ?? "WAVE");
+                        GUI.backgroundColor = Color.white;
+                    }
                     if (_game.StaffLive())
                     {
                         Color staffColor;
