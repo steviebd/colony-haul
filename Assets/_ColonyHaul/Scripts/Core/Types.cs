@@ -7,6 +7,7 @@ namespace ColonyHaul
     public enum Phase { Playing, Won, LostHub, LostStarve }
     public enum Tool { None, Mine, Farm, Power, Route, Kinetic, Splash, Barrier, Upgrade }
     public enum HoldOrder { Auto, Power, Food }
+    public enum CutStake { Brace, Power, Farm, Ore, Generic }
     public enum NodeKind { Hub, Depot, Pad, Choke, Tower, Spawn }
     public enum BuildingType { Hub, Depot, Mine, Farm, Power, Kinetic, Splash }
     public enum EnemyType { Grunt, Brute, Runner }

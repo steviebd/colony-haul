@@ -159,6 +159,14 @@ namespace ColonyHaul
             _audio.PlayOneShot(_deposit, 0.55f);
         }
 
+        public void CutStakeBrace()
+        {
+            SpawnPip(0f, 0f, "BRACE", new Color(0.45f, 0.9f, 1f));
+            Spokes(0f, 0f, 1.7f, new Color(1f, 0.45f, 0.22f));
+            SpawnBurst(0f, 0f, new Color(1f, 0.4f, 0.2f, 0.4f), 3.2f);
+            Punch(0.28f);
+        }
+
         public void HubHit(bool braced)
         {
             if (braced)

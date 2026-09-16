@@ -42,6 +42,7 @@ namespace ColonyHaul
         bool _closePinged;
         bool _atPadPinged;
         bool _clearPinged;
+        bool _braceCutPinged;
         Transform _root;
         Camera _cam;
         float _acc;
@@ -131,6 +132,7 @@ namespace ColonyHaul
             _closePinged = false;
             _atPadPinged = false;
             _clearPinged = false;
+            _braceCutPinged = false;
             _juice.CutAlarm(false);
             _buildingScale.Clear();
             _acc = 0f;
@@ -188,6 +190,7 @@ namespace ColonyHaul
             PingGunsDry();
             PingCoreBound();
             PingWaveClear();
+            PingCutStake();
             _juice.Tick(_cam, events);
             _hubFlash = Mathf.Max(0f, _hubFlash - Time.deltaTime);
             SyncAtmosphere();
@@ -202,7 +205,7 @@ namespace ColonyHaul
                     _hud.Flash("GUNS DRY — haul Power", 2.2f, new Color(0.85f, 0.28f, 0.22f, 0.95f));
                     break;
                 case SimEventKind.Sabotage:
-                    _hud.Flash("HAUL CUT — splice the orange rail", 1.6f, new Color(0.95f, 0.38f, 0.18f, 0.95f));
+                    _hud.Flash(_game.CutStakeFlash() ?? "HAUL CUT — splice the orange rail", 1.6f, new Color(0.95f, 0.38f, 0.18f, 0.95f));
                     break;
                 case SimEventKind.Barrier:
                     _hud.Flash("Barrier up — spawn approach slowed", 1.8f, new Color(0.95f, 0.32f, 0.34f, 0.92f));
@@ -1086,6 +1089,21 @@ namespace ColonyHaul
                 new Color(0.22f, 0.52f, 0.32f, 0.95f));
         }
 
+        void PingCutStake()
+        {
+            if (_game.ActiveCut() == null)
+            {
+                _braceCutPinged = false;
+                return;
+            }
+            if (_game.CutStakeOf() != CutStake.Brace)
+                return;
+            if (_braceCutPinged) return;
+            _braceCutPinged = true;
+            _juice.CutStakeBrace();
+            _hud.Flash("HAUL CUT — BRACE haul stuck", 1.8f, new Color(0.95f, 0.38f, 0.18f, 0.95f));
+        }
+
         void SyncGunLocks()
         {
             var live = new HashSet<string>();
@@ -1498,10 +1516,24 @@ namespace ColonyHaul
             if (cutSp.z <= 0f) return;
             var cx = cutSp.x;
             var cy = Screen.height - cutSp.y;
-            GUI.backgroundColor = new Color(0.85f, 0.28f, 0.12f, 0.88f);
+            GUI.backgroundColor = CutStakeChipColor(_game.CutStakeOf());
             GUI.Box(new Rect(cx - 54f, cy - 12f, 108f, 22f),
-                "SPLICE " + GameSim.CeilSecs(cut.SabotagedUntil - _game.T) + "s");
+                _game.CutStakeChip() ?? ("SPLICE " + GameSim.CeilSecs(cut.SabotagedUntil - _game.T) + "s"));
             GUI.backgroundColor = Color.white;
+        }
+
+        static Color CutStakeChipColor(CutStake stake)
+        {
+            switch (stake)
+            {
+                case CutStake.Brace: return new Color(0.18f, 0.48f, 0.62f, 0.9f);
+                case CutStake.Power: return new Color(0.72f, 0.38f, 0.08f, 0.9f);
+                case CutStake.Farm: return new Color(0.22f, 0.48f, 0.18f, 0.9f);
+                case CutStake.Ore: return new Color(0.72f, 0.42f, 0.12f, 0.9f);
+                case CutStake.Generic: return new Color(0.85f, 0.28f, 0.12f, 0.88f);
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(stake), stake, null);
+            }
         }
 
         static void Prune(Dictionary<string, Transform> map, HashSet<string> live)

@@ -753,6 +753,130 @@ namespace ColonyHaul
             return "CLEAR · food ~" + CeilSecs(FoodSecondsLeft()) + "s · guns ~" + CeilSecs(GunSecondsLeft()) + "s";
         }
 
+        public Hauler BlockedLoadedHauler()
+        {
+            foreach (var h in Haulers)
+            {
+                if (!HaulerBlocked(h)) continue;
+                if (h.CargoAmount > 0) return h;
+            }
+            return null;
+        }
+
+        bool CutTouchesType(SimEdge cut, BuildingType type)
+        {
+            if (cut == null) return false;
+            return NodeIsType(cut.A, type) || NodeIsType(cut.B, type);
+        }
+
+        bool NodeIsType(string nodeId, BuildingType type)
+        {
+            Building b;
+            return Buildings.TryGetValue(nodeId, out b) && b.Type == type;
+        }
+
+        public CutStake CutStakeOf()
+        {
+            var cut = ActiveCut();
+            if (cut == null) return CutStake.Generic;
+            if (RaidLive && BlockedLoadedHauler() != null)
+                return CutStake.Brace;
+            if (CutTouchesType(cut, BuildingType.Power))
+                return CutStake.Power;
+            if (CutTouchesType(cut, BuildingType.Farm))
+                return CutStake.Farm;
+            if (CutTouchesType(cut, BuildingType.Mine))
+                return CutStake.Ore;
+            if (RaidLive && HaulersBlocked() > 0)
+                return CutStake.Brace;
+            return CutStake.Generic;
+        }
+
+        public string CutStakeTitle()
+        {
+            var cut = ActiveCut();
+            if (cut == null) return null;
+            var left = CeilSecs(cut.SabotagedUntil - T);
+            switch (CutStakeOf())
+            {
+                case CutStake.Brace:
+                    return "HAUL CUT · BRACE stuck · splice " + left + "s";
+                case CutStake.Power:
+                    return GunsHungry() || GunsDry()
+                        ? "HAUL CUT · Power rail down · splice " + left + "s"
+                        : "HAUL CUT · Power rail · splice " + left + "s";
+                case CutStake.Farm:
+                    return "HAUL CUT · farm rail down · splice " + left + "s";
+                case CutStake.Ore:
+                    return "HAUL CUT · ore rail down · splice " + left + "s";
+                case CutStake.Generic:
+                    return "HAUL CUT · splice the orange rail · " + left + "s";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(CutStake), CutStakeOf(), null);
+            }
+        }
+
+        public string CutStakeCopy()
+        {
+            var cut = ActiveCut();
+            if (cut == null) return null;
+            var left = CeilSecs(cut.SabotagedUntil - T);
+            var stuck = HaulersBlocked();
+            switch (CutStakeOf())
+            {
+                case CutStake.Brace:
+                    return stuck > 0
+                        ? "BRACE stuck — splice or Hub takes hits"
+                        : "BRACE rail down — splice " + left + "s";
+                case CutStake.Power:
+                    return GunsHungry() || GunsDry()
+                        ? "Power rail down — guns starve · splice " + left + "s"
+                        : "Power rail down — splice " + left + "s";
+                case CutStake.Farm:
+                    return "Farm rail down — larder ~" + CeilSecs(FoodSecondsLeft()) + "s";
+                case CutStake.Ore:
+                    return "Ore rail down — splice " + left + "s";
+                case CutStake.Generic:
+                    return stuck > 0
+                        ? "HAUL CUT — " + stuck + " stuck · splice " + left + "s"
+                        : "HAUL CUT — splice · " + left + "s left";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(CutStake), CutStakeOf(), null);
+            }
+        }
+
+        public string CutStakeChip()
+        {
+            var cut = ActiveCut();
+            if (cut == null) return null;
+            var left = CeilSecs(cut.SabotagedUntil - T);
+            switch (CutStakeOf())
+            {
+                case CutStake.Brace: return "BRACE " + left + "s";
+                case CutStake.Power: return "PWR " + left + "s";
+                case CutStake.Farm: return "FARM " + left + "s";
+                case CutStake.Ore: return "ORE " + left + "s";
+                case CutStake.Generic: return "SPLICE " + left + "s";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(CutStake), CutStakeOf(), null);
+            }
+        }
+
+        public string CutStakeFlash()
+        {
+            if (ActiveCut() == null) return null;
+            switch (CutStakeOf())
+            {
+                case CutStake.Brace: return "HAUL CUT — BRACE haul stuck";
+                case CutStake.Power: return "HAUL CUT — Power rail down";
+                case CutStake.Farm: return "HAUL CUT — farm rail down";
+                case CutStake.Ore: return "HAUL CUT — ore rail down";
+                case CutStake.Generic: return "HAUL CUT — splice the orange rail";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(CutStake), CutStakeOf(), null);
+            }
+        }
+
         public static float RangeOf(BuildingType type)
         {
             switch (type)
@@ -910,9 +1034,27 @@ namespace ColonyHaul
             if (ActiveCut() != null)
             {
                 var stuck = HaulersBlocked();
-                return Call(stuck > 0
-                    ? "SPLICE the orange rail — " + stuck + (stuck == 1 ? " hauler stuck" : " haulers stuck")
-                    : "SPLICE the orange rail — click the glowing pad", Tool.Route);
+                switch (CutStakeOf())
+                {
+                    case CutStake.Brace:
+                        return Call(stuck > 0
+                            ? "SPLICE — BRACE haul stuck · Hub is eating hits"
+                            : "SPLICE — BRACE rail is down · click the glowing pad", Tool.Route);
+                    case CutStake.Power:
+                        return Call(GunsHungry() || GunsDry()
+                            ? "SPLICE — Power rail down · guns need that haul"
+                            : "SPLICE — Power rail is down · click the glowing pad", Tool.Route);
+                    case CutStake.Farm:
+                        return Call("SPLICE — farm rail down · larder ~" + CeilSecs(FoodSecondsLeft()) + "s", Tool.Route);
+                    case CutStake.Ore:
+                        return Call("SPLICE — ore rail down · click the glowing pad", Tool.Route);
+                    case CutStake.Generic:
+                        return Call(stuck > 0
+                            ? "SPLICE the orange rail — " + stuck + (stuck == 1 ? " hauler stuck" : " haulers stuck")
+                            : "SPLICE the orange rail — click the glowing pad", Tool.Route);
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(CutStake), CutStakeOf(), null);
+                }
             }
             var dead = UnroutedProducer();
             if (dead != null)

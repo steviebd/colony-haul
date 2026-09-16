@@ -104,7 +104,7 @@ namespace ColonyHaul
             else if (game.WaveIndex >= 5) GUI.contentColor = new Color(1f, 0.42f, 0.38f);
             string subCopy;
             if (cut != null)
-                subCopy = "HAUL CUT · splice the orange rail · " + GameSim.CeilSecs(cut.SabotagedUntil - game.T) + "s";
+                subCopy = game.CutStakeTitle();
             else if (game.HubChewers() > 0)
                 subCopy = game.HubChewTitle();
             else if (game.HottestRailThreat() != null)
@@ -157,12 +157,7 @@ namespace ColonyHaul
             var cut = game.ActiveCut();
             string haul;
             if (cut != null)
-            {
-                var stuck = game.HaulersBlocked();
-                haul = stuck > 0
-                    ? "HAUL CUT — " + stuck + " stuck · splice " + GameSim.CeilSecs(cut.SabotagedUntil - game.T) + "s"
-                    : "HAUL CUT — splice · " + GameSim.CeilSecs(cut.SabotagedUntil - game.T) + "s left";
-            }
+                haul = game.CutStakeCopy();
             else haul = "Haul " + game.HaulersLoaded + " loaded · " + (game.Haulers.Count - game.HaulersLoaded) + " idle";
             GUI.Label(new Rect(Screen.width - 280, 92, 256, 20), haul);
             var lanes = game.Lanes();
