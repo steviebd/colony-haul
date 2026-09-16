@@ -1,0 +1,3 @@
+source: https://github.com/Programalyst/unity-semantic-bridge
+commit: 41e8bca7a61f6f076a5b925bc8745e68eecf3b0f
+vendored: 2026-09-15
