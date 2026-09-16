@@ -1,0 +1,193 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.IO;
+using Newtonsoft.Json.Linq;
+using UnityEditor;
+using UnityEngine;
+
+namespace Gamenami.UnitySemanticBridge.Editor
+{
+    public static class AssetFunctions
+    {
+        public static string SearchAssets(JObject mcpMessage)
+        {
+            var filter = mcpMessage["filter"]?.ToString();
+            var limit = Convert.ToInt32(mcpMessage["limit"]?.ToString());
+            var searchInFolders = mcpMessage["folders"]?.ToObject<string[]>() ?? new[] { "Assets" };
+            
+            var guids = AssetDatabase.FindAssets(filter, searchInFolders);
+            var paths = guids.Select(AssetDatabase.GUIDToAssetPath).ToList();
+            
+            // Limit results to prevent context overflow (mimicking 'head -n 10')
+            var resultList = paths.Count > limit ? paths.GetRange(0, limit) : paths;
+            var resultText = resultList.Count > 0 
+                ? string.Join("\n", resultList) 
+                : "No assets found matching that query.";
+            return resultText;
+        }
+        
+        public static string FindAssetReferences(JObject mcpMessage)
+        {
+            var assetPath = mcpMessage["path"]?.ToString();
+            // Finds everything this asset uses (dependencies)
+            string[] deps = AssetDatabase.GetDependencies(assetPath, false);
+            var responseContent = deps.Length > 0 ? string.Join("\n", deps) : "No references found.";
+            return responseContent;
+        }
+        
+        public static string GetFolderStructure(JObject mcpMessage)
+        {
+            // 1. Get the path and ensure it's Unity-friendly (forward slashes)
+            var folderPath = mcpMessage["path"]?.ToString() ?? "Assets";
+            folderPath = folderPath.Replace("\\", "/").TrimEnd('/');
+
+            // 2. Get Sub-folders (using AssetDatabase is much faster)
+            string[] subFolders = AssetDatabase.GetSubFolders(folderPath);
+    
+            // 3. Get Files in this specific folder (depth = false to avoid recursion)
+            // We use a filter to ignore .meta files and system files
+            string[] assets = AssetDatabase.FindAssets("", new[] { folderPath });
+            var filesInFolder = new List<string>();
+
+            foreach (var guid in assets)
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                // Only include files DIRECTLY in this folder (not in subfolders)
+                if (Path.GetDirectoryName(path)?.Replace("\\", "/") == folderPath)
+                {
+                    filesInFolder.Add(Path.GetFileName(path));
+                }
+            }
+
+            // 4. Format for Claude
+            var sb = new StringBuilder();
+            sb.AppendLine($"--- Contents of {folderPath} ---");
+    
+            sb.AppendLine("\n[Directories]:");
+            foreach (var dir in subFolders) sb.AppendLine($"  > {Path.GetFileName(dir)}/");
+    
+            sb.AppendLine("\n[Files]:");
+            foreach (var file in filesInFolder) sb.AppendLine($"  - {file}");
+
+            return sb.ToString();
+        }
+        
+        public static string WriteScript(JObject mcpMessage)
+        {
+            var path = mcpMessage["path"]?.ToString();
+            var content = mcpMessage["content"]?.ToString();
+            var confirm = mcpMessage["confirm"]?.ToObject<bool>() ?? false;
+
+            if (string.IsNullOrEmpty(path))
+                return "Failed: 'path' is required.";
+
+            if (CompileWatcher.IsBusy)
+                return "BUSY: Unity is compiling, importing, transitioning Play Mode, or a refresh is pending. Poll get_compilation_status and retry when idle.";
+
+            string token = null;
+            try
+            {
+                var fullPath = Path.GetFullPath(Path.Combine(Application.dataPath, "..", path));
+                var projectRoot = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
+                if (!fullPath.StartsWith(projectRoot, StringComparison.OrdinalIgnoreCase))
+                    return "Refused: path escapes project root.";
+
+                var exists = File.Exists(fullPath);
+                if (exists && !confirm)
+                {
+                    var existing = File.ReadAllText(fullPath);
+                    return $"CONFIRM_REQUIRED: '{path}' already exists ({existing.Length} chars). Re-call with confirm=true to overwrite.";
+                }
+
+                var directory = Path.GetDirectoryName(fullPath);
+                if (directory != null && !Directory.Exists(directory))
+                    Directory.CreateDirectory(directory);
+
+                File.WriteAllText(fullPath, content);
+
+                token = CompileWatcher.BeginWrite();
+                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+                AssetDatabase.Refresh();
+                CompileWatcher.CompleteRefresh();
+
+                return $"Wrote {path}. RELOAD_IMMINENT: Compilation triggered (token={token}). Call get_compilation_status to get the result.";
+            }
+            catch (Exception e)
+            {
+                if (token != null) CompileWatcher.FailRefresh(e);
+                return $"Failed to write script: {e.Message}";
+            }
+        }
+
+        public static string RefreshAssets(JObject mcpMessage)
+        {
+            if (CompileWatcher.IsBusy)
+                return "BUSY: Unity is compiling, importing, transitioning Play Mode, or a refresh is pending. Poll get_compilation_status and retry when idle.";
+
+            var token = CompileWatcher.BeginWrite();
+            // Acknowledge before asking Unity to import/recompile. The dispatcher and
+            // delayCall both run on the main thread; this gives transport a chance to send the hint.
+            EditorApplication.delayCall += () =>
+            {
+                try
+                {
+                    // The Editor may have started other work since we accepted the request.
+                    if (EditorApplication.isCompiling || EditorApplication.isUpdating ||
+                        EditorApplication.isPlayingOrWillChangePlaymode != EditorApplication.isPlaying)
+                    {
+                        CompileWatcher.FailRefresh(new InvalidOperationException("Editor became busy before refresh; retry when idle."));
+                        return;
+                    }
+                    AssetDatabase.Refresh();
+                    CompileWatcher.CompleteRefresh();
+                }
+                catch (Exception e)
+                {
+                    CompileWatcher.FailRefresh(e);
+                }
+            };
+            return $"Refresh queued (token={token}). RELOAD_IMMINENT: Unity may compile/reload if needed. Call get_compilation_status to get the result.";
+        }
+
+        public static string DeleteAsset(JObject mcpMessage)
+        {
+            var path = mcpMessage["path"]?.ToString();
+            if (string.IsNullOrWhiteSpace(path))
+                return "Error: 'path' is required.";
+            if (!path.StartsWith("Assets/", StringComparison.Ordinal))
+                return "Error: path must start with \"Assets/\".";
+            var fullPath = Path.GetFullPath(Path.Combine(Application.dataPath, "..", path));
+            var projectRoot = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
+            if (!fullPath.StartsWith(projectRoot, StringComparison.OrdinalIgnoreCase))
+                return "Error: path escapes project root.";
+            if (!File.Exists(fullPath) && AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(path) == null)
+                return $"Error: asset not found at '{path}'.";
+            // Use AssetDatabase.DeleteAsset (supports Undo)
+            bool ok = AssetDatabase.DeleteAsset(path);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            return ok ? $"Deleted asset '{path}'." : $"Failed to delete asset '{path}'.";
+        }
+
+        // Separate tool — the client calls this after a short delay / in a poll loop.
+        public static string GetCompilationStatus(JObject mcpMessage)
+        {
+            var (status, errors) = CompileWatcher.Poll();
+            switch (status)
+            {
+                case "compiling" or "pending":
+                    return "PENDING: refresh/import/compilation in progress, poll again shortly.";
+                case "failed":
+                    return $"FAILED:\n{errors}";
+                case "success":
+                    return "SUCCESS: compiled cleanly.";
+                case "no_compilation":
+                    return "NO_COMPILATION: refresh completed without a new compilation result; this does not certify edited scripts.";
+                default:
+                    return "UNKNOWN: no compilation result recorded in this Editor session.";
+            }
+        }
+    }
+}
