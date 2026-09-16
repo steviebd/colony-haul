@@ -877,6 +877,95 @@ namespace ColonyHaul
             }
         }
 
+        public string OfflinePad()
+        {
+            if (Phase != Phase.Playing) return null;
+            if (ActiveCut() != null) return null;
+            return UnroutedProducer();
+        }
+
+        Building OfflineBuilding()
+        {
+            var id = OfflinePad();
+            if (id == null) return null;
+            Building b;
+            return Buildings.TryGetValue(id, out b) ? b : null;
+        }
+
+        public string OfflineTitle()
+        {
+            var b = OfflineBuilding();
+            if (b == null) return null;
+            var pad = PadCall(b.NodeId);
+            switch (b.Type)
+            {
+                case BuildingType.Power:
+                    return GunsHungry() || GunsDry()
+                        ? "PAD OFFLINE · Power has no rail"
+                        : "PAD OFFLINE · rail " + pad + " Power home";
+                case BuildingType.Farm:
+                    return "PAD OFFLINE · farm has no rail · larder ~" + CeilSecs(FoodSecondsLeft()) + "s";
+                case BuildingType.Mine:
+                    return "PAD OFFLINE · rail " + pad + " ore home";
+                case BuildingType.Hub:
+                case BuildingType.Depot:
+                case BuildingType.Kinetic:
+                case BuildingType.Splash:
+                    return null;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(b.Type), b.Type, null);
+            }
+        }
+
+        public string OfflineCopy()
+        {
+            var b = OfflineBuilding();
+            if (b == null) return null;
+            var pad = PadCall(b.NodeId);
+            switch (b.Type)
+            {
+                case BuildingType.Power:
+                    return GunsHungry() || GunsDry()
+                        ? "OFFLINE " + pad + " Power — guns wait on a rail"
+                        : "OFFLINE " + pad + " Power — rail home";
+                case BuildingType.Farm:
+                    return "OFFLINE " + pad + " farm — larder ~" + CeilSecs(FoodSecondsLeft()) + "s";
+                case BuildingType.Mine:
+                    return "OFFLINE " + pad + " ore — rail home";
+                case BuildingType.Hub:
+                case BuildingType.Depot:
+                case BuildingType.Kinetic:
+                case BuildingType.Splash:
+                    return null;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(b.Type), b.Type, null);
+            }
+        }
+
+        public string OfflineFlash()
+        {
+            var b = OfflineBuilding();
+            if (b == null) return null;
+            var pad = PadCall(b.NodeId);
+            switch (b.Type)
+            {
+                case BuildingType.Power: return "PAD OFFLINE — rail " + pad + " Power home";
+                case BuildingType.Farm: return "PAD OFFLINE — rail " + pad + " farm home";
+                case BuildingType.Mine: return "PAD OFFLINE — rail " + pad + " ore home";
+                case BuildingType.Hub:
+                case BuildingType.Depot:
+                case BuildingType.Kinetic:
+                case BuildingType.Splash:
+                    return null;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(b.Type), b.Type, null);
+            }
+        }
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(CutStake), CutStakeOf(), null);
+            }
+        }
+
         public static float RangeOf(BuildingType type)
         {
             switch (type)

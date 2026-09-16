@@ -167,6 +167,14 @@ namespace ColonyHaul
             Punch(0.28f);
         }
 
+        public void PadOffline(float x, float z)
+        {
+            SpawnPip(x, z, "OFF", new Color(0.92f, 0.62f, 0.28f));
+            Spokes(x, z, 1.5f, new Color(0.92f, 0.62f, 0.28f));
+            SpawnBurst(x, z, new Color(0.9f, 0.55f, 0.22f, 0.4f), 2.8f);
+            Punch(0.22f);
+        }
+
         public void HubHit(bool braced)
         {
             if (braced)

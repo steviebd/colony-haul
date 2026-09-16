@@ -97,6 +97,7 @@ namespace ColonyHaul
             else if (game.HubClosers() > 0) GUI.contentColor = new Color(1f, 0.32f, 0.18f);
             else if (game.GunsDry()) GUI.contentColor = new Color(1f, 0.48f, 0.22f);
             else if (game.WaveClearLive()) GUI.contentColor = new Color(0.55f, 0.9f, 0.5f);
+            else if (game.OfflinePad() != null) GUI.contentColor = new Color(0.92f, 0.62f, 0.28f);
             else if (game.Surging) GUI.contentColor = new Color(0.45f, 0.9f, 1f);
             else if (game.BraceInbound() != null) GUI.contentColor = new Color(0.45f, 0.9f, 1f);
             else if (game.HoldOrder == HoldOrder.Power) GUI.contentColor = new Color(0.4f, 0.75f, 1f);
@@ -115,6 +116,8 @@ namespace ColonyHaul
                 subCopy = game.GunsDryTitle();
             else if (game.WaveClearLive())
                 subCopy = game.WaveClearTitle();
+            else if (game.OfflinePad() != null)
+                subCopy = game.OfflineTitle();
             else if (game.Surging)
                 subCopy = "BRACE · Hub shrugs hits · " + GameSim.CeilSecs(game.SurgeLeft) + "s";
             else if (game.BraceInbound() != null)
@@ -158,6 +161,8 @@ namespace ColonyHaul
             string haul;
             if (cut != null)
                 haul = game.CutStakeCopy();
+            else if (game.OfflinePad() != null)
+                haul = game.OfflineCopy();
             else haul = "Haul " + game.HaulersLoaded + " loaded · " + (game.Haulers.Count - game.HaulersLoaded) + " idle";
             GUI.Label(new Rect(Screen.width - 280, 92, 256, 20), haul);
             var lanes = game.Lanes();

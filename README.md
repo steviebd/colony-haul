@@ -35,7 +35,7 @@ Scenes are thin on purpose. `VerticalSliceBootstrap` builds the dusk mesa, pads,
 - Keys `1–7`: Farm, Mine, Power, Route, Kinetic, Splash, Barrier. `U` Hub L2. `H` Hold order (wave 4 + Hub L2). `D` demo. `R` restart.
 - Left tray is clickable. Splash stays locked until Hub L2.
 - Top-right logistics strip: loaded vs idle haulers, E/N/W lane counts (hottest marked `*`), next-wave copy, gun-fire fuse, and a larder clock (`~Ns of food`). HAUL CUT names the stake (BRACE / Power / farm / ore) plus splice countdown.
-- Opening coach: 1 Farm (south pad) → 2 rail to Hub → 3 first hauls. After that, a mid-watch coach names the next readable call (splice, Power, Hub L2, Splash west, CORE THIN, second farm, HOLD).
+- Opening coach: 1 Farm (south pad) → 2 rail to Hub → 3 first hauls. After that, a mid-watch coach names the next readable call (splice, Power, Hub L2, Splash west, CORE THIN, second farm, HOLD). An unrouted producer pad reads **OFFLINE** with a gold ghost rail home.
 - Tray: opening Farm/Route still pulse. Mid-watch pulses the called tool. Short-stock tools dim with `· short`. Splash stays locked until Hub L2.
 - Deposits during a raid fire **Rail Surge** (Hub takes less hit damage). Title line reads BRACE while the shield is up; a cyan ring sits on the Hub. Hits during BRACE flash SHRUG (cyan) instead of HIT. Splicing a runner cut flashes RAIL LIVE / SPLICED / ROLLING. After Hub L2, a ghost Splash ring teaches the west choke.
 - Guns draw range rings. Loaded haulers paint cargo trails. Runners telegraph a magenta intent line to the next pad. Slowed raiders tint cyan. Hottest choke labels EAST/NORTH/WEST. Hub HP is a world bar. Grunts are cubes, brutes capsules, runners thin cylinders. Win/lose cards show time, Hub HP, and wave.
@@ -67,6 +67,7 @@ Tick stays one loop. Seed-7 demo still wins. Mid-game is readable, and a haul du
 17. **Pass 10 CORE BOUND** — raiders whose next pad is Hub paint a red last-hop line and the title reads **CORE BOUND**. Chip **IN** then **PAD** at 2.4 from the core (the tick before CHEW). If a BRACE haul is inbound it says BRACE haul racing them. UNDER FIRE still takes over in melee. Tick unchanged.
 18. **Pass 11 WAVE CLEAR** — when a raid dies and the next wave is still queued, the title holds **CLEAR** with the next-raid clock and the next readable call (Hub L2 / Splash WEST / haul Power). Hub pad reads CLEAR. Splice / UNDER FIRE / RAIL THREAT / CORE BOUND / GUNS DRY still outrank this. Tick unchanged.
 19. **Pass 12 HAUL CUT stakes** — a snapped rail names why splice now: **BRACE stuck** if a loaded haul is trapped during a raid, **Power rail down** if the pylon pad is cut, **farm rail down** if the larder line is cut. Midpoint chip reads BRACE / PWR / FARM / ORE. Tick and sabotage chance unchanged.
+20. **Pass 13 PAD OFFLINE** — a producer with no live rail home paints a gold ghost line to the Hub. Pad reads **OFFLINE**. Title (below CLEAR) names farm / Power / ore. Splice still outranks this. Tick unchanged.
 
 Folder layout: `Assets/_ColonyHaul/{Scripts,Art,Prefabs,Scenes,UI,Audio}`.
 
