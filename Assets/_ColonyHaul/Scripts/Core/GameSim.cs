@@ -728,6 +728,31 @@ namespace ColonyHaul
             return n + (n == 1 ? " raider" : " raiders") + " on the last hop to Hub";
         }
 
+        public bool WaveClearLive()
+        {
+            return Phase == Phase.Playing
+                && WaveIndex > 0
+                && WaveIndex < Balance.WavesToWin
+                && !RaidLive
+                && NextWaveIn > 0f;
+        }
+
+        public string WaveClearTitle()
+        {
+            if (!WaveClearLive()) return null;
+            var eta = CeilSecs(NextWaveIn);
+            if (HubLevel < 2) return "CLEAR · raise Hub L2 · next " + eta + "s";
+            if (!HasType(BuildingType.Splash)) return "CLEAR · Splash WEST · next " + eta + "s";
+            if (GunsHungry() && !GunsDry()) return "CLEAR · haul Power · next " + eta + "s";
+            return "CLEAR · next raid in " + eta + "s";
+        }
+
+        public string WaveClearCopy()
+        {
+            if (!WaveClearLive()) return null;
+            return "CLEAR · food ~" + CeilSecs(FoodSecondsLeft()) + "s · guns ~" + CeilSecs(GunSecondsLeft()) + "s";
+        }
+
         public static float RangeOf(BuildingType type)
         {
             switch (type)

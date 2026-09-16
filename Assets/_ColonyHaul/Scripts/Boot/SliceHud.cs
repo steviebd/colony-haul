@@ -96,6 +96,7 @@ namespace ColonyHaul
             else if (game.HottestRailThreat() != null) GUI.contentColor = new Color(0.95f, 0.42f, 0.78f);
             else if (game.HubClosers() > 0) GUI.contentColor = new Color(1f, 0.32f, 0.18f);
             else if (game.GunsDry()) GUI.contentColor = new Color(1f, 0.48f, 0.22f);
+            else if (game.WaveClearLive()) GUI.contentColor = new Color(0.55f, 0.9f, 0.5f);
             else if (game.Surging) GUI.contentColor = new Color(0.45f, 0.9f, 1f);
             else if (game.BraceInbound() != null) GUI.contentColor = new Color(0.45f, 0.9f, 1f);
             else if (game.HoldOrder == HoldOrder.Power) GUI.contentColor = new Color(0.4f, 0.75f, 1f);
@@ -112,6 +113,8 @@ namespace ColonyHaul
                 subCopy = game.CoreBoundTitle();
             else if (game.GunsDry())
                 subCopy = game.GunsDryTitle();
+            else if (game.WaveClearLive())
+                subCopy = game.WaveClearTitle();
             else if (game.Surging)
                 subCopy = "BRACE · Hub shrugs hits · " + GameSim.CeilSecs(game.SurgeLeft) + "s";
             else if (game.BraceInbound() != null)
@@ -135,7 +138,9 @@ namespace ColonyHaul
             GUI.Label(new Rect(Screen.width - 280, 18, 260, 20),
                 game.WaveIndex == 0
                     ? $"WAVE 1 / {Balance.WavesToWin} IN {Mathf.CeilToInt(game.NextWaveIn)}S"
-                    : $"WAVE {game.WaveIndex} / {Balance.WavesToWin} · {game.Enemies.Count} LIVE");
+                    : game.WaveClearLive()
+                        ? $"WAVE {game.WaveIndex} / {Balance.WavesToWin} · CLEAR · {GameSim.CeilSecs(game.NextWaveIn)}S"
+                        : $"WAVE {game.WaveIndex} / {Balance.WavesToWin} · {game.Enemies.Count} LIVE");
             var hubHpColor = game.CoreThin ? new Color(1f, 0.42f, 0.32f) : Color.white;
             var oldHp = GUI.contentColor;
             GUI.contentColor = hubHpColor;
@@ -181,12 +186,14 @@ namespace ColonyHaul
             var threat = game.RailThreatCopy();
             var bound = game.CoreBoundCopy();
             var dry = game.GunsDryCopy();
+            var clear = game.WaveClearCopy();
             var brace = game.BraceInboundCopy();
             string raidRead;
             if (chew != null) raidRead = chew;
             else if (threat != null) raidRead = threat;
             else if (bound != null) raidRead = bound;
             else if (dry != null) raidRead = dry;
+            else if (clear != null) raidRead = clear;
             else if (brace != null) raidRead = brace;
             else if (game.LiveTowers() > 0 || game.RaidLive) raidRead = game.GunLockCopy();
             else raidRead = "Combat haul BRACEs the Hub";

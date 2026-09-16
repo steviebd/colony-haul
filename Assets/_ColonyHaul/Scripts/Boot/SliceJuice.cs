@@ -150,6 +150,15 @@ namespace ColonyHaul
             }
         }
 
+        public void WaveClear()
+        {
+            SpawnPip(0f, 0f, "CLEAR", new Color(0.55f, 0.9f, 0.5f));
+            Spokes(0f, 0f, 2.0f, new Color(0.55f, 0.9f, 0.5f));
+            SpawnBurst(0f, 0f, new Color(0.5f, 0.85f, 0.48f, 0.45f), 4.4f);
+            Punch(0.32f);
+            _audio.PlayOneShot(_deposit, 0.55f);
+        }
+
         public void HubHit(bool braced)
         {
             if (braced)
