@@ -86,6 +86,7 @@ window.addEventListener('keydown', (ev) => {
   if (tool === 'upgrade') game.tryUpgrade();
   else if (tool) game.setTool(tool);
   if (ev.code === 'Escape') game.cancelSelection();
+  if (ev.code === 'KeyH') game.cycleHold();
   if (ev.code === 'KeyD') restart(true);
   if (ev.code === 'KeyM') audio.toggleMute();
 });
@@ -244,6 +245,11 @@ function juice(events: JuiceEvent[]): void {
         break;
       case 'surge':
         hud.flashBanner('BRACE — haul bought the Hub a breath', 1400);
+        break;
+      case 'hold':
+        if (ev.reason === 'power') hud.flashBanner('GUNS ORDER — haulers rush Power', 1800);
+        else if (ev.reason === 'food') hud.flashBanner('CREW ORDER — haulers rush Food', 1800);
+        else hud.flashBanner('Hold auto — hungriest stock', 1400);
         break;
       case 'death':
         break;

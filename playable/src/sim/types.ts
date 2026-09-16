@@ -13,6 +13,8 @@ export type Tool =
   | 'barrier'
   | 'upgrade';
 
+export type HoldOrder = 'auto' | 'power' | 'food';
+
 export type NodeKind = 'hub' | 'depot' | 'pad' | 'choke' | 'tower' | 'spawn';
 
 export type BuildingType =
@@ -42,7 +44,8 @@ export type JuiceKind =
   | 'lose'
   | 'route'
   | 'barrier'
-  | 'surge';
+  | 'surge'
+  | 'hold';
 
 export interface SimNode {
   id: string;
@@ -157,6 +160,8 @@ export interface Snapshot {
   foodWarned: boolean;
   haulCut: boolean;
   powerBrownout: boolean;
+  holdOrder: HoldOrder;
+  holdReady: boolean;
   selectedTool: Tool;
   routeFrom: string | null;
   routeEnds: string[];

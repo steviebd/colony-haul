@@ -32,7 +32,7 @@ Scenes are thin on purpose. `VerticalSliceBootstrap` builds the dusk mesa, pads,
 ### Play in the Editor
 
 - Place a **Farm** on the south mesa pad (it pulses), then click the **Hub** to lay mag-rail. Haulers only move on live rails.
-- Keys `1–7`: Farm, Mine, Power, Route, Kinetic, Splash, Barrier. `U` Hub L2. `D` demo. `R` restart.
+- Keys `1–7`: Farm, Mine, Power, Route, Kinetic, Splash, Barrier. `U` Hub L2. `H` Hold order (wave 4 + Hub L2). `D` demo. `R` restart.
 - Left tray is clickable. Splash stays locked until Hub L2.
 - Top-right logistics strip: loaded vs idle haulers, E/N/W lane counts (hottest marked `*`), next-wave copy, gun-fire fuse, and a larder clock (`~Ns of food`). HAUL CUT shows splice countdown.
 - Opening coach: 1 Farm (south pad) → 2 rail to Hub → 3 first hauls. After that, a mid-watch coach names the next readable call (splice, Power, Hub L2, Splash west, CORE THIN, second farm, HOLD).
@@ -41,7 +41,7 @@ Scenes are thin on purpose. `VerticalSliceBootstrap` builds the dusk mesa, pads,
 - Guns draw range rings. Loaded haulers paint cargo trails. Runners telegraph a magenta intent line to the next pad. Slowed raiders tint cyan. Hottest choke labels EAST/NORTH/WEST. Hub HP is a world bar. Grunts are cubes, brutes capsules, runners thin cylinders. Win/lose cards show time, Hub HP, and wave.
 - Win: survive 6 waves **and** Hub Level 2. Lose: Hub HP 0, or food stays at 0 for 14s.
 - Runners cut rails. The orange rail pulses, pads read SPLICE, stuck haulers throb amber, and a world timer counts down. Route is auto-armed — click the glowing pad.
-- Brownout: guns try to fire with a dry pylon. Keep Power on live rails.
+- Brownout: guns try to fire with a dry pylon. Keep Power on live rails. From wave 4 with Hub L2, **H** cycles a Hold order: Auto → GUNS (haulers rush Power) → CREW (haulers rush Food). Idle haulers replan immediately. Splice still beats this. Demo stays on Auto.
 
 ### Pass 3 Unity-first (presentation + Rail Surge)
 
@@ -58,6 +58,7 @@ Tick stays one loop. Seed-7 demo still wins. Mid-game is readable, and a haul du
 9. **Pass 4 punch-up** — BRACE title + hub shield ring (no Surge banner spam), west Splash ghost ring after L2, SPLICED / RAIL LIVE on cut recovery, win/lose cards with stats and bigger VFX.
 10. **Pass 4 runner-cut recovery** — orange rail pulse + SPLICE pads and world timer, STUCK/ROLLING hauler pips, cut alarm drone, magenta runner intent lines, BRACE hits shrug cyan. Banners sit above the hint so they no longer cover the coach.
 11. **Pass 4 late-wave telegraph** — inbound IN bursts on spawns, LAST RAIDS title, dusk fog heats on waves 5–6.
+12. **Pass 5 Hold order** — late-match decision. Wave 4 + Hub L2 unlocks H: Auto → GUNS (rush Power, feeds guns / BRACE) → CREW (rush Food). Visible hub ring, pad labels, hauler replan. No soft-lock; demo stays Auto.
 
 Folder layout: `Assets/_ColonyHaul/{Scripts,Art,Prefabs,Scenes,UI,Audio}`.
 

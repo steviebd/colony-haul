@@ -263,6 +263,28 @@ namespace ColonyHaul
                     Spokes(0f, 0f, 1.5f, new Color(0.45f, 0.9f, 1f));
                     SpawnBurst(0f, 0f, new Color(0.45f, 0.9f, 1f, 0.45f), 3.6f);
                     break;
+                case SimEventKind.Hold:
+                    if (ev.Reason == "power")
+                    {
+                        _audio.PlayOneShot(_surge, 0.55f);
+                        SpawnPip(0f, 0f, "GUNS", new Color(0.4f, 0.75f, 1f));
+                        Spokes(0f, 0f, 1.8f, new Color(0.4f, 0.75f, 1f));
+                        SpawnBurst(0f, 0f, new Color(0.4f, 0.75f, 1f, 0.5f), 4.2f);
+                    }
+                    else if (ev.Reason == "food")
+                    {
+                        _audio.PlayOneShot(_deposit, 0.55f);
+                        SpawnPip(0f, 0f, "CREW", new Color(0.5f, 0.85f, 0.48f));
+                        Spokes(0f, 0f, 1.8f, new Color(0.5f, 0.85f, 0.48f));
+                        SpawnBurst(0f, 0f, new Color(0.5f, 0.85f, 0.48f, 0.5f), 4.2f);
+                    }
+                    else
+                    {
+                        _audio.PlayOneShot(_dry, 0.35f);
+                        SpawnPip(0f, 0f, "AUTO", new Color(0.85f, 0.82f, 0.7f));
+                    }
+                    Punch(0.32f);
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(ev.Kind), ev.Kind, null);
             }

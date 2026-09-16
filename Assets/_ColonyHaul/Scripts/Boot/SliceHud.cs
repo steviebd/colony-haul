@@ -36,6 +36,7 @@ namespace ColonyHaul
         public bool ConsumeBootPlay { get; private set; }
         public bool ConsumeBootDemo { get; private set; }
         public bool ConsumeRestart { get; private set; }
+        public bool ConsumeHold { get; private set; }
         public Tool? ClickedTool { get; private set; }
 
         public void Flash(string text, float seconds)
@@ -58,7 +59,7 @@ namespace ColonyHaul
 
         public void Draw(GameSim game)
         {
-            ConsumeBootPlay = ConsumeBootDemo = ConsumeRestart = false;
+            ConsumeBootPlay = ConsumeBootDemo = ConsumeRestart = ConsumeHold = false;
             ClickedTool = null;
             var e = Event.current;
 
@@ -92,12 +93,18 @@ namespace ColonyHaul
             var cut = game.ActiveCut();
             if (game.Surging) GUI.contentColor = new Color(0.45f, 0.9f, 1f);
             else if (cut != null) GUI.contentColor = new Color(1f, 0.55f, 0.32f);
+            else if (game.HoldOrder == HoldOrder.Power) GUI.contentColor = new Color(0.4f, 0.75f, 1f);
+            else if (game.HoldOrder == HoldOrder.Food) GUI.contentColor = new Color(0.5f, 0.85f, 0.48f);
             else if (game.WaveIndex >= 5) GUI.contentColor = new Color(1f, 0.42f, 0.38f);
             string subCopy;
             if (game.Surging)
                 subCopy = "BRACE · Hub shrugs hits · " + GameSim.CeilSecs(game.SurgeLeft) + "s";
             else if (cut != null)
                 subCopy = "HAUL CUT · splice the orange rail · " + GameSim.CeilSecs(cut.SabotagedUntil - game.T) + "s";
+            else if (game.HoldOrder == HoldOrder.Power)
+                subCopy = "GUNS ORDER · haulers rush Power · H flips";
+            else if (game.HoldOrder == HoldOrder.Food)
+                subCopy = "CREW ORDER · haulers rush Food · H flips";
             else if (game.WaveIndex >= 5)
                 subCopy = "LAST RAIDS · hold the mesa";
             else
@@ -154,7 +161,7 @@ namespace ColonyHaul
             else guns = "Guns ~" + GameSim.CeilSecs(game.GunSecondsLeft()) + "s of fire · " + towers + " live";
             GUI.Label(new Rect(Screen.width - 280, 152, 256, 20), guns);
             GUI.Label(new Rect(Screen.width - 280, 172, 256, 20), LarderCopy(game));
-            GUI.Label(new Rect(Screen.width - 280, 192, 256, 20), game.HoldCopy());
+            GUI.Label(new Rect(Screen.width - 280, 192, 256, 20), game.HoldOrderCopy());
         }
 
         static string LaneChip(string tag, int n, bool hot)
@@ -232,7 +239,7 @@ namespace ColonyHaul
         void DrawTray(GameSim game)
         {
             GUI.backgroundColor = new Color(0.05f, 0.09f, 0.11f, 0.9f);
-            GUI.Box(new Rect(12, 92, 220, 8 * 44 + 16), "");
+            GUI.Box(new Rect(12, 92, 220, 8 * 44 + 72), "");
             GUI.backgroundColor = Color.white;
             var y = 100f;
             var gate = game.OpeningGate();
@@ -270,7 +277,45 @@ namespace ColonyHaul
                 GUI.backgroundColor = Color.white;
                 y += 44;
             }
-            GUI.Label(new Rect(20, y + 8, 200, 40), "1–7 tools · U Hub L2\nD demo · R restart");
+            GUI.Label(new Rect(20, y + 8, 200, 36), "1–7 tools · U Hub L2\nD demo · R restart · H hold");
+            var holdY = y + 48;
+            if (game.HoldReady)
+            {
+                var holdPulse = watch != null && !string.IsNullOrEmpty(watch.Copy) &&
+                    (watch.Copy.IndexOf("H for", StringComparison.Ordinal) >= 0 ||
+                     watch.Copy.IndexOf("HOLD", StringComparison.Ordinal) >= 0 ||
+                     watch.Copy.IndexOf("GUNS ORDER", StringComparison.Ordinal) >= 0 ||
+                     watch.Copy.IndexOf("CREW ORDER", StringComparison.Ordinal) >= 0);
+                string holdLabel;
+                Color holdColor;
+                switch (game.HoldOrder)
+                {
+                    case HoldOrder.Auto:
+                        holdLabel = "H Hold — auto";
+                        holdColor = holdPulse ? new Color(0.9f * pulse, 0.78f * pulse, 0.5f) : new Color(0.16f, 0.22f, 0.24f);
+                        break;
+                    case HoldOrder.Power:
+                        holdLabel = "H GUNS — rush Power";
+                        holdColor = new Color(0.28f, 0.55f, 0.85f);
+                        break;
+                    case HoldOrder.Food:
+                        holdLabel = "H CREW — rush Food";
+                        holdColor = new Color(0.22f, 0.62f, 0.32f);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(game.HoldOrder), game.HoldOrder, null);
+                }
+                GUI.backgroundColor = holdColor;
+                if (GUI.Button(new Rect(20, holdY, 204, 40), holdLabel + "\nlocks idle haulers · H cycles"))
+                    ConsumeHold = true;
+                GUI.backgroundColor = Color.white;
+            }
+            else
+            {
+                GUI.backgroundColor = new Color(0.1f, 0.11f, 0.12f);
+                GUI.Box(new Rect(20, holdY, 204, 40), "H Hold · locked\nwave 4 + Hub L2");
+                GUI.backgroundColor = Color.white;
+            }
         }
 
         static Color PulseColor(Tool tool, float pulse)

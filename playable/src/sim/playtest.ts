@@ -161,6 +161,31 @@ function onlyFarmRailCutMidWave(): void {
   assert(armed.includes('hub') && armed.length === 1, `armed cut should ghost Hub only, got ${armed.join(',')}`);
 }
 
+function holdOrderRushesPower(): void {
+  const early = new Game(7);
+  const locked = early.cycleHold();
+  assert(!locked.ok, 'hold must stay locked before wave 4 and Hub L2');
+  assert(early.holdOrder === 'auto', 'default hold is auto');
+
+  const game = new Game(7);
+  game.setTool('farm');
+  assert(game.clickNode('pad_s').ok, 'farm should place');
+  assert(game.clickNode('hub').ok, 'farm rail');
+  game.setTool('power');
+  assert(game.clickNode('pad_se').ok, 'power should place');
+  assert(game.clickNode('hub').ok, 'power rail');
+  const step = 1 / 20;
+  for (let i = 0; i < 20 * 28; i += 1) game.tick(step);
+  game.hubLevel = 2;
+  game.waveIndex = 4;
+  const armed = game.cycleHold();
+  assert(armed.ok, armed.why ?? 'hold should unlock');
+  assert(game.holdOrder === 'power', `first cycle is GUNS, got ${game.holdOrder}`);
+  for (let i = 0; i < 20 * 8; i += 1) game.tick(step);
+  const chasing = game.haulers.some((h) => h.cargo?.kind === 'power' || h.path.includes('pad_se'));
+  assert(chasing, 'GUNS order should send a hauler at Power within 8s');
+}
+
 nestedFarmRouteHub();
 openingGateBlocksDeadClicks();
 kineticAffordableAfterCore();
@@ -169,6 +194,7 @@ foodDrainIsEarned();
 hubDiesWithoutDefense();
 starveWithoutFarm();
 onlyFarmRailCutMidWave();
+holdOrderRushesPower();
 const headless = runHeadless({ seed: 7, seconds: 480, demo: true });
 assert(headless.win, `demo must win, got ${headless.phase} t=${headless.t}`);
 assert(headless.deposits >= 8, `too few deposits ${headless.deposits}`);
@@ -180,7 +206,7 @@ const stress = [
   { case: 'food starve (no farm)', result: 'pass', notes: 'farm rail held cut; guns keep Hub up until food 0 for 14s' },
   { case: 'soft-lock early costs', result: 'pass', notes: 'farm+mine+power+routes still afford kinetic (ore>=16)' },
   { case: 'only farm rail cut mid-wave', result: 'pass', notes: 'haulCut, pad_s offline, Route ghosts Hub' },
-  { case: 'demo brownout event', result: 'pass', notes: 'headless demo fires kind=brownout on seed 7' },
+  { case: 'hold order GUNS', result: 'pass', notes: 'locked before wave 4/L2; then haulers chase Power' },
 ];
 console.log(
   JSON.stringify(
@@ -190,6 +216,7 @@ console.log(
       affordKinetic: 'pass',
       cutRailGhosts: 'pass',
       foodDrain: 'pass',
+      holdOrder: 'pass',
       stress,
       headless,
     },

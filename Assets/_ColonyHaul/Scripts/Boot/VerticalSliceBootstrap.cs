@@ -216,6 +216,14 @@ namespace ColonyHaul
                         _hud.Flash("BRACE — haul bought the Hub a breath", 1.4f, new Color(0.2f, 0.55f, 0.7f, 0.95f));
                     }
                     break;
+                case SimEventKind.Hold:
+                    if (ev.Reason == "power")
+                        _hud.Flash("GUNS ORDER — haulers rush Power", 1.8f, new Color(0.2f, 0.45f, 0.75f, 0.95f));
+                    else if (ev.Reason == "food")
+                        _hud.Flash("CREW ORDER — haulers rush Food", 1.8f, new Color(0.18f, 0.5f, 0.28f, 0.95f));
+                    else
+                        _hud.Flash("Hold auto — hungriest stock", 1.4f, new Color(0.35f, 0.35f, 0.32f, 0.92f));
+                    break;
                 default:
                     throw new System.ArgumentOutOfRangeException(nameof(ev.Kind), ev.Kind, null);
             }
@@ -231,6 +239,7 @@ namespace ColonyHaul
             if (Input.GetKeyDown(KeyCode.Alpha6)) _game.SetTool(Tool.Splash);
             if (Input.GetKeyDown(KeyCode.Alpha7)) _game.SetTool(Tool.Barrier);
             if (Input.GetKeyDown(KeyCode.U)) _game.TryUpgrade(out _);
+            if (Input.GetKeyDown(KeyCode.H)) _game.CycleHold(out _);
             if (Input.GetKeyDown(KeyCode.D)) _demo = new DemoPilot();
             if (Input.GetKeyDown(KeyCode.R)) Restart(false);
             if (Input.mousePosition.x < 236f) return;
@@ -289,18 +298,27 @@ namespace ColonyHaul
                      (n.Id == "choke_n" && hotLane == "north") ||
                      (n.Id == "choke_w" && hotLane == "west"));
                 var splashWest = _game.SplashFresh() && n.Id == "choke_w";
+                var holdGuns = _game.HoldOrder == HoldOrder.Power &&
+                    _game.Buildings.TryGetValue(n.Id, out var holdPwr) && holdPwr.Type == BuildingType.Power;
+                var holdCrew = _game.HoldOrder == HoldOrder.Food &&
+                    _game.Buildings.TryGetValue(n.Id, out var holdFarm) && holdFarm.Type == BuildingType.Farm;
                 var near = n.Kind == NodeKind.Choke ? _game.EnemiesNear(n.Id, 4.8f) : 0;
                 Color c;
                 if (inbound) c = MesaView.Spawn * pulse;
                 else if (n.Kind == NodeKind.Spawn) c = MesaView.Spawn;
-                else if (farmGlow) c = MesaView.PadFarm * pulse;
+                else if (farmGlow || holdCrew) c = MesaView.PadFarm * pulse;
+                else if (holdGuns) c = new Color(0.32f * pulse, 0.68f * pulse, 0.94f);
                 else if (hubGlow || routeGlow) c = MesaView.PadRoute * pulse;
                 else if (splashWest) c = new Color(0.94f * pulse, 0.63f * pulse, 0.38f);
                 else if (n.Kind == NodeKind.Choke && (chokeHot || near > 0))
                     c = Color.Lerp(new Color(0.62f, 0.52f, 0.4f), MesaView.Spawn * pulse,
                         Mathf.Clamp01(near / 4f + (chokeHot ? 0.35f : 0f)));
                 else if (n.Kind == NodeKind.Hub)
-                    c = _game.HubRaising
+                    c = _game.HoldOrder == HoldOrder.Power
+                        ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(0.4f, 0.75f, 1f), pulse)
+                        : _game.HoldOrder == HoldOrder.Food
+                            ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(0.5f, 0.85f, 0.48f), pulse)
+                        : _game.HubRaising
                         ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(1f, 0.86f, 0.4f), pulse)
                         : new Color(0.9f, 0.78f, 0.58f);
                 else c = MesaView.PadIdle;
@@ -308,7 +326,10 @@ namespace ColonyHaul
                 if (n.Id == "hub")
                     MesaView.SetLabel(mark, cut != null && (cut.A == n.Id || cut.B == n.Id)
                         ? "SPLICE"
-                        : _game.HubRaising ? "L2" : hubGlow ? "2 HUB" : "HUB");
+                        : _game.HubRaising ? "L2"
+                        : _game.HoldOrder == HoldOrder.Power ? "GUNS"
+                        : _game.HoldOrder == HoldOrder.Food ? "CREW"
+                        : hubGlow ? "2 HUB" : "HUB");
                 else if (n.Kind == NodeKind.Spawn)
                     MesaView.SetLabel(mark, inbound ? "IN " + _game.IncomingAt(n.Id) : "RAID");
                 else if (n.Kind == NodeKind.Choke)
@@ -317,6 +338,12 @@ namespace ColonyHaul
                 {
                     if (cut != null && (cut.A == n.Id || cut.B == n.Id))
                         MesaView.SetLabel(mark, "SPLICE");
+                    else if (_game.HoldOrder == HoldOrder.Power &&
+                             _game.Buildings.TryGetValue(n.Id, out var pwr) && pwr.Type == BuildingType.Power)
+                        MesaView.SetLabel(mark, "GUNS");
+                    else if (_game.HoldOrder == HoldOrder.Food &&
+                             _game.Buildings.TryGetValue(n.Id, out var farm) && farm.Type == BuildingType.Farm)
+                        MesaView.SetLabel(mark, "CREW");
                     else if (n.Id == "pad_s")
                         MesaView.SetLabel(mark, farmGlow ? "1 FARM" : "PAD");
                     else if (_game.Buildings.TryGetValue(n.Id, out var pb) && pb.Type == BuildingType.Power && _game.GunsHungry())
@@ -570,6 +597,27 @@ namespace ColonyHaul
                 live.Add("surge-shield");
                 var pulse = 3.6f + 0.35f * Mathf.Abs(Mathf.Sin(Time.time * 8f));
                 EnsureRing("surge-shield", hubNode, pulse, new Color(0.4f, 0.9f, 1f, 0.42f));
+            }
+            if (!_game.Surging && _game.HoldOrder != HoldOrder.Auto && _game.Nodes.TryGetValue("hub", out var holdHub))
+            {
+                live.Add("hold-order");
+                var glow = 4.4f + 0.25f * Mathf.Abs(Mathf.Sin(Time.time * 5f));
+                Color holdColor;
+                switch (_game.HoldOrder)
+                {
+                    case HoldOrder.Power:
+                        holdColor = new Color(0.4f, 0.75f, 1f, 0.38f);
+                        break;
+                    case HoldOrder.Food:
+                        holdColor = new Color(0.5f, 0.85f, 0.48f, 0.38f);
+                        break;
+                    case HoldOrder.Auto:
+                        holdColor = new Color(0.9f, 0.78f, 0.58f, 0.2f);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(_game.HoldOrder), _game.HoldOrder, null);
+                }
+                EnsureRing("hold-order", holdHub, glow, holdColor);
             }
             Prune(_rings, live);
         }
@@ -835,6 +883,7 @@ namespace ColonyHaul
             if (_hud.ConsumeBootDemo) _pendingDemo = true;
             if (_hud.ConsumeBootPlay) _pendingManual = true;
             if (_hud.ConsumeRestart) _pendingRestart = true;
+            if (_hud.ConsumeHold) _game.CycleHold(out _);
         }
     }
 }

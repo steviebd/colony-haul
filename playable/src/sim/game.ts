@@ -7,6 +7,7 @@ import type {
   EnemyType,
   GameConfig,
   Hauler,
+  HoldOrder,
   JuiceEvent,
   Phase,
   Rates,
@@ -57,6 +58,7 @@ export class Game {
   enemies: Enemy[] = [];
   events: JuiceEvent[] = [];
   selectedTool: Tool = 'none';
+  holdOrder: HoldOrder = 'auto';
   routeFrom: string | null = null;
   hint = 'Food is already draining. Place a Farm on a mesa pad, then click the Hub.';
   foodWarned = false;
@@ -168,6 +170,57 @@ export class Game {
     this.selectedTool = tool;
     if (tool !== 'route') this.routeFrom = null;
     this.refreshHint();
+  }
+
+  get holdReady(): boolean {
+    return this.hubLevel >= 2 && this.waveIndex >= 4;
+  }
+
+  cycleHold(): { ok: boolean; why?: string } {
+    if (this.phase !== 'playing') return { ok: false, why: 'match over' };
+    if (!this.holdReady) {
+      this.hint = 'Hold orders unlock on wave 4 with Hub L2';
+      return { ok: false, why: this.hint };
+    }
+    switch (this.holdOrder) {
+      case 'auto':
+        this.holdOrder = 'power';
+        break;
+      case 'power':
+        this.holdOrder = 'food';
+        break;
+      case 'food':
+        this.holdOrder = 'auto';
+        break;
+      default: {
+        const _exhaustive: never = this.holdOrder;
+        return { ok: false, why: String(_exhaustive) };
+      }
+    }
+    for (const h of this.haulers) {
+      if (h.wait > 0 || h.cargo) continue;
+      h.path = [];
+      this.planHauler(h);
+    }
+    switch (this.holdOrder) {
+      case 'power':
+        this.hint = 'GUNS ORDER. Haulers rush Power. Deposits still BRACE the Hub.';
+        this.emit({ kind: 'hold', nodeId: 'hub', reason: 'power' });
+        break;
+      case 'food':
+        this.hint = 'CREW ORDER. Haulers rush Food. Splice still beats this.';
+        this.emit({ kind: 'hold', nodeId: 'hub', reason: 'food' });
+        break;
+      case 'auto':
+        this.hint = 'Hold auto. Haulers pick the hungriest stock.';
+        this.emit({ kind: 'hold', nodeId: 'hub', reason: 'auto' });
+        break;
+      default: {
+        const _exhaustive: never = this.holdOrder;
+        return { ok: false, why: String(_exhaustive) };
+      }
+    }
+    return { ok: true };
   }
 
   cancelSelection(): void {
@@ -532,9 +585,27 @@ export class Game {
       return;
     }
     let best: { nodeId: string; score: number } | null = null;
-    const foodNeed = this.stock.food < 12 ? 90 : this.stock.food < 20 ? 28 : 0;
-    const pwrNeed = this.stock.power < 6 ? 110 : this.stock.power < 14 ? 36 : 0;
-    const oreNeed = this.stock.ore < 18 ? 18 : 0;
+    let foodNeed = this.stock.food < 12 ? 90 : this.stock.food < 20 ? 28 : 0;
+    let pwrNeed = this.stock.power < 6 ? 110 : this.stock.power < 14 ? 36 : 0;
+    let oreNeed = this.stock.ore < 18 ? 18 : 0;
+    switch (this.holdOrder) {
+      case 'auto':
+        break;
+      case 'power':
+        pwrNeed += 240;
+        foodNeed *= 0.2;
+        oreNeed *= 0.2;
+        break;
+      case 'food':
+        foodNeed += 240;
+        pwrNeed *= 0.2;
+        oreNeed *= 0.2;
+        break;
+      default: {
+        const _exhaustive: never = this.holdOrder;
+        void _exhaustive;
+      }
+    }
     for (const b of this.buildings.values()) {
       if (b.type !== 'mine' && b.type !== 'farm' && b.type !== 'power') continue;
       if (b.buildLeft > 0) continue;
@@ -942,6 +1013,8 @@ export class Game {
     if (!hasFarm) this.hint = 'Food is already draining. Place a Farm on a mesa pad, then click the Hub.';
     else if (!farmRouted) this.hint = 'Mag-rail next. Click the Hub to connect this Farm — haulers will not leave the pad until you do.';
     else if (cut) this.hint = 'HAUL CUT. Route is armed — click the glowing pad to splice the rail.';
+    else if (this.holdOrder === 'power') this.hint = 'GUNS ORDER — haulers rush Power. H to flip.';
+    else if (this.holdOrder === 'food') this.hint = 'CREW ORDER — haulers rush Food. H to flip.';
     else if (this.stock.power < 4 && towers > 0) this.hint = 'Brownout. Towers are dry. Keep the Power pylon on live rails.';
     else if (!hasMine) this.hint = 'Drop a Mine. Haulers only move ore that reaches the Hub.';
     else if (!hasPower) this.hint = 'Plant a Power pylon. Mines, farms, and towers stall without hauled power.';
@@ -974,6 +1047,8 @@ export class Game {
       foodWarned: this.foodWarned,
       haulCut: [...this.edges.values()].some((e) => e.routed && e.sabotagedUntil > this.t),
       powerBrownout: this.stock.power < (BALANCE.buildings.kinetic.powerShot ?? 0.34),
+      holdOrder: this.holdOrder,
+      holdReady: this.holdReady,
       selectedTool: this.selectedTool,
       routeEnds: this.routeEnds(),
       offlineNodeIds: this.offlineNodes(),

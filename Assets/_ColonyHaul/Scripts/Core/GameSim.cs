@@ -18,6 +18,7 @@ namespace ColonyHaul
         public int WaveIndex;
         public float NextWaveIn = 42f;
         public Tool SelectedTool = Tool.None;
+        public HoldOrder HoldOrder = HoldOrder.Auto;
         public string RouteFrom;
         public string Hint = "Food is already draining. Place a Farm on a mesa pad, then click the Hub.";
         public readonly Dictionary<string, SimNode> Nodes = new Dictionary<string, SimNode>();
@@ -99,6 +100,73 @@ namespace ColonyHaul
             if (WaveIndex >= Balance.WavesToWin) return "Last raiders — splice cuts, haul Power";
             var left = Balance.WavesToWin - WaveIndex;
             return left + (left == 1 ? " wave left · Hub L2 online" : " waves left · Hub L2 online");
+        }
+
+        public bool HoldReady => HubLevel >= 2 && WaveIndex >= 4;
+
+        public string HoldOrderCopy()
+        {
+            if (!HoldReady) return HoldCopy();
+            switch (HoldOrder)
+            {
+                case HoldOrder.Auto: return "HOLD auto · H guns / crew";
+                case HoldOrder.Power: return "GUNS ORDER · haulers rush Power · H flips";
+                case HoldOrder.Food: return "CREW ORDER · haulers rush Food · H flips";
+                default: throw new ArgumentOutOfRangeException(nameof(HoldOrder), HoldOrder, null);
+            }
+        }
+
+        public bool CycleHold(out string why)
+        {
+            why = null;
+            if (Phase != Phase.Playing)
+            {
+                why = "match over";
+                return false;
+            }
+            if (!HoldReady)
+            {
+                why = "Hold orders unlock on wave 4 with Hub L2";
+                Hint = why;
+                return false;
+            }
+            switch (HoldOrder)
+            {
+                case HoldOrder.Auto: HoldOrder = HoldOrder.Power; break;
+                case HoldOrder.Power: HoldOrder = HoldOrder.Food; break;
+                case HoldOrder.Food: HoldOrder = HoldOrder.Auto; break;
+                default: throw new ArgumentOutOfRangeException(nameof(HoldOrder), HoldOrder, null);
+            }
+            ReplanIdleHaulers();
+            string reason;
+            switch (HoldOrder)
+            {
+                case HoldOrder.Power:
+                    reason = "power";
+                    Hint = "GUNS ORDER. Haulers rush Power. Deposits still BRACE the Hub.";
+                    break;
+                case HoldOrder.Food:
+                    reason = "food";
+                    Hint = "CREW ORDER. Haulers rush Food. Splice still beats this.";
+                    break;
+                case HoldOrder.Auto:
+                    reason = "auto";
+                    Hint = "Hold auto. Haulers pick the hungriest stock.";
+                    break;
+                default: throw new ArgumentOutOfRangeException(nameof(HoldOrder), HoldOrder, null);
+            }
+            Emit(SimEventKind.Hold, "hub", reason: reason);
+            return true;
+        }
+
+        void ReplanIdleHaulers()
+        {
+            foreach (var h in Haulers)
+            {
+                if (h.Wait > 0 || h.CargoAmount > 0) continue;
+                h.Path.Clear();
+                PlanHauler(h);
+            }
         }
 
         public int IncomingRaiders => _pending.Count;
@@ -376,12 +444,18 @@ namespace ColonyHaul
             {
                 if (!HasType(BuildingType.Power) && CanAfford(Tool.Power))
                     return Call("Guns will brown out — plant Power", Tool.Power);
+                if (HoldReady && HoldOrder != HoldOrder.Power)
+                    return Call("Guns hungry — H for GUNS so haulers rush Power", Tool.None);
                 return Call("Haul POWER — towers are on the last of the pylon", Tool.Route);
             }
             if (HubLevel < 2 && HubUpgradeLeft <= 0 && CanAfford(Tool.Upgrade))
                 return Call("Hub L2 is in stock — Splash unlocks after this", Tool.Upgrade);
             if (Food < 8f)
+            {
+                if (HoldReady && HoldOrder != HoldOrder.Food)
+                    return Call("Larder ~" + CeilSecs(FoodSecondsLeft()) + "s — H for CREW so haulers rush Food", Tool.Farm);
                 return Call("Larder ~" + CeilSecs(FoodSecondsLeft()) + "s — farm rail must stay live", Tool.Farm);
+            }
             if (SplashFresh())
             {
                 if (CanAfford(Tool.Splash))
@@ -416,8 +490,23 @@ namespace ColonyHaul
                 return Call("Second Farm — late waves chew the larder", Tool.Farm);
             if (WaveIndex >= 4 && HasType(BuildingType.Splash) && !NodeArmed("choke_n") && CanAfford(Tool.Kinetic) && lanes.North > 0)
                 return Call("North is open — Kinetic on the north choke", Tool.Kinetic);
+            if (HoldReady && HoldOrder == HoldOrder.Auto && WaveIndex >= 4 && WaveIndex < 5)
+                return Call("HOLD ORDER — H locks haulers on Power or Food", Tool.None);
             if (WaveIndex >= 5)
-                return Call("HOLD THE MESA — splice every cut, haul Power", Tool.Route);
+            {
+                switch (HoldOrder)
+                {
+                    case HoldOrder.Auto:
+                        return Call(HoldReady
+                            ? "HOLD — H sends Power to guns or Food to crew"
+                            : "HOLD THE MESA — splice every cut, haul Power", Tool.None);
+                    case HoldOrder.Power:
+                        return Call("GUNS ORDER — Power hauls BRACE the Hub. H to flip", Tool.None);
+                    case HoldOrder.Food:
+                        return Call("CREW ORDER — Food hauls keep the larder. H to flip", Tool.None);
+                    default: throw new ArgumentOutOfRangeException(nameof(HoldOrder), HoldOrder, null);
+                }
+            }
             return Call(NextWaveCopy(), Tool.None);
         }
 
@@ -830,6 +919,16 @@ namespace ColonyHaul
                 Hint = "HAUL CUT. Route is armed — click the glowing pad to splice the rail.";
                 return;
             }
+            if (HoldOrder == HoldOrder.Power)
+            {
+                Hint = (PowerBrownout ? "GUNS DRY. " : "") + "GUNS ORDER — haulers rush Power. H to flip.";
+                return;
+            }
+            if (HoldOrder == HoldOrder.Food)
+            {
+                Hint = (Food < 8f ? "LARDER THIN. " : "") + "CREW ORDER — haulers rush Food. H to flip.";
+                return;
+            }
             var towers = 0;
             foreach (var b in Buildings.Values)
                 if (b.Type == BuildingType.Kinetic || b.Type == BuildingType.Splash) towers++;
@@ -926,6 +1025,22 @@ namespace ColonyHaul
             var foodNeed = Food < 12f ? 90f : Food < 20f ? 28f : 0f;
             var pwrNeed = Power < 6f ? 110f : Power < 14f ? 36f : 0f;
             var oreNeed = Ore < 18f ? 18f : 0f;
+            switch (HoldOrder)
+            {
+                case HoldOrder.Auto:
+                    break;
+                case HoldOrder.Power:
+                    pwrNeed += 240f;
+                    foodNeed *= 0.2f;
+                    oreNeed *= 0.2f;
+                    break;
+                case HoldOrder.Food:
+                    foodNeed += 240f;
+                    pwrNeed *= 0.2f;
+                    oreNeed *= 0.2f;
+                    break;
+                default: throw new ArgumentOutOfRangeException(nameof(HoldOrder), HoldOrder, null);
+            }
             foreach (var b in Buildings.Values)
             {
                 if (b.Type != BuildingType.Mine && b.Type != BuildingType.Farm && b.Type != BuildingType.Power) continue;
@@ -1338,6 +1453,7 @@ namespace ColonyHaul
                         case SimEventKind.Route:
                         case SimEventKind.Barrier:
                         case SimEventKind.Surge:
+                        case SimEventKind.Hold:
                             break;
                         default:
                             throw new ArgumentOutOfRangeException(nameof(ev.Kind), ev.Kind, null);
