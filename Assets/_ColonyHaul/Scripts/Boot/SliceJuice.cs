@@ -255,6 +255,15 @@ namespace ColonyHaul
             Punch(0.16f);
         }
 
+        public void CrewUp(float x, float z)
+        {
+            SpawnPip(x, z, "CREW", new Color(0.58f, 0.9f, 0.48f));
+            Spokes(x, z, 1.6f, new Color(0.58f, 0.9f, 0.48f));
+            SpawnBurst(x, z, new Color(0.58f, 0.9f, 0.48f, 0.42f), 3.2f);
+            Punch(0.22f);
+            _audio.PlayOneShot(_deposit, 0.4f);
+        }
+
         public void HoldReady()
         {
             SpawnPip(0f, 0f, "HOLD", new Color(0.92f, 0.78f, 0.42f));

@@ -98,6 +98,7 @@ namespace ColonyHaul
             else if (game.GunsDry()) GUI.contentColor = new Color(1f, 0.48f, 0.22f);
             else if (game.RailLiveLive()) GUI.contentColor = new Color(0.42f, 0.92f, 0.88f);
             else if (game.GunsBackLive()) GUI.contentColor = new Color(0.48f, 0.95f, 0.62f);
+            else if (game.CrewUpLive()) GUI.contentColor = new Color(0.58f, 0.9f, 0.48f);
             else if (game.WaveClearLive()) GUI.contentColor = new Color(0.55f, 0.9f, 0.5f);
             else if (game.GunsLow()) GUI.contentColor = new Color(1f, 0.62f, 0.28f);
             else if (game.CoreThinLive()) GUI.contentColor = new Color(1f, 0.32f, 0.22f);
@@ -131,6 +132,8 @@ namespace ColonyHaul
                 subCopy = game.RailLiveTitle();
             else if (game.GunsBackLive())
                 subCopy = game.GunsBackTitle();
+            else if (game.CrewUpLive())
+                subCopy = game.CrewUpTitle();
             else if (game.WaveClearLive())
                 subCopy = game.WaveClearTitle();
             else if (game.GunsLow())
@@ -176,7 +179,9 @@ namespace ColonyHaul
             var pwrColor = game.PowerBrownout ? new Color(1f, 0.35f, 0.32f) : new Color(0.4f, 0.75f, 1f);
             Chip(540, 18, "PWR", Mathf.FloorToInt(game.Power).ToString(), pwrColor);
             Chip(650, 18, "STAFF", game.StaffedProducers() + "/" + game.WorkersTotal,
-                game.CrewStretched() ? new Color(1f, 0.62f, 0.32f) : new Color(0.75f, 0.8f, 0.85f));
+                game.CrewUpLive()
+                    ? new Color(0.58f, 0.9f, 0.48f)
+                    : game.CrewStretched() ? new Color(1f, 0.62f, 0.32f) : new Color(0.75f, 0.8f, 0.85f));
             GUI.Label(new Rect(Screen.width - 280, 18, 260, 20),
                 game.WaveIndex == 0
                     ? $"WAVE 1 / {Balance.WavesToWin} IN {Mathf.CeilToInt(game.NextWaveIn)}S"
@@ -204,6 +209,8 @@ namespace ColonyHaul
                 haul = game.RailLiveCopy();
             else if (game.GunsBackCopy() != null)
                 haul = game.GunsBackCopy();
+            else if (game.CrewUpCopy() != null)
+                haul = game.CrewUpCopy();
             else if (game.OfflinePad() != null)
                 haul = game.OfflineCopy();
             else if (game.SittingStock() != null)
@@ -253,6 +260,7 @@ namespace ColonyHaul
             else if (dry != null) raidRead = dry;
             else if (game.RailLiveCopy() != null) raidRead = game.RailLiveCopy();
             else if (game.GunsBackCopy() != null) raidRead = game.GunsBackCopy();
+            else if (game.CrewUpCopy() != null) raidRead = game.CrewUpCopy();
             else if (clear != null) raidRead = clear;
             else if (game.GunsLowCopy() != null) raidRead = game.GunsLowCopy();
             else if (game.CoreThinCopy() != null) raidRead = game.CoreThinCopy();

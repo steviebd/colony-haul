@@ -1006,6 +1006,68 @@ namespace ColonyHaul
             return "GUNS BACK — guns firing · keep Power rolling";
         }
 
+        public bool CrewUpLive()
+        {
+            if (Phase != Phase.Playing) return false;
+            if (HubLevel < 2) return false;
+            if (_hubL2At < 0f) return false;
+            if (Haulers.Count <= Balance.StartHaulers) return false;
+            return T >= _hubL2At && T - _hubL2At <= 12f;
+        }
+
+        public string CrewUpPingKey()
+        {
+            if (!CrewUpLive()) return null;
+            return _hubL2At.ToString("0.00");
+        }
+
+        public Hauler CrewUpHauler()
+        {
+            if (!CrewUpLive()) return null;
+            if (Haulers.Count <= Balance.StartHaulers) return null;
+            return Haulers[Haulers.Count - 1];
+        }
+
+        public bool CrewUpIs(string haulerId)
+        {
+            if (!CrewUpLive() || string.IsNullOrEmpty(haulerId)) return false;
+            var h = CrewUpHauler();
+            return h != null && h.Id == haulerId;
+        }
+
+        public string CrewUpCall()
+        {
+            if (!CrewUpLive()) return null;
+            var h = CrewUpHauler();
+            if (h == null) return "extra haul rolling";
+            if (h.CargoAmount > 0) return CargoTag(h.CargoKind) + " haul rolling";
+            if (h.Path.Count > 0) return "third haul on the line";
+            return "extra haul from the yard";
+        }
+
+        public string CrewUpTitle()
+        {
+            if (!CrewUpLive()) return null;
+            return "CREW UP · " + CrewUpCall();
+        }
+
+        public string CrewUpCopy()
+        {
+            if (!CrewUpLive()) return null;
+            return "CREW UP — " + CrewUpCall() + " · staff another pad";
+        }
+
+        public string CrewUpChip()
+        {
+            if (!CrewUpLive()) return null;
+            return "CREW +" + Balance.ExtraHaulers;
+        }
+
+        public string CrewUpFlash()
+        {
+            return "CREW UP — extra haul from the yard · staff another pad";
+        }
+
         public bool GunsLow()
         {
             return GunsHungry() && !GunsDry();
