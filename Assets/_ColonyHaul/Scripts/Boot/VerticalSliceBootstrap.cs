@@ -198,7 +198,7 @@ namespace ColonyHaul
             {
                 _coreAlarm = true;
                 _hud.Flash("CORE THIN — haul braces the Hub", 2.4f, new Color(0.85f, 0.2f, 0.18f, 0.95f));
-                _juice.Punch(0.7f);
+                _juice.CoreThin();
             }
             if (!_game.Surging) _surgeBannered = false;
             _juice.CutAlarm(_game.ActiveCut() != null && _game.Phase == Phase.Playing);
@@ -398,6 +398,8 @@ namespace ColonyHaul
                         ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(1f, 0.48f, 0.18f), pulse)
                         : _game.WaveClearLive()
                         ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(0.55f, 0.9f, 0.5f), pulse)
+                        : _game.CoreThinLive()
+                        ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(1f, 0.28f, 0.18f), pulse)
                         : _game.L2ReadyWorld()
                         ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(1f, 0.86f, 0.4f), pulse)
                         : _game.HoldOrder == HoldOrder.Power
@@ -416,6 +418,7 @@ namespace ColonyHaul
                         : _game.HubClosers() > 0 ? (_game.AnyCloseImminent() ? "PAD" : "IN")
                         : _game.GunsDry() ? "DRY"
                         : _game.WaveClearLive() ? "CLEAR"
+                        : _game.CoreThinLive() ? "THIN"
                         : _game.HubRaising ? "L2"
                         : _game.L2ReadyWorld() ? "READY"
                         : _game.HoldOrder == HoldOrder.Power ? "GUNS"
@@ -804,6 +807,14 @@ namespace ColonyHaul
                 live.Add("guns-dry");
                 var dryPulse = 3.0f + 0.3f * Mathf.Abs(Mathf.Sin(Time.time * 10f));
                 EnsureRing("guns-dry", dryHub, dryPulse, new Color(1f, 0.45f, 0.18f, 0.38f));
+            }
+            if (_game.CoreThinLive() && _game.HubChewers() <= 0 && _game.HubClosers() <= 0
+                && !_game.GunsDry() && !_game.WaveClearLive()
+                && _game.Nodes.TryGetValue("hub", out var thinHub))
+            {
+                live.Add("core-thin");
+                var thinPulse = 3.2f + 0.35f * Mathf.Abs(Mathf.Sin(Time.time * 8f));
+                EnsureRing("core-thin", thinHub, thinPulse, new Color(1f, 0.22f, 0.16f, 0.36f));
             }
             if (_game.WaveClearLive() && _game.Nodes.TryGetValue("hub", out var clearHub))
             {
@@ -1724,6 +1735,13 @@ namespace ColonyHaul
                         GUI.backgroundColor = new Color(0.12f, 0.42f, 0.22f, 0.92f);
                         GUI.Box(new Rect(hx - 46f, hy - 18f, 92f, 16f),
                             "CLEAR " + GameSim.CeilSecs(_game.NextWaveIn) + "s");
+                        GUI.backgroundColor = Color.white;
+                    }
+                    else if (_game.CoreThinLive())
+                    {
+                        GUI.backgroundColor = new Color(0.62f, 0.1f, 0.08f, 0.92f);
+                        GUI.Box(new Rect(hx - 46f, hy - 18f, 92f, 16f),
+                            _game.CoreThinChip() ?? "THIN");
                         GUI.backgroundColor = Color.white;
                     }
                     else if (_game.L2ReadyWorld())

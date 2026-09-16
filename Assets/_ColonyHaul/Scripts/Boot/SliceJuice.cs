@@ -214,6 +214,14 @@ namespace ColonyHaul
             Punch(0.16f);
         }
 
+        public void CoreThin()
+        {
+            SpawnPip(0f, 0f, "THIN", new Color(1f, 0.32f, 0.22f));
+            Spokes(0f, 0f, 1.9f, new Color(1f, 0.28f, 0.18f));
+            SpawnBurst(0f, 0f, new Color(1f, 0.22f, 0.16f, 0.5f), 4.0f);
+            Punch(0.7f);
+        }
+
         public void HubHit(bool braced)
         {
             if (braced)

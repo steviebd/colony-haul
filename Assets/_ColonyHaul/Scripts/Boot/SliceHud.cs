@@ -98,6 +98,7 @@ namespace ColonyHaul
             else if (game.GunsDry()) GUI.contentColor = new Color(1f, 0.48f, 0.22f);
             else if (game.WaveClearLive()) GUI.contentColor = new Color(0.55f, 0.9f, 0.5f);
             else if (game.GunsLow()) GUI.contentColor = new Color(1f, 0.62f, 0.28f);
+            else if (game.CoreThinLive()) GUI.contentColor = new Color(1f, 0.32f, 0.22f);
             else if (game.OfflinePad() != null) GUI.contentColor = new Color(0.92f, 0.62f, 0.28f);
             else if (game.SittingStock() != null) GUI.contentColor = new Color(0.95f, 0.78f, 0.32f);
             else if (game.L2Ready()) GUI.contentColor = new Color(1f, 0.86f, 0.42f);
@@ -124,6 +125,8 @@ namespace ColonyHaul
                 subCopy = game.WaveClearTitle();
             else if (game.GunsLow())
                 subCopy = game.GunsLowTitle();
+            else if (game.CoreThinLive())
+                subCopy = game.CoreThinTitle();
             else if (game.OfflinePad() != null)
                 subCopy = game.OfflineTitle();
             else if (game.SittingStock() != null)
@@ -219,6 +222,7 @@ namespace ColonyHaul
             else if (dry != null) raidRead = dry;
             else if (clear != null) raidRead = clear;
             else if (game.GunsLowCopy() != null) raidRead = game.GunsLowCopy();
+            else if (game.CoreThinCopy() != null) raidRead = game.CoreThinCopy();
             else if (game.L2ReadyCopy() != null) raidRead = game.L2ReadyCopy();
             else if (game.OpenChokeCopy() != null) raidRead = game.OpenChokeCopy();
             else if (brace != null) raidRead = brace;

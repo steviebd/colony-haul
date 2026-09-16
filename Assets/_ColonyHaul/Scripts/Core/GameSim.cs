@@ -63,6 +63,47 @@ namespace ColonyHaul
 
         public bool CoreThin => HubHp < 72f;
 
+        public bool CoreThinLive()
+        {
+            return Phase == Phase.Playing && CoreThin && RaidLive;
+        }
+
+        public string CoreThinTitle()
+        {
+            if (!CoreThinLive()) return null;
+            if (Surging) return "CORE THIN · BRACE shrugs · " + CeilSecs(SurgeLeft) + "s";
+            var h = BraceInbound();
+            if (h != null)
+            {
+                var eta = HaulEtaToHub(h);
+                if (eta <= 0.35f) return "CORE THIN · BRACE NOW";
+                return "CORE THIN · BRACE IN " + CeilSecs(eta) + "s";
+            }
+            if (HoldReady && HoldOrder != HoldOrder.Power)
+                return "CORE THIN · H for GUNS · haul braces";
+            return "CORE THIN · haul braces the Hub";
+        }
+
+        public string CoreThinCopy()
+        {
+            if (!CoreThinLive()) return null;
+            if (Surging) return "CORE THIN — BRACE is up · keep hauls coming";
+            var h = BraceInbound();
+            if (h != null)
+            {
+                var eta = HaulEtaToHub(h);
+                if (eta <= 0.35f) return "CORE THIN — BRACE at the Hub";
+                return "CORE THIN — BRACE in " + CeilSecs(eta) + "s";
+            }
+            return "CORE THIN — Hub HP " + (int)Math.Ceiling(HubHp) + " · a haul braces it";
+        }
+
+        public string CoreThinChip()
+        {
+            if (!CoreThinLive()) return null;
+            return "THIN";
+        }
+
         public bool CrewStretched()
         {
             return ProducerCount() > WorkersTotal;
