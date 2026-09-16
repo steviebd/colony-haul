@@ -651,6 +651,83 @@ namespace ColonyHaul
             return "GUNS DRY — haul Power now";
         }
 
+        public bool ClosingOnHub(Enemy e)
+        {
+            if (e == null || ChewingHub(e)) return false;
+            if (e.Path.Count == 0) return false;
+            return e.Path[0] == "hub";
+        }
+
+        public float DistToHub(Enemy e)
+        {
+            if (e == null || !Nodes.TryGetValue("hub", out var hub)) return float.PositiveInfinity;
+            var dx = e.X - hub.X;
+            var dz = e.Z - hub.Z;
+            return (float)Math.Sqrt(dx * dx + dz * dz);
+        }
+
+        public bool ClosingImminent(Enemy e)
+        {
+            return ClosingOnHub(e) && DistToHub(e) <= 2.4f;
+        }
+
+        public int HubClosers()
+        {
+            var n = 0;
+            foreach (var en in Enemies)
+                if (ClosingOnHub(en)) n++;
+            return n;
+        }
+
+        public Enemy HottestCloser()
+        {
+            Enemy best = null;
+            var bestD = float.PositiveInfinity;
+            foreach (var en in Enemies)
+            {
+                if (!ClosingOnHub(en)) continue;
+                var d = DistToHub(en);
+                if (d < bestD)
+                {
+                    bestD = d;
+                    best = en;
+                }
+            }
+            return best;
+        }
+
+        public bool AnyCloseImminent()
+        {
+            foreach (var en in Enemies)
+                if (ClosingImminent(en)) return true;
+            return false;
+        }
+
+        public string CoreBoundTitle()
+        {
+            var n = HubClosers();
+            if (n <= 0) return null;
+            if (AnyCloseImminent() && BraceInbound() != null)
+                return "CORE BOUND · BRACE haul racing them";
+            if (AnyCloseImminent()) return "CORE BOUND · at the pad";
+            var h = BraceInbound();
+            if (h != null)
+            {
+                var eta = HaulEtaToHub(h);
+                if (eta <= 0.35f) return "CORE BOUND · BRACE NOW";
+                return "CORE BOUND · BRACE IN " + CeilSecs(eta) + "s";
+            }
+            return "CORE BOUND · " + n + " on the last rail";
+        }
+
+        public string CoreBoundCopy()
+        {
+            var n = HubClosers();
+            if (n <= 0) return null;
+            if (AnyCloseImminent()) return "RAID at the Hub pad · " + n + " closing";
+            return n + (n == 1 ? " raider" : " raiders") + " on the last hop to Hub";
+        }
+
         public static float RangeOf(BuildingType type)
         {
             switch (type)

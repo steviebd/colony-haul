@@ -94,6 +94,7 @@ namespace ColonyHaul
             if (cut != null) GUI.contentColor = new Color(1f, 0.55f, 0.32f);
             else if (game.HubChewers() > 0) GUI.contentColor = new Color(1f, 0.38f, 0.28f);
             else if (game.HottestRailThreat() != null) GUI.contentColor = new Color(0.95f, 0.42f, 0.78f);
+            else if (game.HubClosers() > 0) GUI.contentColor = new Color(1f, 0.32f, 0.18f);
             else if (game.GunsDry()) GUI.contentColor = new Color(1f, 0.48f, 0.22f);
             else if (game.Surging) GUI.contentColor = new Color(0.45f, 0.9f, 1f);
             else if (game.BraceInbound() != null) GUI.contentColor = new Color(0.45f, 0.9f, 1f);
@@ -107,6 +108,8 @@ namespace ColonyHaul
                 subCopy = game.HubChewTitle();
             else if (game.HottestRailThreat() != null)
                 subCopy = game.RailThreatTitle();
+            else if (game.HubClosers() > 0)
+                subCopy = game.CoreBoundTitle();
             else if (game.GunsDry())
                 subCopy = game.GunsDryTitle();
             else if (game.Surging)
@@ -176,11 +179,13 @@ namespace ColonyHaul
             GUI.Label(new Rect(Screen.width - 280, 192, 256, 20), game.HoldOrderCopy());
             var chew = game.HubChewCopy();
             var threat = game.RailThreatCopy();
+            var bound = game.CoreBoundCopy();
             var dry = game.GunsDryCopy();
             var brace = game.BraceInboundCopy();
             string raidRead;
             if (chew != null) raidRead = chew;
             else if (threat != null) raidRead = threat;
+            else if (bound != null) raidRead = bound;
             else if (dry != null) raidRead = dry;
             else if (brace != null) raidRead = brace;
             else if (game.LiveTowers() > 0 || game.RaidLive) raidRead = game.GunLockCopy();

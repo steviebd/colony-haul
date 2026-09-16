@@ -28,6 +28,7 @@ namespace ColonyHaul
         readonly Dictionary<string, Transform> _shadows = new Dictionary<string, Transform>();
         readonly Dictionary<string, LineRenderer> _locks = new Dictionary<string, LineRenderer>();
         readonly Dictionary<string, LineRenderer> _chews = new Dictionary<string, LineRenderer>();
+        readonly Dictionary<string, LineRenderer> _closes = new Dictionary<string, LineRenderer>();
         readonly Dictionary<string, Transform> _forecasts = new Dictionary<string, Transform>();
         readonly Dictionary<string, Transform> _cargoTags = new Dictionary<string, Transform>();
         readonly HashSet<string> _stuckShown = new HashSet<string>();
@@ -38,6 +39,8 @@ namespace ColonyHaul
         LineRenderer _braceLine;
         LineRenderer _powerLine;
         bool _chewPinged;
+        bool _closePinged;
+        bool _atPadPinged;
         Transform _root;
         Camera _cam;
         float _acc;
@@ -109,6 +112,7 @@ namespace ColonyHaul
             ClearIntents();
             ClearLocks();
             ClearChews();
+            ClearCloses();
             ClearForecasts();
             ClearCargoTags();
             ClearBraceLine();
@@ -123,6 +127,8 @@ namespace ColonyHaul
             _cutSoonPinged.Clear();
             _powerPinged.Clear();
             _chewPinged = false;
+            _closePinged = false;
+            _atPadPinged = false;
             _juice.CutAlarm(false);
             _buildingScale.Clear();
             _acc = 0f;
@@ -178,6 +184,7 @@ namespace ColonyHaul
             PingChew();
             PingRailThreat();
             PingGunsDry();
+            PingCoreBound();
             _juice.Tick(_cam, events);
             _hubFlash = Mathf.Max(0f, _hubFlash - Time.deltaTime);
             SyncAtmosphere();
@@ -345,6 +352,8 @@ namespace ColonyHaul
                 else if (n.Kind == NodeKind.Hub)
                     c = _game.HubChewers() > 0
                         ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(1f, 0.28f, 0.18f), pulse)
+                        : _game.HubClosers() > 0
+                        ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(1f, 0.32f, 0.18f), pulse)
                         : _game.GunsDry()
                         ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(1f, 0.48f, 0.18f), pulse)
                         : _game.HoldOrder == HoldOrder.Power
@@ -360,6 +369,7 @@ namespace ColonyHaul
                     MesaView.SetLabel(mark, cut != null && (cut.A == n.Id || cut.B == n.Id)
                         ? "SPLICE"
                         : _game.HubChewers() > 0 ? "CHEW"
+                        : _game.HubClosers() > 0 ? (_game.AnyCloseImminent() ? "PAD" : "IN")
                         : _game.GunsDry() ? "DRY"
                         : _game.HubRaising ? "L2"
                         : _game.HoldOrder == HoldOrder.Power ? "GUNS"
@@ -423,6 +433,8 @@ namespace ColonyHaul
                     tint = Color.Lerp(tint, new Color(0.95f, 0.22f, 0.18f), 0.4f + 0.2f * pulse);
                 if (b.Type == BuildingType.Hub && _game.HubChewers() > 0)
                     tint = Color.Lerp(tint, new Color(1f, 0.18f, 0.12f), 0.45f + 0.2f * pulse);
+                else if (b.Type == BuildingType.Hub && _game.HubClosers() > 0)
+                    tint = Color.Lerp(tint, new Color(1f, 0.32f, 0.16f), 0.4f + 0.2f * pulse);
                 else if (b.Type == BuildingType.Hub && _game.GunsDry())
                     tint = Color.Lerp(tint, new Color(1f, 0.48f, 0.18f), 0.4f + 0.2f * pulse);
                 if (b.Type == BuildingType.Hub && _hubFlash > 0f)
@@ -517,6 +529,7 @@ namespace ColonyHaul
             SyncRunnerIntents();
             SyncGunLocks();
             SyncChews();
+            SyncCloses();
             SyncBraceLine();
             SyncPowerLine();
             SyncForecasts();
@@ -608,12 +621,16 @@ namespace ColonyHaul
                     c = Color.Lerp(c, Color.white, 0.28f + 0.12f * Mathf.Abs(Mathf.Sin(Time.time * 11f)));
                 if (_game.ChewingHub(e))
                     c = Color.Lerp(c, new Color(1f, 0.55f, 0.2f), 0.4f + 0.2f * Mathf.Abs(Mathf.Sin(Time.time * 10f)));
+                else if (_game.ClosingOnHub(e))
+                    c = Color.Lerp(c, new Color(1f, 0.32f, 0.16f), 0.35f + 0.2f * Mathf.Abs(Mathf.Sin(Time.time * 9f)));
                 if (e.Flash > 0f) c = Color.white;
                 MesaView.Tint(tr.gameObject, c);
                 if (e.Type == EnemyType.Runner)
                     tr.localScale = MesaView.EnemyScale(e.Type) * (1f + 0.08f * Mathf.Abs(Mathf.Sin(Time.time * 14f)));
                 else if (_game.ChewingHub(e))
                     tr.localScale = MesaView.EnemyScale(e.Type) * (1f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 10f)));
+                else if (_game.ClosingOnHub(e))
+                    tr.localScale = MesaView.EnemyScale(e.Type) * (1f + 0.08f * Mathf.Abs(Mathf.Sin(Time.time * 9f)));
             }
             Prune(_enemies, live);
         }
@@ -689,6 +706,14 @@ namespace ColonyHaul
                 live.Add("chew-ring");
                 var chewPulse = 2.4f + 0.35f * Mathf.Abs(Mathf.Sin(Time.time * 9f));
                 EnsureRing("chew-ring", chewHub, chewPulse, new Color(1f, 0.28f, 0.16f, 0.4f));
+            }
+            if (_game.HubClosers() > 0 && _game.HubChewers() <= 0 && _game.Nodes.TryGetValue("hub", out var boundHub))
+            {
+                live.Add("core-bound");
+                var boundPulse = _game.AnyCloseImminent()
+                    ? 2.8f + 0.4f * Mathf.Abs(Mathf.Sin(Time.time * 10f))
+                    : 3.4f + 0.25f * Mathf.Abs(Mathf.Sin(Time.time * 7f));
+                EnsureRing("core-bound", boundHub, boundPulse, new Color(1f, 0.32f, 0.16f, 0.36f));
             }
             if (_game.GunsDry() && _game.Nodes.TryGetValue("hub", out var dryHub))
             {
@@ -1009,6 +1034,30 @@ namespace ColonyHaul
             _juice.PowerComing(h.X, h.Z);
         }
 
+        void PingCoreBound()
+        {
+            var n = _game.HubClosers();
+            if (n <= 0)
+            {
+                _closePinged = false;
+                _atPadPinged = false;
+                return;
+            }
+            var hot = _game.HottestCloser();
+            var hx = hot != null ? hot.X : 0f;
+            var hz = hot != null ? hot.Z : 0f;
+            if (!_closePinged)
+            {
+                _closePinged = true;
+                _juice.CoreBound(hx, hz, false);
+            }
+            if (_game.AnyCloseImminent() && !_atPadPinged)
+            {
+                _atPadPinged = true;
+                _juice.CoreBound(hx, hz, true);
+            }
+        }
+
         void SyncGunLocks()
         {
             var live = new HashSet<string>();
@@ -1079,6 +1128,40 @@ namespace ColonyHaul
             {
                 if (_chews[id] != null) Destroy(_chews[id].gameObject);
                 _chews.Remove(id);
+            }
+        }
+
+        void SyncCloses()
+        {
+            var live = new HashSet<string>();
+            foreach (var e in _game.Enemies)
+            {
+                if (!_game.ClosingOnHub(e)) continue;
+                live.Add(e.Id);
+                if (!_closes.TryGetValue(e.Id, out var lr))
+                {
+                    lr = MesaView.MakeLine(_root, "close", 0.08f, 0.02f);
+                    _closes[e.Id] = lr;
+                }
+                lr.positionCount = 2;
+                lr.SetPosition(0, new Vector3(e.X, 0.9f, e.Z));
+                lr.SetPosition(1, new Vector3(0f, 1.05f, 0f));
+                var a = 0.45f + 0.35f * Mathf.Abs(Mathf.Sin(Time.time * 10f));
+                var imminent = _game.ClosingImminent(e);
+                var color = imminent
+                    ? new Color(1f, 0.28f, 0.14f, a)
+                    : new Color(1f, 0.42f, 0.22f, a);
+                lr.startColor = color;
+                lr.endColor = color;
+                lr.enabled = true;
+            }
+            var dead = new List<string>();
+            foreach (var kv in _closes)
+                if (!live.Contains(kv.Key)) dead.Add(kv.Key);
+            foreach (var id in dead)
+            {
+                if (_closes[id] != null) Destroy(_closes[id].gameObject);
+                _closes.Remove(id);
             }
         }
 
@@ -1225,6 +1308,13 @@ namespace ColonyHaul
             _chews.Clear();
         }
 
+        void ClearCloses()
+        {
+            foreach (var lr in _closes.Values)
+                if (lr != null) Destroy(lr.gameObject);
+            _closes.Clear();
+        }
+
         void ClearForecasts()
         {
             ClearMap(_forecasts);
@@ -1297,6 +1387,13 @@ namespace ColonyHaul
                             _game.Surging ? "SHRUG " + chewers : "CHEW " + chewers);
                         GUI.backgroundColor = Color.white;
                     }
+                    else if (_game.HubClosers() > 0)
+                    {
+                        GUI.backgroundColor = new Color(0.72f, 0.14f, 0.08f, 0.92f);
+                        GUI.Box(new Rect(hx - 46f, hy - 18f, 92f, 16f),
+                            _game.AnyCloseImminent() ? "PAD" : "IN " + _game.HubClosers());
+                        GUI.backgroundColor = Color.white;
+                    }
                     else if (_game.GunsDry())
                     {
                         GUI.backgroundColor = new Color(0.72f, 0.28f, 0.08f, 0.92f);
@@ -1330,6 +1427,18 @@ namespace ColonyHaul
                     var chip = eta <= 0.35f ? "POWER NOW" : "POWER " + GameSim.CeilSecs(eta) + "s";
                     GUI.backgroundColor = new Color(0.72f, 0.28f, 0.08f, 0.9f);
                     GUI.Box(new Rect(psp.x - 46f, Screen.height - psp.y - 14f, 92f, 22f), chip);
+                    GUI.backgroundColor = Color.white;
+                }
+            }
+            var closer = _game.HottestCloser();
+            if (closer != null)
+            {
+                var csp = _cam.WorldToScreenPoint(new Vector3(closer.X, 1.5f, closer.Z));
+                if (csp.z > 0f)
+                {
+                    GUI.backgroundColor = new Color(0.72f, 0.14f, 0.08f, 0.9f);
+                    GUI.Box(new Rect(csp.x - 40f, Screen.height - csp.y - 14f, 80f, 22f),
+                        _game.ClosingImminent(closer) ? "PAD" : "IN");
                     GUI.backgroundColor = Color.white;
                 }
             }

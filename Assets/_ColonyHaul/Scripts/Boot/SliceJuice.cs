@@ -139,6 +139,17 @@ namespace ColonyHaul
             SpawnBurst(x, z, new Color(1f, 0.48f, 0.18f, 0.4f), 2.6f);
         }
 
+        public void CoreBound(float x, float z, bool imminent)
+        {
+            SpawnPip(x, z, imminent ? "PAD" : "BOUND", new Color(1f, 0.32f, 0.18f));
+            Spokes(x, z, imminent ? 1.7f : 1.3f, new Color(1f, 0.32f, 0.18f));
+            if (imminent)
+            {
+                SpawnBurst(x, z, new Color(1f, 0.28f, 0.16f, 0.5f), 2.8f);
+                Punch(0.42f);
+            }
+        }
+
         public void HubHit(bool braced)
         {
             if (braced)
