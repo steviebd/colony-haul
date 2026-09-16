@@ -34,12 +34,25 @@ Scenes are thin on purpose. `VerticalSliceBootstrap` builds the dusk mesa, pads,
 - Place a **Farm** on the south mesa pad (it pulses), then click the **Hub** to lay mag-rail. Haulers only move on live rails.
 - Keys `1–7`: Farm, Mine, Power, Route, Kinetic, Splash, Barrier. `U` Hub L2. `D` demo. `R` restart.
 - Left tray is clickable. Splash stays locked until Hub L2.
-- Top-right logistics strip: loaded vs idle haulers, live/inbound raiders, next-wave lane copy, and a gun-fire fuse. HAUL CUT shows splice countdown.
-- Opening coach: 1 Farm (south pad) → 2 rail to Hub → 3 first hauls. Farm/Route tray buttons pulse until that beat is done.
-- Guns draw range rings. Route mode shows a ghost rail. Enemies show HP. Deposits float scrap/ore pips. Pads stack a buffer pillar as ore/food/power sits uncollected.
+- Top-right logistics strip: loaded vs idle haulers, E/N/W lane counts (hottest marked `*`), next-wave copy, gun-fire fuse, and a larder clock (`~Ns of food`). HAUL CUT shows splice countdown.
+- Opening coach: 1 Farm (south pad) → 2 rail to Hub → 3 first hauls. After that, a mid-watch coach names the next readable call (splice, offline pad, east kinetic, brownout, Hub L2, thin larder, hottest ungunned choke, barrier, splash west).
+- Tray: opening Farm/Route still pulse. Mid-watch pulses the called tool. Short-stock tools dim with `· short`. Splash stays locked until Hub L2.
+- Guns draw range rings. Route mode shows a ghost rail. Loaded haulers paint a cargo-colored trail along the remaining rail. Slowed raiders tint cyan. Hottest choke glows and labels EAST/NORTH/WEST pressure. Hub HP sits as a world bar over the core. Enemies show HP. Kills punch the camera and float scrap. Pads stack a buffer pillar as ore/food/power sits uncollected.
 - Win: survive 6 waves **and** Hub Level 2. Lose: Hub HP 0, or food stays at 0 for 14s.
 - Runners cut rails. Route is auto-armed — click the glowing pad to splice.
 - Brownout: guns try to fire with a dry pylon. Keep Power on live rails.
+
+### Pass 3 Unity-first (presentation only)
+
+Tick, waves, and balance are unchanged. Seed-7 demo still wins. This pass makes mid-game readable:
+
+1. Mid-watch coach after the Farm-Route-Hub opening — splice, offline pad, east kinetic, brownout, Hub L2, thin larder, hottest ungunned choke, barrier, splash west.
+2. Logistics: E/N/W lane counts with hottest marked, inbound raiders, gun fuse, larder clock.
+3. Tray affordability (`· short`) and pulse on the called tool.
+4. Cargo haul trails on loaded haulers.
+5. Slowed raiders tint cyan; hottest choke glows with EAST/NORTH/WEST pressure.
+6. World-space Hub HP bar.
+7. Kill punch + scrap pip.
 
 Folder layout: `Assets/_ColonyHaul/{Scripts,Art,Prefabs,Scenes,UI,Audio}`.
 

@@ -10,6 +10,19 @@ namespace ColonyHaul
     public enum BuildingType { Hub, Depot, Mine, Farm, Power, Kinetic, Splash }
     public enum EnemyType { Grunt, Brute, Runner }
 
+    public sealed class WatchCall
+    {
+        public string Copy;
+        public Tool Pulse;
+    }
+
+    public struct LaneThreat
+    {
+        public int East;
+        public int North;
+        public int West;
+    }
+
     public sealed class SimNode
     {
         public string Id;

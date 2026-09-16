@@ -137,6 +137,9 @@ namespace ColonyHaul
                     break;
                 case SimEventKind.Death:
                     SpawnPip(ev.X, ev.Z, "+" + Mathf.RoundToInt(ev.Amount) + " scrap", new Color(0.94f, 0.64f, 0.23f));
+                    AddTracer(ev.X, ev.Z + 0.4f, 1.6f, ev.X, ev.Z, 0.55f, new Color(1f, 0.82f, 0.35f), 0.16f);
+                    Punch(0.55f);
+                    _audio.PlayOneShot(_shot, 0.28f);
                     break;
                 case SimEventKind.WarnFood:
                     break;
@@ -223,12 +226,17 @@ namespace ColonyHaul
 
         void AddTracer(SimEvent ev, Color color)
         {
+            AddTracer(ev.FromX, ev.FromZ, 1.2f, ev.ToX, ev.ToZ, 0.7f, color, 0.09f);
+        }
+
+        void AddTracer(float ax, float az, float ay, float bx, float bz, float by, Color color, float life)
+        {
             _tracers.Add(new Tracer
             {
-                A = new Vector3(ev.FromX, 1.2f, ev.FromZ),
-                B = new Vector3(ev.ToX, 0.7f, ev.ToZ),
+                A = new Vector3(ax, ay, az),
+                B = new Vector3(bx, by, bz),
                 Color = color,
-                Until = Time.time + 0.09f
+                Until = Time.time + life
             });
         }
 

@@ -89,15 +89,20 @@ namespace ColonyHaul
         static void DrawLogistics(GameSim game)
         {
             GUI.backgroundColor = new Color(0.05f, 0.09f, 0.11f, 0.88f);
-            GUI.Box(new Rect(Screen.width - 292, 88, 280, 90), "");
+            GUI.Box(new Rect(Screen.width - 292, 88, 280, 128), "");
             GUI.backgroundColor = Color.white;
             var cut = game.ActiveCut();
             var haul = cut != null
                 ? "HAUL CUT — splice · " + GameSim.CeilSecs(cut.SabotagedUntil - game.T) + "s left"
                 : "Haul " + game.HaulersLoaded + " loaded · " + (game.Haulers.Count - game.HaulersLoaded) + " idle";
             GUI.Label(new Rect(Screen.width - 280, 92, 256, 20), haul);
+            var lanes = game.Lanes();
+            var hot = game.HottestLane();
             GUI.Label(new Rect(Screen.width - 280, 112, 256, 20),
-                "Raid " + game.Enemies.Count + " live · " + game.IncomingRaiders + " inbound");
+                LaneChip("E", lanes.East, hot == "east") + "  " +
+                LaneChip("N", lanes.North, hot == "north") + "  " +
+                LaneChip("W", lanes.West, hot == "west") +
+                "  · " + game.IncomingRaiders + " inbound");
             GUI.Label(new Rect(Screen.width - 280, 132, 256, 20), game.NextWaveCopy());
             var towers = game.LiveTowers();
             string guns;
@@ -105,21 +110,51 @@ namespace ColonyHaul
             else if (game.PowerBrownout) guns = "GUNS DRY — haul Power now";
             else guns = "Guns ~" + GameSim.CeilSecs(game.GunSecondsLeft()) + "s of fire · " + towers + " live";
             GUI.Label(new Rect(Screen.width - 280, 152, 256, 20), guns);
+            GUI.Label(new Rect(Screen.width - 280, 172, 256, 20), LarderCopy(game));
+        }
+
+        static string LaneChip(string tag, int n, bool hot)
+        {
+            return (hot ? tag + "*" : tag) + n;
+        }
+
+        static string LarderCopy(GameSim game)
+        {
+            if (game.StarveTimer > 0.2f)
+                return "STARVING · " + GameSim.CeilSecs(game.StarveSecondsLeft()) + "s to fail";
+            var secs = GameSim.CeilSecs(game.FoodSecondsLeft());
+            if (game.Food < 11f) return "LARDER THIN · ~" + secs + "s of food";
+            return "Larder ~" + secs + "s of food";
         }
 
         static void DrawCoach(GameSim game)
         {
-            var copy = game.OpeningCoach();
-            if (string.IsNullOrEmpty(copy) || game.Phase != Phase.Playing) return;
-            var step = game.OpeningStep();
-            GUI.backgroundColor = new Color(0.07f, 0.16f, 0.12f, 0.92f);
-            GUI.Box(new Rect(Screen.width / 2 - 230, 88, 460, 58), "");
+            if (game.Phase != Phase.Playing) return;
+            var opening = game.OpeningCoach();
+            if (!string.IsNullOrEmpty(opening))
+            {
+                var step = game.OpeningStep();
+                GUI.backgroundColor = new Color(0.07f, 0.16f, 0.12f, 0.92f);
+                GUI.Box(new Rect(Screen.width / 2 - 230, 88, 460, 58), "");
+                GUI.backgroundColor = Color.white;
+                GUI.Label(new Rect(Screen.width / 2 - 214, 92, 428, 22), opening);
+                GUI.Label(new Rect(Screen.width / 2 - 214, 114, 428, 22),
+                    (step >= 1 ? "✓" : "·") + " Farm   " +
+                    (step >= 2 ? "✓" : "·") + " Rail to Hub   " +
+                    (step >= 3 ? "✓" : "·") + " First hauls");
+                return;
+            }
+            var watch = game.MidWatch();
+            if (watch == null || string.IsNullOrEmpty(watch.Copy)) return;
+            GUI.backgroundColor = new Color(0.07f, 0.14f, 0.18f, 0.92f);
+            GUI.Box(new Rect(Screen.width / 2 - 250, 88, 500, 58), "");
             GUI.backgroundColor = Color.white;
-            GUI.Label(new Rect(Screen.width / 2 - 214, 92, 428, 22), copy);
-            GUI.Label(new Rect(Screen.width / 2 - 214, 114, 428, 22),
-                (step >= 1 ? "✓" : "·") + " Farm   " +
-                (step >= 2 ? "✓" : "·") + " Rail to Hub   " +
-                (step >= 3 ? "✓" : "·") + " First hauls");
+            GUI.Label(new Rect(Screen.width / 2 - 234, 92, 468, 22), "WATCH  " + watch.Copy);
+            var lanes = game.Lanes();
+            GUI.Label(new Rect(Screen.width / 2 - 234, 114, 468, 22),
+                "Hot " + game.HottestLane().ToUpperInvariant() +
+                "  ·  E" + lanes.East + " N" + lanes.North + " W" + lanes.West +
+                "  ·  " + LarderCopy(game));
         }
 
         static void Chip(float x, float y, string label, string value, Color color)
@@ -142,6 +177,8 @@ namespace ColonyHaul
             GUI.backgroundColor = Color.white;
             var y = 100f;
             var gate = game.OpeningGate();
+            var watch = game.MidWatch();
+            var pulseTool = watch != null ? watch.Pulse : Tool.None;
             var pulse = 0.55f + 0.45f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * 4f));
             foreach (var tool in Tools)
             {
@@ -149,13 +186,19 @@ namespace ColonyHaul
                 var selected = game.SelectedTool == tool.Tool;
                 var coachFarm = gate == "farm" && tool.Tool == Tool.Farm;
                 var coachRoute = gate == "route" && tool.Tool == Tool.Route;
+                var midPulse = pulseTool == tool.Tool && pulseTool != Tool.None && gate == null;
+                var shortStock = !locked && !game.CanAfford(tool.Tool);
                 GUI.backgroundColor = selected ? new Color(0.25f, 0.85f, 0.8f) : new Color(0.12f, 0.18f, 0.2f);
+                if (shortStock) GUI.backgroundColor = new Color(0.1f, 0.11f, 0.12f);
                 if (coachFarm) GUI.backgroundColor = new Color(0.2f * pulse, 0.85f * pulse, 0.38f);
                 if (coachRoute) GUI.backgroundColor = new Color(0.95f * pulse, 0.82f * pulse, 0.28f);
+                if (midPulse) GUI.backgroundColor = PulseColor(tool.Tool, pulse);
                 if (locked) GUI.backgroundColor = new Color(0.12f, 0.12f, 0.12f);
                 var label = (selected ? "▶ " : "") + tool.Label;
                 if (coachFarm) label = "▶ 1 Farm — south pad";
                 if (coachRoute) label = "▶ 2 Route — click Hub";
+                if (midPulse) label = "▶ " + tool.Label;
+                if (shortStock && !midPulse) label = tool.Label + "  · short";
                 if (locked) label = "Splash  · locked Hub L2";
                 if (GUI.Button(new Rect(20, y, 204, 40), label + "\n" + tool.Hint))
                 {
@@ -166,6 +209,23 @@ namespace ColonyHaul
                 y += 44;
             }
             GUI.Label(new Rect(20, y + 8, 200, 40), "1–7 tools · U Hub L2\nD demo · R restart");
+        }
+
+        static Color PulseColor(Tool tool, float pulse)
+        {
+            switch (tool)
+            {
+                case Tool.Farm: return new Color(0.2f * pulse, 0.85f * pulse, 0.38f);
+                case Tool.Mine: return new Color(0.94f * pulse, 0.64f * pulse, 0.23f);
+                case Tool.Power: return new Color(0.32f * pulse, 0.68f * pulse, 0.94f);
+                case Tool.Route: return new Color(0.95f * pulse, 0.82f * pulse, 0.28f);
+                case Tool.Kinetic: return new Color(0.45f * pulse, 0.9f * pulse, 0.88f);
+                case Tool.Splash: return new Color(0.94f * pulse, 0.63f * pulse, 0.38f);
+                case Tool.Barrier: return new Color(0.95f * pulse, 0.32f * pulse, 0.34f);
+                case Tool.Upgrade: return new Color(0.9f * pulse, 0.78f * pulse, 0.5f);
+                case Tool.None: return new Color(0.12f, 0.18f, 0.2f);
+                default: throw new ArgumentOutOfRangeException(nameof(tool), tool, null);
+            }
         }
 
         void DrawHint(GameSim game)

@@ -23,6 +23,7 @@ namespace ColonyHaul
         readonly Dictionary<string, Transform> _rings = new Dictionary<string, Transform>();
         readonly Dictionary<string, Transform> _ghosts = new Dictionary<string, Transform>();
         readonly Dictionary<string, Transform> _buffers = new Dictionary<string, Transform>();
+        readonly Dictionary<string, LineRenderer> _trails = new Dictionary<string, LineRenderer>();
         Transform _root;
         Camera _cam;
         float _acc;
@@ -74,7 +75,7 @@ namespace ColonyHaul
             {
                 if (child.name == "Sun" || child.name == "Fill" || child.name == "Mesa" || child.name == "Cliff" || child.name == "HubRing")
                     continue;
-                if (child.name == "tracer" || child.name == "pip" || child.name == "ring" || child.name == "ghost" || child.name == "buffer") continue;
+                if (child.name == "tracer" || child.name == "pip" || child.name == "ring" || child.name == "ghost" || child.name == "buffer" || child.name == "trail") continue;
             }
             ClearMap(_buildings);
             ClearMap(_haulers);
@@ -85,6 +86,7 @@ namespace ColonyHaul
             ClearMap(_ghosts);
             ClearMap(_buffers);
             ClearMap(_nodes);
+            ClearTrails();
             _hubFlash = 0f;
             _buildingScale.Clear();
             _acc = 0f;
@@ -218,11 +220,20 @@ namespace ColonyHaul
                 var inbound = n.Kind == NodeKind.Spawn &&
                     (_game.IncomingAt(n.Id) > 0 ||
                      (Array.IndexOf(_game.NextWaveSpawns(), n.Id) >= 0 && _game.NextWaveIn < 10f));
+                var hotLane = _game.HottestLane();
+                var chokeHot = n.Kind == NodeKind.Choke &&
+                    ((n.Id == "choke_e" && hotLane == "east") ||
+                     (n.Id == "choke_n" && hotLane == "north") ||
+                     (n.Id == "choke_w" && hotLane == "west"));
+                var near = n.Kind == NodeKind.Choke ? _game.EnemiesNear(n.Id, 4.8f) : 0;
                 Color c;
                 if (inbound) c = MesaView.Spawn * pulse;
                 else if (n.Kind == NodeKind.Spawn) c = MesaView.Spawn;
                 else if (farmGlow) c = MesaView.PadFarm * pulse;
                 else if (hubGlow || routeGlow) c = MesaView.PadRoute * pulse;
+                else if (n.Kind == NodeKind.Choke && (chokeHot || near > 0))
+                    c = Color.Lerp(new Color(0.62f, 0.52f, 0.4f), MesaView.Spawn * pulse,
+                        Mathf.Clamp01(near / 4f + (chokeHot ? 0.35f : 0f)));
                 else if (n.Kind == NodeKind.Hub) c = new Color(0.9f, 0.78f, 0.58f);
                 else c = MesaView.PadIdle;
                 MesaView.Tint(mark.gameObject, c);
@@ -232,6 +243,8 @@ namespace ColonyHaul
                     MesaView.SetLabel(mark, hubGlow ? "2 HUB" : "HUB");
                 else if (n.Kind == NodeKind.Spawn)
                     MesaView.SetLabel(mark, inbound ? "IN " + _game.IncomingAt(n.Id) : "RAID");
+                else if (n.Kind == NodeKind.Choke)
+                    MesaView.SetLabel(mark, ChokeLabel(n.Id, near, chokeHot));
             }
 
             foreach (var b in _game.Buildings.Values)
@@ -311,7 +324,22 @@ namespace ColonyHaul
             }
 
             SyncHaulers();
+            SyncTrails();
             SyncEnemies();
+        }
+
+        static string ChokeLabel(string id, int near, bool hot)
+        {
+            string tag;
+            switch (id)
+            {
+                case "choke_e": tag = "EAST"; break;
+                case "choke_n": tag = "NORTH"; break;
+                case "choke_w": tag = "WEST"; break;
+                default: tag = "GUN"; break;
+            }
+            if (near > 0) return (hot ? "*" : "") + tag + " " + near;
+            return hot ? "*" + tag : tag;
         }
 
         void SyncHaulers()
@@ -359,6 +387,8 @@ namespace ColonyHaul
                 }
                 tr.position = new Vector3(e.X, 0.62f, e.Z);
                 var c = MesaView.EnemyColor(e.Type);
+                if (e.SlowUntil > _game.T)
+                    c = Color.Lerp(c, new Color(0.35f, 0.88f, 1f), 0.62f);
                 if (e.Flash > 0f) c = Color.white;
                 MesaView.Tint(tr.gameObject, c);
             }
@@ -476,7 +506,60 @@ namespace ColonyHaul
             Prune(_buffers, live);
         }
 
-        void DrawEnemyHp()
+        void SyncTrails()
+        {
+            var live = new HashSet<string>();
+            foreach (var h in _game.Haulers)
+            {
+                if (h.CargoAmount <= 0 || h.Path.Count == 0) continue;
+                live.Add(h.Id);
+                if (!_trails.TryGetValue(h.Id, out var lr))
+                {
+                    var go = new GameObject("trail");
+                    go.transform.SetParent(_root, false);
+                    lr = go.AddComponent<LineRenderer>();
+                    lr.useWorldSpace = true;
+                    lr.startWidth = 0.11f;
+                    lr.endWidth = 0.03f;
+                    var shader = Shader.Find("Hidden/Internal-Colored")
+                        ?? Shader.Find("Sprites/Default")
+                        ?? Shader.Find("Unlit/Color")
+                        ?? Shader.Find("Standard");
+                    if (shader != null) lr.material = new Material(shader);
+                    _trails[h.Id] = lr;
+                }
+                lr.positionCount = 1 + h.Path.Count;
+                lr.SetPosition(0, new Vector3(h.X, 0.56f, h.Z));
+                for (var i = 0; i < h.Path.Count; i++)
+                {
+                    if (!_game.Nodes.TryGetValue(h.Path[i], out var node)) continue;
+                    lr.SetPosition(i + 1, new Vector3(node.X, 0.56f, node.Z));
+                }
+                var cargo = h.CargoKind == Resource.Food ? new Color(0.5f, 0.85f, 0.45f, 0.85f)
+                    : h.CargoKind == Resource.Power ? new Color(0.35f, 0.7f, 1f, 0.85f)
+                    : new Color(0.94f, 0.64f, 0.23f, 0.85f);
+                lr.startColor = cargo;
+                lr.endColor = cargo;
+                lr.enabled = true;
+            }
+            var dead = new List<string>();
+            foreach (var kv in _trails)
+                if (!live.Contains(kv.Key)) dead.Add(kv.Key);
+            foreach (var id in dead)
+            {
+                if (_trails[id] != null) Destroy(_trails[id].gameObject);
+                _trails.Remove(id);
+            }
+        }
+
+        void ClearTrails()
+        {
+            foreach (var lr in _trails.Values)
+                if (lr != null) Destroy(lr.gameObject);
+            _trails.Clear();
+        }
+
+        void DrawWorldBars()
         {
             if (_cam == null) return;
             foreach (var e in _game.Enemies)
@@ -489,10 +572,23 @@ namespace ColonyHaul
                 var pct = Mathf.Clamp01(e.Hp / Mathf.Max(1f, e.MaxHp));
                 GUI.backgroundColor = new Color(0f, 0f, 0f, 0.65f);
                 GUI.Box(new Rect(x - w * 0.5f, y, w, 7f), "");
-                GUI.backgroundColor = Color.Lerp(new Color(0.85f, 0.18f, 0.16f), new Color(0.45f, 0.85f, 0.32f), pct);
+                GUI.backgroundColor = e.SlowUntil > _game.T
+                    ? Color.Lerp(new Color(0.2f, 0.55f, 0.85f), new Color(0.45f, 0.9f, 1f), pct)
+                    : Color.Lerp(new Color(0.85f, 0.18f, 0.16f), new Color(0.45f, 0.85f, 0.32f), pct);
                 GUI.Box(new Rect(x - w * 0.5f, y, w * pct, 7f), "");
                 GUI.backgroundColor = Color.white;
             }
+            if (!_game.Nodes.TryGetValue("hub", out var hub)) return;
+            var hubSp = _cam.WorldToScreenPoint(new Vector3(hub.X, 2.35f, hub.Z));
+            if (hubSp.z <= 0f) return;
+            var hx = hubSp.x;
+            var hy = Screen.height - hubSp.y;
+            var hp = Mathf.Clamp01(_game.HubHp / Balance.HubMaxHp);
+            GUI.backgroundColor = new Color(0f, 0f, 0f, 0.7f);
+            GUI.Box(new Rect(hx - 42f, hy, 84f, 9f), "");
+            GUI.backgroundColor = Color.Lerp(new Color(0.85f, 0.18f, 0.16f), new Color(0.9f, 0.78f, 0.5f), hp);
+            GUI.Box(new Rect(hx - 42f, hy, 84f * hp, 9f), "");
+            GUI.backgroundColor = Color.white;
         }
 
         static void Prune(Dictionary<string, Transform> map, HashSet<string> live)
@@ -510,7 +606,7 @@ namespace ColonyHaul
         {
             if (_hud == null || _game == null) return;
             _hud.Draw(_game);
-            DrawEnemyHp();
+            DrawWorldBars();
             if (_hud.ClickedTool == Tool.Upgrade) _game.TryUpgrade(out _);
             else if (_hud.ClickedTool.HasValue) _game.SetTool(_hud.ClickedTool.Value);
             if (_hud.ConsumeBootDemo) _pendingDemo = true;

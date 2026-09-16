@@ -179,6 +179,147 @@ namespace ColonyHaul
             return 0f;
         }
 
+        public float FoodSecondsLeft()
+        {
+            var n = 0;
+            foreach (var b in Buildings.Values)
+                if (b.Type != BuildingType.Hub && b.Type != BuildingType.Depot) n++;
+            var drain = Balance.FoodDrain + n * Balance.FoodDrainPerBuilding;
+            if (drain < 0.01f) return 99f;
+            return Food / drain;
+        }
+
+        public float StarveSecondsLeft() => Math.Max(0f, Balance.StarveFail - StarveTimer);
+
+        public bool HasType(BuildingType type)
+        {
+            foreach (var b in Buildings.Values)
+                if (b.Type == type) return true;
+            return false;
+        }
+
+        public bool NodeArmed(string nodeId)
+        {
+            if (!Buildings.TryGetValue(nodeId, out var b)) return false;
+            return b.Type == BuildingType.Kinetic || b.Type == BuildingType.Splash;
+        }
+
+        public bool ChokeBarred(string chokeId)
+        {
+            foreach (var e in Neighbors(chokeId))
+                if (e.Barrier) return true;
+            return false;
+        }
+
+        public int EnemiesNear(string nodeId, float range)
+        {
+            if (!Nodes.TryGetValue(nodeId, out var n)) return 0;
+            var c = 0;
+            var r2 = range * range;
+            foreach (var e in Enemies)
+            {
+                var dx = n.X - e.X;
+                var dz = n.Z - e.Z;
+                if (dx * dx + dz * dz <= r2) c++;
+            }
+            return c;
+        }
+
+        public LaneThreat Lanes()
+        {
+            var t = new LaneThreat();
+            foreach (var e in Enemies)
+            {
+                if (e.X > 5.5f) t.East++;
+                else if (e.X < -5.5f) t.West++;
+                else t.North++;
+            }
+            t.East += IncomingAt("spawn_e");
+            t.North += IncomingAt("spawn_n");
+            t.West += IncomingAt("spawn_w");
+            return t;
+        }
+
+        public string HottestLane()
+        {
+            var l = Lanes();
+            if (l.East >= l.North && l.East >= l.West) return "east";
+            if (l.West >= l.North) return "west";
+            return "north";
+        }
+
+        public bool CanAfford(Tool tool)
+        {
+            switch (tool)
+            {
+                case Tool.None: return true;
+                case Tool.Farm: return Ore >= Balance.FarmOre;
+                case Tool.Mine: return Ore >= Balance.MineOre;
+                case Tool.Power: return Ore >= Balance.PowerOre;
+                case Tool.Route: return Ore >= Balance.RouteCost;
+                case Tool.Kinetic: return Ore >= Balance.KineticOre && Power >= Balance.KineticPower;
+                case Tool.Splash: return HubLevel >= 2 && Ore >= Balance.SplashOre && Power >= Balance.SplashPower;
+                case Tool.Barrier: return Ore >= Balance.BarrierCost;
+                case Tool.Upgrade:
+                    return HubLevel < 2 && HubUpgradeLeft <= 0
+                        && Ore >= Balance.HubL2Ore && Food >= Balance.HubL2Food && Power >= Balance.HubL2Power;
+                default: throw new ArgumentOutOfRangeException(nameof(tool), tool, null);
+            }
+        }
+
+        public WatchCall MidWatch()
+        {
+            if (Phase != Phase.Playing) return null;
+            if (OpeningStep() != 0) return null;
+            if (ActiveCut() != null)
+                return Call("SPLICE the orange rail — haulers are stuck", Tool.Route);
+            var dead = UnroutedProducer();
+            if (dead != null)
+                return Call("Pad " + PadCall(dead) + " is offline — rail it home", Tool.Route);
+            if (LiveTowers() == 0 && CanAfford(Tool.Kinetic) && (WaveIndex >= 1 || NextWaveIn <= 22f))
+                return Call("Wave on the clock — Kinetic on the EAST choke", Tool.Kinetic);
+            if (PowerBrownout || (LiveTowers() > 0 && GunSecondsLeft() < 9f))
+            {
+                if (!HasType(BuildingType.Power) && CanAfford(Tool.Power))
+                    return Call("Guns will brown out — plant Power", Tool.Power);
+                return Call("Haul POWER — towers are on the last of the pylon", Tool.Route);
+            }
+            if (HubLevel < 2 && HubUpgradeLeft <= 0 && CanAfford(Tool.Upgrade))
+                return Call("Hub L2 is in stock — Splash unlocks after this", Tool.Upgrade);
+            if (Food < 11f)
+                return Call("Larder ~" + CeilSecs(FoodSecondsLeft()) + "s — farm rail must stay live", Tool.Farm);
+            var hot = HottestLane();
+            var choke = hot == "east" ? "choke_e" : hot == "west" ? "choke_w" : "choke_n";
+            var lanes = Lanes();
+            var pressure = lanes.East + lanes.North + lanes.West;
+            if (!NodeArmed(choke) && CanAfford(Tool.Kinetic) && pressure > 0)
+                return Call("Heaviest lane is " + hot.ToUpperInvariant() + " — gun that choke", Tool.Kinetic);
+            if (!ChokeBarred(choke) && CanAfford(Tool.Barrier) && pressure > 3)
+                return Call("Slow the " + hot + " approach — Barrier on the choke", Tool.Barrier);
+            if (HubLevel >= 2 && !HasType(BuildingType.Splash) && CanAfford(Tool.Splash))
+                return Call("Splash on the west choke — brutes bunch there", Tool.Splash);
+            return Call(NextWaveCopy(), Tool.None);
+        }
+
+        static WatchCall Call(string copy, Tool pulse)
+        {
+            return new WatchCall { Copy = copy, Pulse = pulse };
+        }
+
+        static string PadCall(string id)
+        {
+            switch (id)
+            {
+                case "pad_s": return "south";
+                case "pad_n": return "north";
+                case "pad_se": return "south-east";
+                case "pad_ne": return "north-east";
+                case "pad_sw": return "south-west";
+                case "pad_nw": return "north-west";
+                default: return id;
+            }
+        }
+
         void Emit(SimEventKind kind, string nodeId = null, float x = 0, float z = 0,
             float fromX = 0, float fromZ = 0, float toX = 0, float toZ = 0,
             float amount = 0, Resource? resource = null, int wave = 0,
@@ -571,7 +712,13 @@ namespace ColonyHaul
             foreach (var b in Buildings.Values)
                 if (b.Type == BuildingType.Kinetic || b.Type == BuildingType.Splash) towers++;
             if (towers > 0 && Power < 4f)
+            {
                 Hint = "Brownout. Towers are dry. Keep the Power pylon on live rails.";
+                return;
+            }
+            var watch = MidWatch();
+            if (watch != null && !string.IsNullOrEmpty(watch.Copy))
+                Hint = watch.Copy;
         }
 
         void TickUpgrade(float dt)
