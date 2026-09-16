@@ -5,15 +5,15 @@ GitHub (cold-open / Hub / Cursor): **https://github.com/steviebd/colony-haul**
 | Field | Value |
 | --- | --- |
 | Hub-ready | **Yes** |
-| Origin SHA | `5d81e2f0fdb06048cfca4eb5b7e90229861f91e3` |
-| GitHub SHA | `ff7a38d448265560cb0d83b569dafbc80efeccd7` |
+| Origin SHA | `1da310df7887e47a9380971ef19c6063f1ad25c7` |
+| GitHub SHA | `8911df1c8b5be33b2596e6046c5fc4ece50dd6cf` |
 | Kernel | seed-7 playtest **win** (`phase=won`, t≈184.45, Hub L2, minHp≈50.4, sabotages=4, brownouts=1) |
 | Nested opening | **pass** (Farm → Route → Hub still deposits) |
 | Hold order | **pass** (locked until wave 4 + L2; then GUNS chase Power) |
 | Product | Unity 2022.3.50f1 URP under `Assets/_ColonyHaul` — not Vite |
 | Feature freeze | **No** — keep deepening Unity until **~16:30 AEST**, then lock SHAs for the 17:00 captain package. |
 
-Pass 31 trees match on the three edited paths (byte-identical). Pass 30 HAUL ROLL, Pass 29 LARDER, Pass 28 GUN FUSE, and prior beats stay on both remotes. Cold clone still has `Assets/`, `Packages/`, `ProjectSettings/`, USB, `playable/`, artifacts tape. Import workflows self-delete.
+Pass 32 trees match on the three edited paths (byte-identical). Pass 31 PAD STOCK, Pass 30 HAUL ROLL, Pass 29 LARDER, and prior beats stay on both remotes. Cold clone still has `Assets/`, `Packages/`, `ProjectSettings/`, USB, `playable/`, artifacts tape. Import workflows self-delete.
 
 ## Unity feature list
 
@@ -147,9 +147,13 @@ One Game tick. Demo stays on Hold **Auto**, so seed-7 is the same run as Pass 4/
 
 39. **HAUL ROLL** — every other loaded haul chips cargo ETA (**FOOD / PWR / ORE Ns**). BRACE / POWER / HOME still own the named cart. World chips only. Seed-7 fires from the opening hauls (HOME is gated until t=28) and on the extra L2 cart. Tick unchanged.
 
-**Pass 31 — this beat**
+**Pass 31 — kept**
 
 40. **PAD STOCK** — staffed pylons and mines chip pad stock (**PWR n** / **ORE n**). Amber when piled (≥6) or guns hungry, red when dry. Farms stay on LARDER. World chips only — SIT / OFFLINE / FEED still own those pads. Seed-7 fires from the first mine and pylon. Tick unchanged.
+
+**Pass 32 — this beat**
+
+41. **STAFF** — the Hub chips crew vs pads (**STAFF n/m**) under the HP bar. Amber when stretched, green on CREW UP. World chips only — CREW STRETCH / CREW UP / CLEAR still own the title. Seed-7 fires from the first farm. Tick unchanged.
 
 ## How to play (Editor)
 
@@ -169,17 +173,17 @@ Win: 6 waves **and** Hub L2. Lose: Hub HP 0, or food stays at 0 for 14s.
 
 **Hold order in a raid:** when guns go hungry, coach says `H for GUNS`. Press H — haulers peel toward the Power pad, deposits BRACE the Hub. If the larder is thin instead, `H for CREW`. Press again to flip. Cut rails still flash SPLICE first.
 
-**Pass 6–31 in a raid:** LOCK beam = who the gun will shoot. FOOD/PWR/ORE haul = BRACE IN Xs. Magenta rail + CUT? = splice before the snap. After the snap, the orange chip names the stake — BRACE / PWR / FARM — so splice is a recovery, not a generic repair. After you splice, **RAIL LIVE** names what is rolling again for 4s (CLEAR still owns the rest of the intermission). After brownout recovers, **GUNS BACK** names the towers live again for 8s so you keep Power rolling (RAIL LIVE still outranks a splice; CLEAR still owns later intermission). When Hub L2 lands, **CREW UP** names the extra haul from the yard so you staff another pad. A producer with no rail home reads **OFFLINE** and ghosts a gold line to Hub. A piled pad with no inbound hauler reads **HAUL FOOD / PWR / ORE**. Before brownout, **GUNS LOW** paints amber POWER IN Xs. GUNS DRY = towers clicked empty. CORE BOUND = they are on the Hub pad next. After the last raider drops, **CLEAR** names the next 26s — Hub L2, Splash WEST, or haul Power before the next pack. Last 8s before a wave, spawn pads read **PACK** and **PACK IN** names the lane (CLEAR still owns the intermission title). Live Kinetic / Splash chip **FUSE Ns** (amber hungry, red dry) so you haul Power before GUNS LOW. Staffed farms chip **LARDER Ns** (amber Food under 11, red starving) so you haul Food before the clock fails. Staffed pylons and mines chip **PWR n / ORE n** so you haul the pad before SIT. Other loaded hauls chip **FOOD / PWR / ORE Ns** so the second cart stays readable (BRACE / POWER / HOME still own the named cart). A new gun going live reads **UP** and **GUNS UP** names the lane so you haul Power before the fuse is hungry (PACK IN still wins the last 8s; CLEAR still owns later intermissions). Between raids a loaded haul paints **HAUL HOME** as FOOD / PWR / ORE IN Xs (BRACE still owns that cart in a raid). When Hub L2 is in stock the pad reads **READY** (CLEAR still owns the intermission) and the tray pulses **Hub L2 — Splash next**. An unarmed hottest lane with raiders on it reads **OPEN** and names Kinetic (or Splash west after L2). After the gun is up, that choke reads **SLOW** and names Barrier. An overbuilt pad with no crew reads **IDLE**. When Hub HP cracks below 72 in a raid the pad reads **THIN** and names the BRACE haul. Wave 4 with Hub L2 and Hold still Auto reads **HOLD** and pulses **H Hold — GUNS / CREW** (LAST RAIDS still owns waves 5–6).
+**Pass 6–32 in a raid:** LOCK beam = who the gun will shoot. FOOD/PWR/ORE haul = BRACE IN Xs. Magenta rail + CUT? = splice before the snap. After the snap, the orange chip names the stake — BRACE / PWR / FARM — so splice is a recovery, not a generic repair. After you splice, **RAIL LIVE** names what is rolling again for 4s (CLEAR still owns the rest of the intermission). After brownout recovers, **GUNS BACK** names the towers live again for 8s so you keep Power rolling (RAIL LIVE still outranks a splice; CLEAR still owns later intermission). When Hub L2 lands, **CREW UP** names the extra haul from the yard so you staff another pad. A producer with no rail home reads **OFFLINE** and ghosts a gold line to Hub. A piled pad with no inbound hauler reads **HAUL FOOD / PWR / ORE**. Before brownout, **GUNS LOW** paints amber POWER IN Xs. GUNS DRY = towers clicked empty. CORE BOUND = they are on the Hub pad next. After the last raider drops, **CLEAR** names the next 26s — Hub L2, Splash WEST, or haul Power before the next pack. Last 8s before a wave, spawn pads read **PACK** and **PACK IN** names the lane (CLEAR still owns the intermission title). Live Kinetic / Splash chip **FUSE Ns** (amber hungry, red dry) so you haul Power before GUNS LOW. Staffed farms chip **LARDER Ns** (amber Food under 11, red starving) so you haul Food before the clock fails. Staffed pylons and mines chip **PWR n / ORE n** so you haul the pad before SIT. The Hub chips **STAFF n/m** so you raise L2 or stop planting idle pads. Other loaded hauls chip **FOOD / PWR / ORE Ns** so the second cart stays readable (BRACE / POWER / HOME still own the named cart). A new gun going live reads **UP** and **GUNS UP** names the lane so you haul Power before the fuse is hungry (PACK IN still wins the last 8s; CLEAR still owns later intermissions). Between raids a loaded haul paints **HAUL HOME** as FOOD / PWR / ORE IN Xs (BRACE still owns that cart in a raid). When Hub L2 is in stock the pad reads **READY** (CLEAR still owns the intermission) and the tray pulses **Hub L2 — Splash next**. An unarmed hottest lane with raiders on it reads **OPEN** and names Kinetic (or Splash west after L2). After the gun is up, that choke reads **SLOW** and names Barrier. An overbuilt pad with no crew reads **IDLE**. When Hub HP cracks below 72 in a raid the pad reads **THIN** and names the BRACE haul. Wave 4 with Hub L2 and Hold still Auto reads **HOLD** and pulses **H Hold — GUNS / CREW** (LAST RAIDS still owns waves 5–6).
 
 ## Fun call
 
-Pylons and mines chip how much is sitting on the pad — haul it before SIT, and haul Power when the pylon goes amber. Farms still chip LARDER. Every loaded haul chips drop ETA — BRACE, POWER, and HOME still name the cart that matters most. Live guns still chip FUSE. When Hub L2 lands, CREW UP names the extra haul from the yard so you staff another pad. After brownout, GUNS BACK names the towers live again. RAIL LIVE still names what rolls after a splice. CLEAR still owns the rest of the intermission.
+The Hub chips STAFF n/m so you see crew headroom — raise L2 or stop planting idle pads. Pylons and mines chip how much is sitting on the pad. Farms still chip LARDER. Every loaded haul chips drop ETA — BRACE, POWER, and HOME still name the cart that matters most. Live guns still chip FUSE. When Hub L2 lands, CREW UP names the extra haul from the yard so you staff another pad. After brownout, GUNS BACK names the towers live again. RAIL LIVE still names what rolls after a splice. CLEAR still owns the rest of the intermission.
 
 ## Gaps
 
 - This VM has no Unity Editor — Play Mode is documented, not screenshot-verified.
 - Runtime art is procedural low-poly, not authored FBX.
 - Origin remote stays `tmp-*`. GitHub is the Hub/Cursor clone.
-- GitHub SHA ≠ Origin SHA (parallel history); pass-31 file bytes match.
+- GitHub SHA ≠ Origin SHA (parallel history); pass-32 file bytes match.
 - Hold order does not reroute haulers already carrying cargo — they finish the trip, then obey.
 - Out of scope: multiplayer, cloud meta, deep tech tree, campaign.
