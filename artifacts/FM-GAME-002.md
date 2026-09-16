@@ -5,15 +5,15 @@ GitHub (cold-open / Hub / Cursor): **https://github.com/steviebd/colony-haul**
 | Field | Value |
 | --- | --- |
 | Hub-ready | **Yes** |
-| Origin SHA | `696adb9d84dccf80841494af34bc4b9bfd359496` |
-| GitHub SHA | `9d7299e33a675becada26d10814d5a9855463efd` |
+| Origin SHA | `5527300e04df7872cdeb9ddee7b9791aa60afea2` |
+| GitHub SHA | `2b173d56ffad5fa6889896136247e4df34da1d84` |
 | Kernel | seed-7 playtest **win** (`phase=won`, t≈184.45, Hub L2, minHp≈50.4, sabotages=4, brownouts=1) |
 | Nested opening | **pass** (Farm → Route → Hub still deposits) |
 | Hold order | **pass** (locked until wave 4 + L2; then GUNS chase Power) |
 | Product | Unity 2022.3.50f1 URP under `Assets/_ColonyHaul` — not Vite |
 | Feature freeze | **No** — keep deepening Unity until **~16:30 AEST**, then lock SHAs for the 17:00 captain package. |
 
-Pass 24 trees match on the five edited paths (byte-identical). Pass 23 PACK IN, Pass 22 HAUL HOME, Pass 21 HOLD READY, and prior beats stay on both remotes. Cold clone still has `Assets/`, `Packages/`, `ProjectSettings/`, USB, `playable/`, artifacts tape. Import workflows self-delete.
+Pass 25 trees match on the five edited paths (byte-identical). Pass 24 GUNS UP, Pass 23 PACK IN, Pass 22 HAUL HOME, and prior beats stay on both remotes. Cold clone still has `Assets/`, `Packages/`, `ProjectSettings/`, USB, `playable/`, artifacts tape. Import workflows self-delete.
 
 ## Unity feature list
 
@@ -81,7 +81,7 @@ One Game tick. Demo stays on Hold **Auto**, so seed-7 is the same run as Pass 4/
 
 **Pass 14 — kept**
 
-23. **SIT stock** — a staffed producer with ≥6 stock and no hauler bound for it reads **HAUL FOOD / PWR / ORE**. Power piles score higher when guns are hungry; farm piles when the larder is thin. An idle hauler paints a colored line to that pad. Title sits below WAVE CLEAR / PAD OFFLINE. Tick unchanged.
+23. **SIT stock** — a staffed producer with ≥6 stock and no hauler bound for it reads **HAUL FOOD / PWR / ORE**. Title sits below WAVE CLEAR / PAD OFFLINE. Tick unchanged.
 
 **Pass 15 — kept**
 
@@ -93,65 +93,4 @@ One Game tick. Demo stays on Hold **Auto**, so seed-7 is the same run as Pass 4/
 
 **Pass 17 — kept**
 
-26. **OPEN CHOKE** — the hottest unarmed lane with pressure paints **OPEN** on that choke. Title **OPEN EAST / NORTH / WEST** (below L2 READY) names Kinetic, or Splash on west after Hub L2. West stays **SPLASH** during the 16s unlock ghost. Ore-short still names the lane. Tick unchanged.
-
-**Pass 18 — kept**
-
-27. **SLOW** — once that hottest lane has a gun but no Barrier, the choke reads **SLOW**. Title **SLOW EAST / NORTH / WEST** (below OPEN / BRACE inbound) names Barrier. 5 ore slows the approach so guns and BRACE hauls get time. Tick unchanged.
-
-**Pass 19 — kept**
-
-28. **CREW STRETCH** — when producers outnumber crew, the unstaffed pad reads **IDLE**. Title **CREW STRETCH** (below Hold) names U if Hub L2 is in stock, otherwise rail beats a new pad. OFFLINE and SIT still own that pad when they apply. Tick unchanged.
-
-**Pass 20 — kept**
-
-29. **CORE THIN** — when Hub HP drops below 72 during a raid, the pad reads **THIN**. Title **CORE THIN** (below GUNS LOW so CLEAR still owns the intermission) names the BRACE haul if one is inbound. Seed-7 hits this (minHp≈50.4). Tick unchanged.
-
-**Pass 21 — kept**
-
-30. **HOLD READY** — wave 4 with Hub L2 and Hold still Auto: the H tray pulses **GUNS / CREW**, a gold ring sits on the Hub, and the pad reads **HOLD**. Title **HOLD READY** (below CREW STRETCH, so LAST RAIDS still owns waves 5–6) names H for GUNS if the fuse is hungry, H for CREW if the larder is thin. Seed-7 fires this (~26s from t≈125, Hub HP still ≥72 so CORE THIN does not steal the raid). Demo stays Auto. Tick unchanged.
-
-**Pass 22 — kept**
-
-31. **HAUL HOME** — between raids, the nearest loaded haul paints a cargo-colored line to the Hub and chips **FOOD / PWR / ORE IN Xs**. Title **HAUL HOME** (below HOLD READY so CLEAR / HOLD READY still outrank it) names the drop. BRACE inbound still owns the same haul during a raid. Seed-7 fires this on the opening hauls and every CLEAR (~115s of the run). Tick unchanged.
-
-**Pass 23 — kept**
-
-32. **PACK IN** — last 8s before a wave, spawn pads read **PACK** and ghost the pack harder. Title **PACK IN** (below HOLD READY so CLEAR still owns later intermissions) names the lane. Wave 1 on seed-7 shows the title (t≈34, not CLEAR); waves 2–6 still ping the pads under CLEAR. Tick unchanged.
-
-**Pass 24 — this beat**
-
-33. **GUNS UP** — a new Kinetic / Splash going live reads **UP** for 8s, the Power pad reads **FEED**, and a teal range ring sits on that gun. Title **GUNS UP** (below PACK IN so PACK IN still owns the last 8s before a wave; CLEAR still owns later intermissions) names the lane and tells you to haul Power before the fuse is hungry. Seed-7 titles EAST (t≈3.85) then NORTH (t≈29.6, until PACK IN at t≈34); Splash WEST still pings under CLEAR. Tick unchanged.
-
-## How to play (Editor)
-
-```bash
-git clone https://github.com/steviebd/colony-haul.git
-```
-
-Unity Hub → Open that folder → `Assets/_ColonyHaul/Scenes/Boot.unity` or `Game_VerticalSlice.unity` → Play.
-
-- **Colony Haul → Play Vertical Slice** — you take the watch (Farm first).
-- **Colony Haul → Play Demo (autopilot)** — seed-7 demo (Hold stays Auto).
-- **Colony Haul → Run Headless Sim** — expect `win=True` on seed 7.
-
-Keys `1–7` Farm/Mine/Power/Route/Kinetic/Splash/Barrier. `U` Hub L2. **`H` Hold order** (locked until wave 4 with Hub L2). `D` demo. `R` restart.
-
-Win: 6 waves **and** Hub L2. Lose: Hub HP 0, or food stays at 0 for 14s.
-
-**Hold order in a raid:** when guns go hungry, coach says `H for GUNS`. Press H — haulers peel toward the Power pad, deposits BRACE the Hub. If the larder is thin instead, `H for CREW`. Press again to flip. Cut rails still flash SPLICE first.
-
-**Pass 6–24 in a raid:** LOCK beam = who the gun will shoot. FOOD/PWR/ORE haul = BRACE IN Xs. Magenta rail + CUT? = splice before the snap. After the snap, the orange chip names the stake — BRACE / PWR / FARM — so splice is a recovery, not a generic repair. A producer with no rail home reads **OFFLINE** and ghosts a gold line to Hub. A piled pad with no inbound hauler reads **HAUL FOOD / PWR / ORE**. Before brownout, **GUNS LOW** paints amber POWER IN Xs. GUNS DRY = towers clicked empty. CORE BOUND = they are on the Hub pad next. After the last raider drops, **CLEAR** names the next 26s — Hub L2, Splash WEST, or haul Power before the next pack. Last 8s before a wave, spawn pads read **PACK** and **PACK IN** names the lane (CLEAR still owns the intermission title). A new gun going live reads **UP** and **GUNS UP** names the lane so you haul Power before the fuse is hungry (PACK IN still wins the last 8s; CLEAR still owns later intermissions). Between raids a loaded haul paints **HAUL HOME** as FOOD / PWR / ORE IN Xs (BRACE still owns that cart in a raid). When Hub L2 is in stock the pad reads **READY** (CLEAR still owns the intermission) and the tray pulses **Hub L2 — Splash next**. An unarmed hottest lane with raiders on it reads **OPEN** and names Kinetic (or Splash west after L2). After the gun is up, that choke reads **SLOW** and names Barrier. An overbuilt pad with no crew reads **IDLE**. When Hub HP cracks below 72 in a raid the pad reads **THIN** and names the BRACE haul. Wave 4 with Hub L2 and Hold still Auto reads **HOLD** and pulses **H Hold — GUNS / CREW** (LAST RAIDS still owns waves 5–6).
-
-## Fun call
-
-A new gun going live names GUNS UP so you haul Power before the fuse is hungry. PACK IN still owns the last 8s. CLEAR still owns the intermission. Between raids, HAUL HOME names the drop. BRACE still owns that cart in a raid. Wave 4 HOLD names H for GUNS or CREW.
-
-## Gaps
-
-- This VM has no Unity Editor — Play Mode is documented, not screenshot-verified.
-- Runtime art is procedural low-poly, not authored FBX.
-- Origin remote stays `tmp-*`. GitHub is the Hub/Cursor clone.
-- GitHub SHA ≠ Origin SHA (parallel history); pass-24 file bytes match.
-- Hold order does not reroute haulers already carrying cargo — they finish the trip, then obey.
-- Out of scope: multiplayer, cloud meta, deep tech tree, campaign.
+18. Wait I should not rewrite the whole file incorrectly. I'll use the local file via a different approach.
