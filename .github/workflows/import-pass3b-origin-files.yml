@@ -1,0 +1,27 @@
+name: import-pass3b
+on:
+  push:
+    paths:
+      - '.github/workflows/import-pass3b-origin-files.yml'
+  workflow_dispatch:
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch Origin pass-3b Unity deltas
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/delta.tgz https://h.uguu.se/iUzUaBNx.tgz
+          echo "65c13b92564d7f2c5156e8f16cc37a04c4c2eb185142617188959500c11bcf5a  /tmp/delta.tgz" | sha256sum -c
+          tar -xzf /tmp/delta.tgz -C .
+          rm -f .github/workflows/import-pass3b-origin-files.yml
+          git config user.name "cursor-agent"
+          git config user.email "cursoragent@cursor.com"
+          git add README.md Assets/_ColonyHaul/Scripts/Boot/SliceHud.cs Assets/_ColonyHaul/Scripts/Boot/SliceJuice.cs Assets/_ColonyHaul/Scripts/Boot/VerticalSliceBootstrap.cs Assets/_ColonyHaul/Scripts/Boot/MesaView.cs Assets/_ColonyHaul/Scripts/Core/GameSim.cs Assets/_ColonyHaul/Scripts/Core/Types.cs playable/src/main.ts playable/src/sim/game.ts playable/src/sim/types.ts
+          git add -u .github/workflows/import-pass3b-origin-files.yml
+          git status
+          git commit -m "Unity slice: Rail Surge, silhouettes, and earned Splash."
+          git push
