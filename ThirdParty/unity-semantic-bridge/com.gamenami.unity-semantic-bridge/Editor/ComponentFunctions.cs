@@ -1,0 +1,299 @@
+using System;
+using System.Linq;
+using System.Text;
+using Newtonsoft.Json.Linq;
+using UnityEditor;
+using UnityEngine;
+
+namespace Gamenami.UnitySemanticBridge.Editor
+{
+    public static class ComponentFunctions
+    {
+        public static string GetComponentCode(JObject mcpMessage) 
+        {
+            var componentName = mcpMessage["componentName"]?.ToString();
+            
+            // Find the script asset by name
+            var guids = AssetDatabase.FindAssets($"{componentName} t:MonoScript");
+            if (guids.Length == 0) return $"Source code for {componentName} not found.";
+
+            var path = AssetDatabase.GUIDToAssetPath(guids[0]);
+            try 
+            {
+                var fullPath = System.IO.Path.GetFullPath(path);
+                return System.IO.File.ReadAllText(fullPath);
+            } 
+            catch (Exception e) 
+            {
+                return $"Error reading file: {e.Message}";
+            }
+        }
+        
+        public static string GetComponentInspectorValues(JObject mcpMessage)
+        {
+            var id = (int)mcpMessage["instanceId"];
+            var compName = mcpMessage["componentName"]?.ToString();
+
+            var go = EditorIdLookup.FromInstanceId(id) as GameObject;
+            if (go == null) return "Error: GameObject not found.";
+
+            var comp = go.GetComponent(compName);
+            if (comp == null) return $"Error: Component '{compName}' not found on {go.name}.";
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"--- Inspector: {go.name} > {compName} ---");
+            ComponentInspector.AppendComponentProperties(sb, comp);
+            return sb.ToString();
+        }
+        
+        public static string AddComponent(JObject mcpMessage)
+        {
+            var id = (int)mcpMessage["instanceId"];
+            var componentType = mcpMessage["componentType"]?.ToString();
+            var allowDuplicate = mcpMessage["allowDuplicate"]?.ToObject<bool>() ?? false;
+
+            var go = EditorIdLookup.FromInstanceId(id) as GameObject;
+            if (go == null) return "Error: GameObject not found.";
+
+            if (!TryResolveComponentType(componentType, out var type))
+                return $"Error: Type '{componentType}' not found in any loaded assembly.";
+
+            if (!allowDuplicate)
+            {
+                var existing = go.GetComponent(type);
+                if (existing != null)
+                    return $"Skipped: '{componentType}' already exists on '{go.name}' (instanceId: {existing.GetInstanceID()}). Set allowDuplicate=true to override.";
+            }
+
+            var added = Undo.AddComponent(go, type);
+            if (added == null) return $"Error: AddComponent failed for '{componentType}'. Ensure it is a valid non-abstract Component subclass.";
+
+            EditorUtility.SetDirty(go);
+
+            return $"Added '{type.FullName}' to '{go.name}'. New component instanceId: {added.GetInstanceID()}.";
+        }
+        
+        public static string RemoveComponent(JObject mcpMessage)
+        {
+            var instanceId = mcpMessage["instanceId"].ToObject<int>();
+            var componentType = mcpMessage["componentType"]?.ToString();
+
+            var go = EditorIdLookup.FromInstanceId(instanceId) as GameObject;
+            if (go == null) throw new BridgeToolException($"No GameObject found for instance_id {instanceId}.");
+
+            if (!TryResolveComponentType(componentType, out var type))
+                throw new BridgeToolException($"Type '{componentType}' not found in any loaded assembly.");
+
+            var comp = go.GetComponent(type);
+            if (comp == null) throw new BridgeToolException($"Component '{type.Name}' not found on '{go.name}'.");
+
+            Undo.DestroyObjectImmediate(comp);
+            return $"Removed '{type.FullName}' from '{go.name}'.";
+        }
+
+        /// <summary>
+        /// Resolves a component type from a fully-qualified name (e.g. UnityEngine.AudioSource)
+        /// or a short name (e.g. AudioSource). GetComponent(string) only accepts short names,
+        /// so callers must resolve to Type first.
+        /// </summary>
+        private static bool TryResolveComponentType(string componentType, out Type type)
+        {
+            type = null;
+            if (string.IsNullOrWhiteSpace(componentType)) return false;
+
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                type = assembly.GetType(componentType);
+                if (type != null) break;
+            }
+
+            if (type == null)
+            {
+                type = AppDomain.CurrentDomain.GetAssemblies()
+                    .SelectMany(a => { try { return a.GetTypes(); } catch { return Type.EmptyTypes; } })
+                    .FirstOrDefault(t => t.Name == componentType && typeof(Component).IsAssignableFrom(t));
+            }
+
+            return type != null && typeof(Component).IsAssignableFrom(type);
+        }
+
+        public static string SetFieldValues(JObject mcpMessage)
+        {
+            var id = (int)mcpMessage["instanceId"];
+            var componentName = mcpMessage["componentName"]?.ToString();
+            var fields = mcpMessage["fields"] as JObject;
+            var componentIndex = mcpMessage["componentIndex"]?.ToObject<int>() ?? 0;
+
+            var go = EditorIdLookup.FromInstanceId(id) as GameObject;
+            if (go == null) return "Error: GameObject not found.";
+
+            var matches = go.GetComponents<Component>()
+                .Where(c => c != null && c.GetType().Name == componentName)
+                .ToArray();
+
+            if (matches.Length == 0) return $"Error: Component '{componentName}' not found on '{go.name}'.";
+            if (componentIndex >= matches.Length) return $"Error: componentIndex {componentIndex} out of range — found {matches.Length} '{componentName}' component(s).";
+
+            var target = matches[componentIndex];
+            var so = new SerializedObject(target);
+            Undo.RecordObject(target, $"Set fields on {componentName}");
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"--- SetFieldValue: {go.name} > {componentName} ---");
+
+            foreach (var kvp in fields)
+            {
+                var prop = so.FindProperty(kvp.Key);
+                if (prop == null)
+                {
+                    sb.AppendLine($"{kvp.Key}: ERROR — property not found.");
+                    continue;
+                }
+
+                try
+                {
+                    ApplyPropertyValue(prop, kvp.Value);
+                    sb.AppendLine($"{kvp.Key}: OK");
+                }
+                catch (Exception e)
+                {
+                    sb.AppendLine($"{kvp.Key}: ERROR — {e.Message}");
+                }
+            }
+
+            so.ApplyModifiedProperties();
+            EditorUtility.SetDirty(go);
+
+            return sb.ToString();
+        }
+
+        private static void ApplyPropertyValue(SerializedProperty prop, JToken value)
+        {
+            // Handle arrays / Generic structs recursively — needed for RigBuilder.m_RigLayers and Constraint.m_Data
+            if (prop.isArray)
+            {
+                if (value.Type != JTokenType.Array)
+                    throw new NotSupportedException($"Property '{prop.name}' is an array but value is {value.Type}, expected JSON array.");
+                var arr = (JArray)value;
+                prop.arraySize = arr.Count;
+                for (int i = 0; i < arr.Count; i++)
+                {
+                    var element = prop.GetArrayElementAtIndex(i);
+                    // Array elements are usually Generic structs — recurse via relative properties
+                    if (element.propertyType == SerializedPropertyType.Generic)
+                    {
+                        ApplyGenericValue(element, arr[i]);
+                    }
+                    else
+                    {
+                        ApplyPropertyValue(element, arr[i]);
+                    }
+                }
+                return;
+            }
+            if (prop.propertyType == SerializedPropertyType.Generic)
+            {
+                ApplyGenericValue(prop, value);
+                return;
+            }
+
+            switch (prop.propertyType)
+            {
+                case SerializedPropertyType.Integer:
+                    prop.intValue = value.ToObject<int>(); 
+                    break;
+                case SerializedPropertyType.Float:
+                    prop.floatValue = value.ToObject<float>(); 
+                    break;
+                case SerializedPropertyType.Boolean:
+                    prop.boolValue = value.ToObject<bool>(); 
+                    break;
+                case SerializedPropertyType.String:
+                    prop.stringValue = value.ToObject<string>(); 
+                    break;
+                case SerializedPropertyType.Enum:
+                    prop.enumValueIndex = value.Type == JTokenType.String
+                        ? Array.IndexOf(prop.enumNames, value.ToObject<string>())
+                        : value.ToObject<int>(); 
+                    break;
+                case SerializedPropertyType.Vector2:
+                    var j2 = (JObject)value;
+                    prop.vector2Value = new Vector2(j2["x"].ToObject<float>(), j2["y"].ToObject<float>()); 
+                    break;
+                case SerializedPropertyType.Vector3:
+                    var j3 = (JObject)value;
+                    prop.vector3Value = new Vector3(j3["x"].ToObject<float>(), j3["y"].ToObject<float>(), j3["z"].ToObject<float>()); 
+                    break;
+                case SerializedPropertyType.Quaternion:
+                    var jq = (JObject)value;
+                    // Support both quaternion {x,y,z,w} and euler {x,y,z} or {euler:{x,y,z}}
+                    if (jq["w"] != null)
+                        prop.quaternionValue = new Quaternion(jq["x"].ToObject<float>(), jq["y"].ToObject<float>(), jq["z"].ToObject<float>(), jq["w"].ToObject<float>());
+                    else if (jq["euler"] != null)
+                    {
+                        var e = (JObject)jq["euler"];
+                        prop.quaternionValue = Quaternion.Euler(e["x"].ToObject<float>(), e["y"].ToObject<float>(), e["z"].ToObject<float>());
+                    }
+                    else
+                        prop.quaternionValue = Quaternion.Euler(jq["x"].ToObject<float>(), jq["y"].ToObject<float>(), jq["z"].ToObject<float>());
+                    break;
+                case SerializedPropertyType.Color:
+                    var jc = (JObject)value;
+                    prop.colorValue = new Color(jc["r"].ToObject<float>(), jc["g"].ToObject<float>(), jc["b"].ToObject<float>(), jc["a"]?.ToObject<float>() ?? 1f); 
+                    break;
+                case SerializedPropertyType.ObjectReference:
+                    // Allow null/0/None to clear, integer instanceId, or JObject with instanceId
+                    if (value.Type == JTokenType.Null || (value.Type == JTokenType.String && value.ToString() == "None"))
+                        prop.objectReferenceValue = null;
+                    else if (value.Type == JTokenType.Integer)
+                        prop.objectReferenceValue = EditorIdLookup.FromInstanceId(value.ToObject<int>());
+                    else if (value is JObject jo && jo["instanceId"] != null)
+                        prop.objectReferenceValue = EditorIdLookup.FromInstanceId(jo["instanceId"].ToObject<int>());
+                    else
+                        prop.objectReferenceValue = EditorIdLookup.FromInstanceId(value.ToObject<int>()); 
+                    break;
+                case SerializedPropertyType.LayerMask:
+                    prop.intValue = value.ToObject<int>(); 
+                    break;
+                case SerializedPropertyType.Vector2Int:
+                    var j2i = (JObject)value;
+                    prop.vector2IntValue = new Vector2Int(j2i["x"].ToObject<int>(), j2i["y"].ToObject<int>());
+                    break;
+                case SerializedPropertyType.Vector3Int:
+                    var j3i = (JObject)value;
+                    prop.vector3IntValue = new Vector3Int(j3i["x"].ToObject<int>(), j3i["y"].ToObject<int>(), j3i["z"].ToObject<int>());
+                    break;
+                default:
+                    throw new NotSupportedException($"SerializedPropertyType '{prop.propertyType}' is not supported for '{prop.name}'.");
+            }
+        }
+
+        private static void ApplyGenericValue(SerializedProperty prop, JToken value)
+        {
+            if (value is JObject obj)
+            {
+                foreach (var kvp in obj)
+                {
+                    var child = prop.FindPropertyRelative(kvp.Key);
+                    if (child == null)
+                        throw new NotSupportedException($"Generic property '{prop.name}' has no child '{kvp.Key}'.");
+                    ApplyPropertyValue(child, kvp.Value);
+                }
+            }
+            else if (value is JArray arr && prop.isArray)
+            {
+                // Already handled via isArray branch; fallback for nested generic arrays like m_SourceObjects
+                prop.arraySize = arr.Count;
+                for (int i = 0; i < arr.Count; i++)
+                {
+                    var element = prop.GetArrayElementAtIndex(i);
+                    ApplyPropertyValue(element, arr[i]);
+                }
+            }
+            else
+            {
+                throw new NotSupportedException($"Generic property '{prop.name}' expects JObject value, got {value.Type}.");
+            }
+        }
+    }
+}
