@@ -145,6 +145,20 @@ namespace ColonyHaul
             }
         }
 
+        public int HaulersBlocked()
+        {
+            if (ActiveCut() == null) return 0;
+            var n = 0;
+            foreach (var h in Haulers)
+                if (h.Path.Count == 0 && h.Wait <= 0) n++;
+            return n;
+        }
+
+        public bool HaulerBlocked(Hauler h)
+        {
+            return ActiveCut() != null && h.Path.Count == 0 && h.Wait <= 0;
+        }
+
         public string NextWaveCopy()
         {
             if (WaveIndex >= Balance.WavesToWin) return "No more waves — hold the mesa.";
@@ -347,7 +361,12 @@ namespace ColonyHaul
             if (Phase != Phase.Playing) return null;
             if (OpeningStep() != 0) return null;
             if (ActiveCut() != null)
-                return Call("SPLICE the orange rail — haulers are stuck", Tool.Route);
+            {
+                var stuck = HaulersBlocked();
+                return Call(stuck > 0
+                    ? "SPLICE the orange rail — " + stuck + (stuck == 1 ? " hauler stuck" : " haulers stuck")
+                    : "SPLICE the orange rail — click the glowing pad", Tool.Route);
+            }
             var dead = UnroutedProducer();
             if (dead != null)
                 return Call("Pad " + PadCall(dead) + " is offline — rail it home", Tool.Route);

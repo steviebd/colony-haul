@@ -27,6 +27,7 @@ namespace ColonyHaul
 
         string _banner;
         float _bannerUntil;
+        Color _bannerColor = new Color(0.82f, 0.28f, 0.32f, 0.95f);
         string _wave;
         float _waveUntil;
         bool _boot = true;
@@ -39,8 +40,14 @@ namespace ColonyHaul
 
         public void Flash(string text, float seconds)
         {
+            Flash(text, seconds, new Color(0.82f, 0.28f, 0.32f, 0.95f));
+        }
+
+        public void Flash(string text, float seconds, Color color)
+        {
             _banner = text;
             _bannerUntil = Time.unscaledTime + seconds;
+            _bannerColor = color;
         }
 
         public void WaveCall(string copy, float seconds)
@@ -82,11 +89,17 @@ namespace ColonyHaul
             GUI.backgroundColor = Color.white;
             GUI.Label(new Rect(24, 16, 280, 22), "COLONY HAUL");
             var sub = GUI.contentColor;
+            var cut = game.ActiveCut();
             if (game.Surging) GUI.contentColor = new Color(0.45f, 0.9f, 1f);
-            GUI.Label(new Rect(24, 36, 300, 18),
-                game.Surging
-                    ? "BRACE · Hub shrugs hits · " + GameSim.CeilSecs(game.SurgeLeft) + "s"
-                    : "Mesa 7 · dusk cycle · Unity slice");
+            else if (cut != null) GUI.contentColor = new Color(1f, 0.55f, 0.32f);
+            string subCopy;
+            if (game.Surging)
+                subCopy = "BRACE · Hub shrugs hits · " + GameSim.CeilSecs(game.SurgeLeft) + "s";
+            else if (cut != null)
+                subCopy = "HAUL CUT · splice the orange rail · " + GameSim.CeilSecs(cut.SabotagedUntil - game.T) + "s";
+            else
+                subCopy = "Mesa 7 · dusk cycle · Unity slice";
+            GUI.Label(new Rect(24, 36, 340, 18), subCopy);
             GUI.contentColor = sub;
             Chip(320, 18, "ORE", Mathf.FloorToInt(game.Ore).ToString(), new Color(0.94f, 0.64f, 0.23f));
             Chip(430, 18, "FOOD", Mathf.FloorToInt(game.Food).ToString(), new Color(0.5f, 0.85f, 0.48f));
@@ -112,9 +125,15 @@ namespace ColonyHaul
             GUI.Box(new Rect(Screen.width - 292, 88, 280, 148), "");
             GUI.backgroundColor = Color.white;
             var cut = game.ActiveCut();
-            var haul = cut != null
-                ? "HAUL CUT — splice · " + GameSim.CeilSecs(cut.SabotagedUntil - game.T) + "s left"
-                : "Haul " + game.HaulersLoaded + " loaded · " + (game.Haulers.Count - game.HaulersLoaded) + " idle";
+            string haul;
+            if (cut != null)
+            {
+                var stuck = game.HaulersBlocked();
+                haul = stuck > 0
+                    ? "HAUL CUT — " + stuck + " stuck · splice " + GameSim.CeilSecs(cut.SabotagedUntil - game.T) + "s"
+                    : "HAUL CUT — splice · " + GameSim.CeilSecs(cut.SabotagedUntil - game.T) + "s left";
+            }
+            else haul = "Haul " + game.HaulersLoaded + " loaded · " + (game.Haulers.Count - game.HaulersLoaded) + " idle";
             GUI.Label(new Rect(Screen.width - 280, 92, 256, 20), haul);
             var lanes = game.Lanes();
             var hot = game.HottestLane();
@@ -179,13 +198,15 @@ namespace ColonyHaul
             }
             var watch = game.MidWatch();
             if (watch == null || string.IsNullOrEmpty(watch.Copy)) return;
-            GUI.backgroundColor = game.CoreThin
-                ? new Color(0.22f, 0.08f, 0.08f, 0.94f)
-                : new Color(0.07f, 0.14f, 0.18f, 0.92f);
+            GUI.backgroundColor = game.ActiveCut() != null
+                ? new Color(0.32f, 0.1f, 0.06f, 0.95f)
+                : game.CoreThin
+                    ? new Color(0.22f, 0.08f, 0.08f, 0.94f)
+                    : new Color(0.07f, 0.14f, 0.18f, 0.92f);
             GUI.Box(new Rect(Screen.width / 2 - 250, 88, 500, 58), "");
             GUI.backgroundColor = Color.white;
             GUI.Label(new Rect(Screen.width / 2 - 234, 92, 468, 22),
-                (game.CoreThin ? "CORE  " : "WATCH  ") + watch.Copy);
+                (game.ActiveCut() != null ? "CUT  " : game.CoreThin ? "CORE  " : "WATCH  ") + watch.Copy);
             var lanes = game.Lanes();
             GUI.Label(new Rect(Screen.width / 2 - 234, 114, 468, 22),
                 game.HoldCopy() +
@@ -284,8 +305,8 @@ namespace ColonyHaul
         void DrawBanner()
         {
             if (string.IsNullOrEmpty(_banner) || Time.unscaledTime > _bannerUntil) return;
-            GUI.backgroundColor = new Color(0.82f, 0.28f, 0.32f, 0.95f);
-            GUI.Box(new Rect(Screen.width / 2 - 220, 88, 440, 36), _banner.ToUpperInvariant());
+            GUI.backgroundColor = _bannerColor;
+            GUI.Box(new Rect(Screen.width / 2 - 240, Screen.height - 140, 480, 36), _banner.ToUpperInvariant());
             GUI.backgroundColor = Color.white;
         }
 

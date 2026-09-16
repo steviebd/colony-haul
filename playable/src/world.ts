@@ -349,6 +349,8 @@ export class World {
         const n = this.nodePos.get(h.path[0]);
         if (n) g.rotation.y = Math.atan2(n.x - h.x, n.z - h.z);
       }
+      const stuck = s.haulCut && h.path.length === 0 && h.wait <= 0;
+      g.scale.setScalar(stuck ? 1.12 + 0.1 * Math.abs(Math.sin(s.t * 9)) : 1);
       const cargo = g.getObjectByName('cargo') as THREE.Mesh;
       cargo.visible = !!h.cargo;
       const cm = cargo.material as THREE.MeshStandardMaterial;
@@ -390,7 +392,7 @@ export class World {
         const n = this.nodePos.get(e.path[0]);
         if (n) g.rotation.y = Math.atan2(n.x - e.x, n.z - e.z);
       }
-      const pulse = e.flash > 0 ? 1.32 : 1;
+      const pulse = e.flash > 0 ? 1.32 : e.type === 'runner' ? 1.05 + 0.08 * Math.abs(Math.sin(s.t * 14)) : 1;
       g.scale.setScalar(pulse);
       let bar = g.getObjectByName('hp') as THREE.Mesh | undefined;
       if (!bar) {

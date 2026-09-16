@@ -24,11 +24,14 @@ namespace ColonyHaul
         readonly Dictionary<string, Transform> _ghosts = new Dictionary<string, Transform>();
         readonly Dictionary<string, Transform> _buffers = new Dictionary<string, Transform>();
         readonly Dictionary<string, LineRenderer> _trails = new Dictionary<string, LineRenderer>();
+        readonly Dictionary<string, LineRenderer> _intents = new Dictionary<string, LineRenderer>();
         readonly Dictionary<string, Transform> _shadows = new Dictionary<string, Transform>();
+        readonly HashSet<string> _stuckShown = new HashSet<string>();
         Transform _root;
         Camera _cam;
         float _acc;
         float _hubFlash;
+        bool _hubBraceFlash;
         bool _coreAlarm;
         bool _surgeBannered;
         bool _pendingRestart;
@@ -78,7 +81,7 @@ namespace ColonyHaul
             {
                 if (child.name == "Sun" || child.name == "Fill" || child.name == "Mesa" || child.name == "Cliff" || child.name == "HubRing")
                     continue;
-                if (child.name == "tracer" || child.name == "pip" || child.name == "ring" || child.name == "ghost" || child.name == "buffer" || child.name == "trail" || child.name == "shadow" || child.name == "burst") continue;
+                if (child.name == "tracer" || child.name == "pip" || child.name == "ring" || child.name == "ghost" || child.name == "buffer" || child.name == "trail" || child.name == "intent" || child.name == "shadow" || child.name == "burst") continue;
             }
             ClearMap(_buildings);
             ClearMap(_haulers);
@@ -91,9 +94,13 @@ namespace ColonyHaul
             ClearMap(_nodes);
             ClearMap(_shadows);
             ClearTrails();
+            ClearIntents();
             _hubFlash = 0f;
+            _hubBraceFlash = false;
             _coreAlarm = false;
             _surgeBannered = false;
+            _stuckShown.Clear();
+            _juice.CutAlarm(false);
             _buildingScale.Clear();
             _acc = 0f;
             BootMatch();
@@ -139,10 +146,11 @@ namespace ColonyHaul
             if (_game.CoreThin && !_coreAlarm && _game.Phase == Phase.Playing)
             {
                 _coreAlarm = true;
-                _hud.Flash("CORE THIN — haul braces the Hub", 2.4f);
+                _hud.Flash("CORE THIN — haul braces the Hub", 2.4f, new Color(0.85f, 0.2f, 0.18f, 0.95f));
                 _juice.Punch(0.7f);
             }
             if (!_game.Surging) _surgeBannered = false;
+            _juice.CutAlarm(_game.ActiveCut() != null && _game.Phase == Phase.Playing);
             _juice.Tick(_cam, events);
             _hubFlash = Mathf.Max(0f, _hubFlash - Time.deltaTime);
             SyncView(false);
@@ -153,46 +161,51 @@ namespace ColonyHaul
             switch (ev.Kind)
             {
                 case SimEventKind.Brownout:
-                    _hud.Flash("Brownout — towers dry", 2.2f);
+                    _hud.Flash("Brownout — towers dry", 2.2f, new Color(0.85f, 0.28f, 0.22f, 0.95f));
                     break;
                 case SimEventKind.Sabotage:
-                    _hud.Flash("HAUL CUT — runner sparked a mag-rail", 1.8f);
+                    _hud.Flash("HAUL CUT — splice the orange rail", 1.6f, new Color(0.95f, 0.38f, 0.18f, 0.95f));
                     break;
                 case SimEventKind.Barrier:
-                    _hud.Flash("Barrier up — spawn approach slowed", 1.8f);
+                    _hud.Flash("Barrier up — spawn approach slowed", 1.8f, new Color(0.95f, 0.32f, 0.34f, 0.92f));
                     break;
                 case SimEventKind.Wave:
                     _hud.WaveCall(_game.WaveBannerCopy(), _game.WaveIndex >= 5 ? 4.2f : 3.2f);
                     break;
                 case SimEventKind.Upgrade:
-                    if (_game.HubLevel >= 2) _hud.Flash("Hub Level 2 — Splash unlocked · WEST choke", 2.6f);
-                    else _hud.Flash("Hub L2 raising", 1.6f);
+                    if (_game.HubLevel >= 2) _hud.Flash("Hub Level 2 — Splash unlocked · WEST choke", 2.6f, new Color(0.94f, 0.63f, 0.38f, 0.95f));
+                    else _hud.Flash("Hub L2 raising", 1.6f, new Color(0.9f, 0.78f, 0.5f, 0.94f));
                     break;
                 case SimEventKind.Shot:
                 case SimEventKind.Splash:
                 case SimEventKind.Deposit:
                     break;
                 case SimEventKind.Hit:
-                    if (ev.NodeId == "hub") _hubFlash = _game.CoreThin ? 0.7f : 0.4f;
+                    if (ev.NodeId == "hub")
+                    {
+                        _hubBraceFlash = _game.Surging;
+                        _hubFlash = _game.Surging ? 0.35f : (_game.CoreThin ? 0.7f : 0.4f);
+                        _juice.HubHit(_game.Surging);
+                    }
                     break;
                 case SimEventKind.Death:
                 case SimEventKind.WarnFood:
                 case SimEventKind.Build:
                     break;
                 case SimEventKind.Win:
-                    _hud.Flash("MESA HOLDS", 3.2f);
+                    _hud.Flash("MESA HOLDS", 3.2f, new Color(0.18f, 0.55f, 0.32f, 0.95f));
                     break;
                 case SimEventKind.Lose:
-                    _hud.Flash(_game.Phase == Phase.LostStarve ? "STARVED OUT" : "HUB DOWN", 3.2f);
+                    _hud.Flash(_game.Phase == Phase.LostStarve ? "STARVED OUT" : "HUB DOWN", 3.2f, new Color(0.72f, 0.12f, 0.12f, 0.95f));
                     break;
                 case SimEventKind.Route:
-                    if (ev.Reason == "splice") _hud.Flash("RAIL LIVE — haulers rolling", 2f);
+                    if (ev.Reason == "splice") _hud.Flash("RAIL LIVE — haulers rolling", 2f, new Color(0.2f, 0.55f, 0.52f, 0.95f));
                     break;
                 case SimEventKind.Surge:
                     if (!_surgeBannered)
                     {
                         _surgeBannered = true;
-                        _hud.Flash("BRACE — haul bought the Hub a breath", 1.4f);
+                        _hud.Flash("BRACE — haul bought the Hub a breath", 1.4f, new Color(0.2f, 0.55f, 0.7f, 0.95f));
                     }
                     break;
                 default:
@@ -269,17 +282,21 @@ namespace ColonyHaul
                         : new Color(0.9f, 0.78f, 0.58f);
                 else c = MesaView.PadIdle;
                 MesaView.Tint(mark.gameObject, c);
-                if (n.Id == "pad_s")
-                    MesaView.SetLabel(mark, farmGlow ? "1 FARM" : "PAD");
-                else if (n.Id == "hub")
-                    MesaView.SetLabel(mark, _game.HubRaising ? "L2" : hubGlow ? "2 HUB" : "HUB");
+                if (n.Id == "hub")
+                    MesaView.SetLabel(mark, cut != null && (cut.A == n.Id || cut.B == n.Id)
+                        ? "SPLICE"
+                        : _game.HubRaising ? "L2" : hubGlow ? "2 HUB" : "HUB");
                 else if (n.Kind == NodeKind.Spawn)
                     MesaView.SetLabel(mark, inbound ? "IN " + _game.IncomingAt(n.Id) : "RAID");
                 else if (n.Kind == NodeKind.Choke)
                     MesaView.SetLabel(mark, splashWest ? "SPLASH" : ChokeLabel(n.Id, near, chokeHot));
-                else if (n.Kind == NodeKind.Pad && n.Id != "pad_s")
+                else if (n.Kind == NodeKind.Pad)
                 {
-                    if (_game.Buildings.TryGetValue(n.Id, out var pb) && pb.Type == BuildingType.Power && _game.GunsHungry())
+                    if (cut != null && (cut.A == n.Id || cut.B == n.Id))
+                        MesaView.SetLabel(mark, "SPLICE");
+                    else if (n.Id == "pad_s")
+                        MesaView.SetLabel(mark, farmGlow ? "1 FARM" : "PAD");
+                    else if (_game.Buildings.TryGetValue(n.Id, out var pb) && pb.Type == BuildingType.Power && _game.GunsHungry())
                         MesaView.SetLabel(mark, "FEED");
                     else MesaView.SetLabel(mark, "PAD");
                 }
@@ -317,7 +334,9 @@ namespace ColonyHaul
                 if (b.Type == BuildingType.Hub && _game.CoreThin)
                     tint = Color.Lerp(tint, new Color(0.95f, 0.22f, 0.18f), 0.4f + 0.2f * pulse);
                 if (b.Type == BuildingType.Hub && _hubFlash > 0f)
-                    tint = Color.Lerp(tint, new Color(1f, 0.22f, 0.18f), Mathf.Clamp01(_hubFlash * 2.4f));
+                    tint = Color.Lerp(tint,
+                        _hubBraceFlash ? new Color(0.4f, 0.9f, 1f) : new Color(1f, 0.22f, 0.18f),
+                        Mathf.Clamp01(_hubFlash * 2.4f));
                 MesaView.Tint(tr.gameObject, tint);
                 if (b.Type == BuildingType.Hub && _game.HubLevel >= 2)
                     tr.localScale = _buildingScale[b.Id] * 1.18f;
@@ -345,9 +364,13 @@ namespace ColonyHaul
                 var pa = new Vector3(a.X, 0.48f, a.Z);
                 var pb = new Vector3(b.X, 0.48f, b.Z);
                 rail.position = (pa + pb) * 0.5f;
-                rail.localScale = new Vector3(0.2f, 0.08f, Vector3.Distance(pa, pb));
+                var cutRail = e.SabotagedUntil > _game.T;
+                var pulseW = cutRail ? 0.2f + 0.14f * Mathf.Abs(Mathf.Sin(Time.time * 9f)) : 0.2f;
+                rail.localScale = new Vector3(pulseW, cutRail ? 0.12f : 0.08f, Vector3.Distance(pa, pb));
                 rail.rotation = Quaternion.LookRotation(pb - pa);
-                MesaView.Tint(rail.gameObject, e.SabotagedUntil > _game.T ? MesaView.RailCut : MesaView.RailLive);
+                MesaView.Tint(rail.gameObject, cutRail
+                    ? Color.Lerp(MesaView.RailCut, new Color(1f, 0.82f, 0.28f), Mathf.Abs(Mathf.Sin(Time.time * 9f)))
+                    : MesaView.RailLive);
             }
 
             foreach (var e in _game.Edges.Values)
@@ -373,6 +396,7 @@ namespace ColonyHaul
 
             SyncHaulers();
             SyncTrails();
+            SyncRunnerIntents();
             SyncEnemies();
             SyncShadows();
         }
@@ -407,15 +431,24 @@ namespace ColonyHaul
                     _haulers[h.Id] = tr;
                 }
                 tr.position = new Vector3(h.X, 0.58f, h.Z);
-                var waitPulse = h.Wait > 0 ? 1f + 0.12f * Mathf.Abs(Mathf.Sin(Time.time * 9f)) : 1f;
+                var blocked = _game.HaulerBlocked(h);
+                if (blocked)
+                {
+                    if (_stuckShown.Add(h.Id)) _juice.Stuck(h.X, h.Z);
+                }
+                else if (_stuckShown.Remove(h.Id) && h.Path.Count > 0)
+                    _juice.Rolling(h.X, h.Z);
+                var waitPulse = h.Wait > 0 || blocked ? 1f + 0.16f * Mathf.Abs(Mathf.Sin(Time.time * 9f)) : 1f;
                 tr.localScale = Vector3.one * ((h.CargoAmount > 0 ? 0.5f : 0.38f) * waitPulse);
                 var cargo = h.CargoAmount <= 0 ? new Color(0.31f, 0.8f, 0.77f)
                     : h.CargoKind == Resource.Food ? new Color(0.5f, 0.85f, 0.45f)
                     : h.CargoKind == Resource.Power ? new Color(0.35f, 0.7f, 1f)
                     : new Color(0.94f, 0.64f, 0.23f);
+                if (blocked) cargo = Color.Lerp(cargo, new Color(1f, 0.5f, 0.22f), 0.62f);
                 MesaView.Tint(tr.gameObject, cargo);
             }
             Prune(_haulers, live);
+            if (_game.ActiveCut() == null) _stuckShown.Clear();
         }
 
         void SyncEnemies()
@@ -437,10 +470,14 @@ namespace ColonyHaul
                 }
                 tr.position = new Vector3(e.X, 0.62f, e.Z);
                 var c = MesaView.EnemyColor(e.Type);
+                if (e.Type == EnemyType.Runner)
+                    c = Color.Lerp(c, new Color(1f, 0.82f, 0.45f), 0.35f * Mathf.Abs(Mathf.Sin(Time.time * 14f)));
                 if (e.SlowUntil > _game.T)
                     c = Color.Lerp(c, new Color(0.35f, 0.88f, 1f), 0.62f);
                 if (e.Flash > 0f) c = Color.white;
                 MesaView.Tint(tr.gameObject, c);
+                if (e.Type == EnemyType.Runner)
+                    tr.localScale = MesaView.EnemyScale(e.Type) * (1f + 0.08f * Mathf.Abs(Mathf.Sin(Time.time * 14f)));
             }
             Prune(_enemies, live);
         }
@@ -534,6 +571,12 @@ namespace ColonyHaul
         void SyncGhostRails()
         {
             var live = new HashSet<string>();
+            var cut = _game.ActiveCut();
+            if (cut != null)
+            {
+                live.Add(cut.Id);
+                PlaceGhost(cut, Color.Lerp(MesaView.RailCut, MesaView.PadRoute, 0.45f + 0.35f * Mathf.Abs(Mathf.Sin(Time.time * 8f))));
+            }
             if (_game.SelectedTool == Tool.Route && _game.RouteFrom != null)
             {
                 foreach (var end in _game.RouteEnds())
@@ -542,27 +585,32 @@ namespace ColonyHaul
                     if (edge == null) continue;
                     if (edge.Routed && edge.SabotagedUntil <= _game.T) continue;
                     live.Add(edge.Id);
-                    if (!_ghosts.TryGetValue(edge.Id, out var rail))
-                    {
-                        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                        go.name = "ghost";
-                        go.transform.SetParent(_root, false);
-                        var col = go.GetComponent<Collider>();
-                        if (col != null) UnityEngine.Object.Destroy(col);
-                        rail = go.transform;
-                        _ghosts[edge.Id] = rail;
-                    }
-                    var a = _game.Nodes[edge.A];
-                    var b = _game.Nodes[edge.B];
-                    var pa = new Vector3(a.X, 0.52f, a.Z);
-                    var pb = new Vector3(b.X, 0.52f, b.Z);
-                    rail.position = (pa + pb) * 0.5f;
-                    rail.localScale = new Vector3(0.12f, 0.05f, Vector3.Distance(pa, pb));
-                    rail.rotation = Quaternion.LookRotation(pb - pa);
-                    MesaView.Tint(rail.gameObject, MesaView.PadRoute);
+                    PlaceGhost(edge, MesaView.PadRoute);
                 }
             }
             Prune(_ghosts, live);
+        }
+
+        void PlaceGhost(SimEdge edge, Color color)
+        {
+            if (!_ghosts.TryGetValue(edge.Id, out var rail))
+            {
+                var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                go.name = "ghost";
+                go.transform.SetParent(_root, false);
+                var col = go.GetComponent<Collider>();
+                if (col != null) UnityEngine.Object.Destroy(col);
+                rail = go.transform;
+                _ghosts[edge.Id] = rail;
+            }
+            var a = _game.Nodes[edge.A];
+            var b = _game.Nodes[edge.B];
+            var pa = new Vector3(a.X, 0.54f, a.Z);
+            var pb = new Vector3(b.X, 0.54f, b.Z);
+            rail.position = (pa + pb) * 0.5f;
+            rail.localScale = new Vector3(0.14f, 0.05f, Vector3.Distance(pa, pb));
+            rail.rotation = Quaternion.LookRotation(pb - pa);
+            MesaView.Tint(rail.gameObject, color);
         }
 
         void SyncBuffers()
@@ -645,6 +693,54 @@ namespace ColonyHaul
             _trails.Clear();
         }
 
+        void ClearIntents()
+        {
+            foreach (var lr in _intents.Values)
+                if (lr != null) Destroy(lr.gameObject);
+            _intents.Clear();
+        }
+
+        void SyncRunnerIntents()
+        {
+            var live = new HashSet<string>();
+            foreach (var e in _game.Enemies)
+            {
+                if (e.Type != EnemyType.Runner || e.Path.Count == 0) continue;
+                if (!_game.Nodes.TryGetValue(e.Path[0], out var next)) continue;
+                live.Add(e.Id);
+                if (!_intents.TryGetValue(e.Id, out var lr))
+                {
+                    var go = new GameObject("intent");
+                    go.transform.SetParent(_root, false);
+                    lr = go.AddComponent<LineRenderer>();
+                    lr.useWorldSpace = true;
+                    lr.startWidth = 0.09f;
+                    lr.endWidth = 0.02f;
+                    var shader = Shader.Find("Hidden/Internal-Colored")
+                        ?? Shader.Find("Sprites/Default")
+                        ?? Shader.Find("Unlit/Color")
+                        ?? Shader.Find("Standard");
+                    if (shader != null) lr.material = new Material(shader);
+                    _intents[e.Id] = lr;
+                }
+                lr.positionCount = 2;
+                lr.SetPosition(0, new Vector3(e.X, 0.72f, e.Z));
+                lr.SetPosition(1, new Vector3(next.X, 0.62f, next.Z));
+                var mag = new Color(0.95f, 0.42f, 0.78f, 0.85f);
+                lr.startColor = mag;
+                lr.endColor = mag;
+                lr.enabled = true;
+            }
+            var dead = new List<string>();
+            foreach (var kv in _intents)
+                if (!live.Contains(kv.Key)) dead.Add(kv.Key);
+            foreach (var id in dead)
+            {
+                if (_intents[id] != null) Destroy(_intents[id].gameObject);
+                _intents.Remove(id);
+            }
+        }
+
         void DrawWorldBars()
         {
             if (_cam == null) return;
@@ -664,18 +760,34 @@ namespace ColonyHaul
                 GUI.Box(new Rect(x - w * 0.5f, y, w * pct, 7f), "");
                 GUI.backgroundColor = Color.white;
             }
-            if (!_game.Nodes.TryGetValue("hub", out var hub)) return;
-            var hubSp = _cam.WorldToScreenPoint(new Vector3(hub.X, 2.35f, hub.Z));
-            if (hubSp.z <= 0f) return;
-            var hx = hubSp.x;
-            var hy = Screen.height - hubSp.y;
-            var hp = Mathf.Clamp01(_game.HubHp / Balance.HubMaxHp);
-            GUI.backgroundColor = new Color(0f, 0f, 0f, 0.7f);
-            GUI.Box(new Rect(hx - 42f, hy, 84f, 9f), "");
-            GUI.backgroundColor = _game.CoreThin
-                ? Color.Lerp(new Color(0.55f, 0.08f, 0.08f), new Color(1f, 0.32f, 0.22f), hp)
-                : Color.Lerp(new Color(0.85f, 0.18f, 0.16f), new Color(0.9f, 0.78f, 0.5f), hp);
-            GUI.Box(new Rect(hx - 42f, hy, 84f * hp, 9f), "");
+            if (_game.Nodes.TryGetValue("hub", out var hub))
+            {
+                var hubSp = _cam.WorldToScreenPoint(new Vector3(hub.X, 2.35f, hub.Z));
+                if (hubSp.z > 0f)
+                {
+                    var hx = hubSp.x;
+                    var hy = Screen.height - hubSp.y;
+                    var hp = Mathf.Clamp01(_game.HubHp / Balance.HubMaxHp);
+                    GUI.backgroundColor = new Color(0f, 0f, 0f, 0.7f);
+                    GUI.Box(new Rect(hx - 42f, hy, 84f, 9f), "");
+                    GUI.backgroundColor = _game.CoreThin
+                        ? Color.Lerp(new Color(0.55f, 0.08f, 0.08f), new Color(1f, 0.32f, 0.22f), hp)
+                        : Color.Lerp(new Color(0.85f, 0.18f, 0.16f), new Color(0.9f, 0.78f, 0.5f), hp);
+                    GUI.Box(new Rect(hx - 42f, hy, 84f * hp, 9f), "");
+                    GUI.backgroundColor = Color.white;
+                }
+            }
+            var cut = _game.ActiveCut();
+            if (cut == null || !_game.Nodes.TryGetValue(cut.A, out var ca) || !_game.Nodes.TryGetValue(cut.B, out var cb))
+                return;
+            var mid = new Vector3((ca.X + cb.X) * 0.5f, 1.15f, (ca.Z + cb.Z) * 0.5f);
+            var cutSp = _cam.WorldToScreenPoint(mid);
+            if (cutSp.z <= 0f) return;
+            var cx = cutSp.x;
+            var cy = Screen.height - cutSp.y;
+            GUI.backgroundColor = new Color(0.85f, 0.28f, 0.12f, 0.88f);
+            GUI.Box(new Rect(cx - 54f, cy - 12f, 108f, 22f),
+                "SPLICE " + GameSim.CeilSecs(cut.SabotagedUntil - _game.T) + "s");
             GUI.backgroundColor = Color.white;
         }
 

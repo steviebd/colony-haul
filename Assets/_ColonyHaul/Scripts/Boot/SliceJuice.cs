@@ -46,6 +46,9 @@ namespace ColonyHaul
         readonly AudioClip _surge;
         readonly AudioClip _dry;
         readonly AudioClip _splice;
+        readonly AudioClip _alarm;
+        readonly AudioSource _alarmSrc;
+        bool _alarmOn;
         float _shake;
         Vector3 _camHome;
 
@@ -65,9 +68,49 @@ namespace ColonyHaul
             _surge = Beep(990f, 0.12f);
             _dry = Beep(140f, 0.2f);
             _splice = Beep(620f, 0.16f);
+            _alarm = Drone(92f, 0.42f);
+            _alarmSrc = cam.gameObject.AddComponent<AudioSource>();
+            _alarmSrc.playOnAwake = false;
+            _alarmSrc.loop = true;
+            _alarmSrc.spatialBlend = 0f;
+            _alarmSrc.clip = _alarm;
+            _alarmSrc.volume = 0.16f;
         }
 
         public void Punch(float amount) => _shake = Mathf.Max(_shake, amount);
+
+        public void CutAlarm(bool on)
+        {
+            if (on == _alarmOn) return;
+            _alarmOn = on;
+            if (on) _alarmSrc.Play();
+            else _alarmSrc.Stop();
+        }
+
+        public void Stuck(float x, float z)
+        {
+            SpawnPip(x, z, "STUCK", new Color(1f, 0.55f, 0.28f));
+        }
+
+        public void Rolling(float x, float z)
+        {
+            SpawnPip(x, z, "ROLLING", new Color(0.42f, 0.92f, 0.88f));
+            SpawnBurst(x, z, new Color(0.42f, 0.92f, 0.88f, 0.45f), 1.8f);
+        }
+
+        public void HubHit(bool braced)
+        {
+            if (braced)
+            {
+                SpawnPip(0f, 0f, "SHRUG", new Color(0.45f, 0.9f, 1f));
+                Punch(0.18f);
+            }
+            else
+            {
+                SpawnPip(0f, 0f, "HIT", new Color(1f, 0.35f, 0.28f));
+                Punch(0.7f);
+            }
+        }
 
         public void Tick(Camera cam, List<SimEvent> events)
         {
@@ -140,11 +183,12 @@ namespace ColonyHaul
                     Punch(0.16f);
                     break;
                 case SimEventKind.Sabotage:
-                    _audio.PlayOneShot(_cut, 0.6f);
-                    Punch(0.9f);
+                    _audio.PlayOneShot(_cut, 0.7f);
+                    Punch(1.05f);
                     SpawnPip(ev.X, ev.Z, "CUT", new Color(1f, 0.38f, 0.22f));
-                    Spokes(ev.X, ev.Z, 1.8f, new Color(1f, 0.38f, 0.22f));
-                    SpawnBurst(ev.X, ev.Z, new Color(1f, 0.38f, 0.22f, 0.6f), 2.4f);
+                    Spokes(ev.X, ev.Z, 2.2f, new Color(1f, 0.55f, 0.22f));
+                    SpawnBurst(ev.X, ev.Z, new Color(1f, 0.38f, 0.22f, 0.65f), 3.1f);
+                    SpawnBurst(ev.X, ev.Z, new Color(1f, 0.72f, 0.28f, 0.4f), 4.4f);
                     break;
                 case SimEventKind.Wave:
                     _audio.PlayOneShot(_wave, 0.5f);
@@ -163,10 +207,6 @@ namespace ColonyHaul
                     SpawnBurst(ev.X, ev.Z, new Color(0.95f, 0.28f, 0.32f, 0.5f), 2.8f);
                     break;
                 case SimEventKind.Hit:
-                    if (ev.NodeId == "hub")
-                    {
-                        Punch(0.6f);
-                    }
                     break;
                 case SimEventKind.Death:
                     SpawnPip(ev.X, ev.Z, "+" + Mathf.RoundToInt(ev.Amount) + " scrap", new Color(0.94f, 0.64f, 0.23f));
@@ -200,10 +240,11 @@ namespace ColonyHaul
                 case SimEventKind.Route:
                     if (ev.Reason == "splice")
                     {
-                        _audio.PlayOneShot(_splice, 0.7f);
-                        Punch(0.5f);
+                        _audio.PlayOneShot(_splice, 0.8f);
+                        Punch(0.55f);
                         SpawnPip(ev.X, ev.Z, "SPLICED", new Color(0.42f, 0.92f, 0.88f));
-                        SpawnBurst(ev.X, ev.Z, new Color(0.42f, 0.92f, 0.88f, 0.55f), 3.2f);
+                        SpawnBurst(ev.X, ev.Z, new Color(0.42f, 0.92f, 0.88f, 0.55f), 3.6f);
+                        Spokes(ev.X, ev.Z, 2.1f, new Color(0.42f, 0.92f, 0.88f));
                     }
                     else _audio.PlayOneShot(_deposit, 0.25f);
                     break;
@@ -355,6 +396,21 @@ namespace ColonyHaul
             {
                 var env = 1f - i / (float)n;
                 data[i] = Mathf.Sin(2f * Mathf.PI * freq * i / sr) * env * 0.35f;
+            }
+            clip.SetData(data, 0);
+            return clip;
+        }
+
+        static AudioClip Drone(float freq, float dur)
+        {
+            const int sr = 22050;
+            var n = Mathf.Max(8, (int)(sr * dur));
+            var clip = AudioClip.Create("drone", n, 1, sr, false);
+            var data = new float[n];
+            for (var i = 0; i < n; i++)
+            {
+                var fade = Mathf.Sin(Mathf.PI * i / n);
+                data[i] = Mathf.Sin(2f * Mathf.PI * freq * i / sr) * fade * 0.22f;
             }
             clip.SetData(data, 0);
             return clip;

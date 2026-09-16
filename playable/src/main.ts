@@ -220,7 +220,7 @@ function juice(events: JuiceEvent[]): void {
         break;
       case 'sabotage':
         audio.sabotage();
-        hud.flashBanner('HAUL CUT — runner sparked a mag-rail', 1800);
+        hud.flashBanner('HAUL CUT — splice the orange rail', 1600);
         break;
       case 'win':
         audio.win();
