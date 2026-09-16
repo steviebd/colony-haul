@@ -996,6 +996,46 @@ namespace ColonyHaul
             return "SLOW " + lane + " — Barrier the approach";
         }
 
+        public string StretchPad()
+        {
+            if (Phase != Phase.Playing) return null;
+            if (OpeningStep() != 0) return null;
+            if (!CrewStretched()) return null;
+            var id = UnstaffedPad();
+            if (id == null) return null;
+            if (OfflinePad() == id) return null;
+            return id;
+        }
+
+        public string StretchTitle()
+        {
+            var id = StretchPad();
+            if (id == null) return null;
+            if (HubLevel < 2 && CanAfford(Tool.Upgrade))
+                return "CREW STRETCH · U adds crew";
+            return "CREW STRETCH · " + PadCall(id) + " idle";
+        }
+
+        public string StretchCopy()
+        {
+            var id = StretchPad();
+            if (id == null) return null;
+            return "CREW STRETCH — " + PadCall(id) + " is idle · rail beats a new pad";
+        }
+
+        public string StretchChip()
+        {
+            if (StretchPad() == null) return null;
+            return "IDLE";
+        }
+
+        public string StretchFlash()
+        {
+            var id = StretchPad();
+            if (id == null) return "CREW STRETCH — rail beats a new pad";
+            return "CREW STRETCH — " + PadCall(id) + " idle";
+        }
+
         public Hauler BlockedLoadedHauler()
         {
             foreach (var h in Haulers)

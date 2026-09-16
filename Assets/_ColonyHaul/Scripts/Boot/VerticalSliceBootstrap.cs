@@ -51,6 +51,7 @@ namespace ColonyHaul
         bool _l2ReadyPinged;
         string _openPinged;
         string _slowPinged;
+        string _stretchPinged;
         Transform _root;
         Camera _cam;
         float _acc;
@@ -149,6 +150,7 @@ namespace ColonyHaul
             _l2ReadyPinged = false;
             _openPinged = null;
             _slowPinged = null;
+            _stretchPinged = null;
             _juice.CutAlarm(false);
             _buildingScale.Clear();
             _acc = 0f;
@@ -213,6 +215,7 @@ namespace ColonyHaul
             PingL2Ready();
             PingOpenChoke();
             PingSlowChoke();
+            PingStretch();
             _juice.Tick(_cam, events);
             _hubFlash = Mathf.Max(0f, _hubFlash - Time.deltaTime);
             SyncAtmosphere();
@@ -375,6 +378,8 @@ namespace ColonyHaul
                 else if (_game.OfflinePad() == n.Id) c = new Color(0.92f * pulse, 0.55f * pulse, 0.22f);
                 else if (_game.SittingStock() != null && _game.SittingStock().NodeId == n.Id)
                     c = new Color(0.95f * pulse, 0.78f * pulse, 0.32f);
+                else if (_game.StretchPad() == n.Id)
+                    c = new Color(1f * pulse, 0.62f * pulse, 0.32f);
                 else if (hubGlow || routeGlow) c = MesaView.PadRoute * pulse;
                 else if (splashWest) c = new Color(0.94f * pulse, 0.63f * pulse, 0.38f);
                 else if (_game.OpenChokeId() == n.Id)
@@ -440,6 +445,8 @@ namespace ColonyHaul
                         MesaView.SetLabel(mark, "OFFLINE");
                     else if (_game.SittingStock() != null && _game.SittingStock().NodeId == n.Id)
                         MesaView.SetLabel(mark, _game.SittingChip() ?? "HAUL");
+                    else if (_game.StretchPad() == n.Id)
+                        MesaView.SetLabel(mark, "IDLE");
                     else if (n.Id == "pad_s")
                         MesaView.SetLabel(mark, farmGlow ? "1 FARM" : "PAD");
                     else if (_game.Buildings.TryGetValue(n.Id, out var pb) && pb.Type == BuildingType.Power && _game.GunsHungry())
@@ -1285,6 +1292,22 @@ namespace ColonyHaul
                 new Color(0.72f, 0.18f, 0.16f, 0.95f));
         }
 
+        void PingStretch()
+        {
+            var id = _game.StretchPad();
+            if (id == null)
+            {
+                _stretchPinged = null;
+                return;
+            }
+            if (_stretchPinged == id) return;
+            _stretchPinged = id;
+            if (!_game.Nodes.TryGetValue(id, out var node)) return;
+            _juice.CrewStretch(node.X, node.Z);
+            _hud.Flash(_game.StretchFlash() ?? "CREW STRETCH — rail beats a new pad", 1.7f,
+                new Color(0.72f, 0.38f, 0.12f, 0.95f));
+        }
+
         void SyncGunLocks()
         {
             var live = new HashSet<string>();
@@ -1815,6 +1838,18 @@ namespace ColonyHaul
                     GUI.backgroundColor = new Color(0.62f, 0.14f, 0.16f, 0.92f);
                     GUI.Box(new Rect(slp.x - 50f, Screen.height - slp.y - 12f, 100f, 22f),
                         _game.SlowChokeChip() ?? "SLOW");
+                    GUI.backgroundColor = Color.white;
+                }
+            }
+            var stretchId = _game.StretchPad();
+            if (stretchId != null && _game.Nodes.TryGetValue(stretchId, out var stretchNode))
+            {
+                var tsp = _cam.WorldToScreenPoint(new Vector3(stretchNode.X, 1.55f, stretchNode.Z));
+                if (tsp.z > 0f)
+                {
+                    GUI.backgroundColor = new Color(0.55f, 0.28f, 0.08f, 0.92f);
+                    GUI.Box(new Rect(tsp.x - 40f, Screen.height - tsp.y - 12f, 80f, 22f),
+                        _game.StretchChip() ?? "IDLE");
                     GUI.backgroundColor = Color.white;
                 }
             }

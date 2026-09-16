@@ -207,6 +207,13 @@ namespace ColonyHaul
             Punch(0.2f);
         }
 
+        public void CrewStretch(float x, float z)
+        {
+            SpawnPip(x, z, "IDLE", new Color(1f, 0.62f, 0.32f));
+            Spokes(x, z, 1.3f, new Color(1f, 0.62f, 0.32f));
+            Punch(0.16f);
+        }
+
         public void HubHit(bool braced)
         {
             if (braced)

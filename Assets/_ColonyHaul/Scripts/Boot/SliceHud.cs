@@ -107,6 +107,7 @@ namespace ColonyHaul
             else if (game.SlowChokeId() != null) GUI.contentColor = new Color(0.95f, 0.32f, 0.34f);
             else if (game.HoldOrder == HoldOrder.Power) GUI.contentColor = new Color(0.4f, 0.75f, 1f);
             else if (game.HoldOrder == HoldOrder.Food) GUI.contentColor = new Color(0.5f, 0.85f, 0.48f);
+            else if (game.StretchPad() != null) GUI.contentColor = new Color(1f, 0.62f, 0.32f);
             else if (game.WaveIndex >= 5) GUI.contentColor = new Color(1f, 0.42f, 0.38f);
             string subCopy;
             if (cut != null)
@@ -141,6 +142,8 @@ namespace ColonyHaul
                 subCopy = "GUNS ORDER · haulers rush Power · H flips";
             else if (game.HoldOrder == HoldOrder.Food)
                 subCopy = "CREW ORDER · haulers rush Food · H flips";
+            else if (game.StretchPad() != null)
+                subCopy = game.StretchTitle();
             else if (game.WaveIndex >= 5)
                 subCopy = "LAST RAIDS · hold the mesa";
             else
@@ -182,6 +185,8 @@ namespace ColonyHaul
                 haul = game.SittingCopy();
             else if (game.L2Ready())
                 haul = game.L2ReadyCopy();
+            else if (game.StretchCopy() != null)
+                haul = game.StretchCopy();
             else haul = "Haul " + game.HaulersLoaded + " loaded · " + (game.Haulers.Count - game.HaulersLoaded) + " idle";
             GUI.Label(new Rect(Screen.width - 280, 92, 256, 20), haul);
             var lanes = game.Lanes();
@@ -218,6 +223,7 @@ namespace ColonyHaul
             else if (game.OpenChokeCopy() != null) raidRead = game.OpenChokeCopy();
             else if (brace != null) raidRead = brace;
             else if (game.SlowChokeCopy() != null) raidRead = game.SlowChokeCopy();
+            else if (game.StretchCopy() != null) raidRead = game.StretchCopy();
             else if (game.LiveTowers() > 0 || game.RaidLive) raidRead = game.GunLockCopy();
             else raidRead = "Combat haul BRACEs the Hub";
             GUI.Label(new Rect(Screen.width - 280, 212, 256, 20), raidRead);
