@@ -5,7 +5,7 @@ GitHub (cold-open / Hub / Cursor): **https://github.com/steviebd/colony-haul**
 | Field | Value |
 | --- | --- |
 | Hub-ready | **Yes** |
-| Origin SHA | `2615c0703b53823bcaacbea02b26618484e4d4b3` |
+| Origin SHA | `933f8c1d6de5f99ccb0d0086f5a6c5de3061c93d` |
 | Origin Unity | `bd112318c2de23ca2f0e4946ac43807cdac2d1aa` |
 | GitHub SHA | `750e0443db430bb45c328b16237e3574bf60fa4b` |
 | Kernel | seed-7 playtest **win** (`phase=won`, t≈184.45, Hub L2, 6 waves) |
