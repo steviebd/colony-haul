@@ -41,7 +41,7 @@ Scenes are thin on purpose. `VerticalSliceBootstrap` builds the dusk mesa, pads,
 - Guns draw range rings. Loaded haulers paint cargo trails. Runners telegraph a magenta intent line to the next pad. Slowed raiders tint cyan. Hottest choke labels EAST/NORTH/WEST. Hub HP is a world bar. Grunts are cubes, brutes capsules, runners thin cylinders. Win/lose cards show time, Hub HP, and wave.
 - Win: survive 6 waves **and** Hub Level 2. Lose: Hub HP 0, or food stays at 0 for 14s.
 - Runners cut rails. The orange rail pulses, pads read SPLICE, stuck haulers throb amber, and a world timer counts down. Route is auto-armed — click the glowing pad.
-- Guns draw range rings and a LOCK beam to the raider they will shoot. Dry guns go red. Loaded haulers stamp FOOD / PWR / ORE. During a raid, the nearest cargo haul paints a cyan line to the Hub and calls **BRACE IN Xs** before the shield pops. Last 14s before a wave, spawn pads show `4G · 8s` ghosts. Raiders on the Hub paint a **CHEW** beam and the title reads UNDER FIRE — if a haul is inbound it becomes UNDER FIRE · BRACE IN Xs.
+- Guns draw range rings and a LOCK beam to the raider they will shoot. Dry guns go red. Loaded haulers stamp FOOD / PWR / ORE. During a raid, the nearest cargo haul paints a cyan line to the Hub and calls **BRACE IN Xs** before the shield pops. Last 14s before a wave, spawn pads show `4G · 8s` ghosts. Raiders on the Hub paint a **CHEW** beam and the title reads UNDER FIRE — if a haul is inbound it becomes UNDER FIRE · BRACE IN Xs. A runner on a live rail paints it magenta (**CUT?** → **CUT NOW**) before the snap.
 - Brownout: guns try to fire with a dry pylon. Keep Power on live rails. From wave 4 with Hub L2, **H** cycles a Hold order: Auto → GUNS (haulers rush Power) → CREW (haulers rush Food). Idle haulers replan immediately. Splice still beats this. Demo stays on Auto.
 
 ### Pass 3 Unity-first (presentation + Rail Surge)
@@ -62,6 +62,7 @@ Tick stays one loop. Seed-7 demo still wins. Mid-game is readable, and a haul du
 12. **Pass 5 Hold order** — late-match decision. Wave 4 + Hub L2 unlocks H: Auto → GUNS (rush Power, feeds guns / BRACE) → CREW (rush Food). Visible hub ring, pad labels, hauler replan. No soft-lock; demo stays Auto.
 13. **Pass 6 raid reads** — gun LOCK beams to the tracked raider (dry guns go red). Loaded haulers paint FOOD/PWR/ORE. A combat haul telegraphs BRACE IN Xs on the rail before the shield pops. Next-wave spawn ghosts + `4G · 8s` labels in the last 14s.
 14. **Pass 7 UNDER FIRE** — raiders in Hub melee paint CHEW beams. Title reads UNDER FIRE (BRACE IN Xs if a haul is inbound, BRACE shrugs if the shield is up). Hub pad says CHEW. Splice still outranks this.
+15. **Pass 8 RAIL THREAT** — a runner on a live rail paints that line magenta and calls CUT? / CUT NOW before sabotage. Title reads RAIL THREAT; if a BRACE haul is on that line it says BRACE haul in danger. Already-cut rails still go orange SPLICE.
 
 Folder layout: `Assets/_ColonyHaul/{Scripts,Art,Prefabs,Scenes,UI,Audio}`.
 

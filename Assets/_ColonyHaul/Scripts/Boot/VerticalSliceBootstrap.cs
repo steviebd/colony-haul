@@ -32,6 +32,8 @@ namespace ColonyHaul
         readonly Dictionary<string, Transform> _cargoTags = new Dictionary<string, Transform>();
         readonly HashSet<string> _stuckShown = new HashSet<string>();
         readonly HashSet<string> _bracePinged = new HashSet<string>();
+        readonly HashSet<string> _threatPinged = new HashSet<string>();
+        readonly HashSet<string> _cutSoonPinged = new HashSet<string>();
         LineRenderer _braceLine;
         bool _chewPinged;
         Transform _root;
@@ -114,6 +116,8 @@ namespace ColonyHaul
             _surgeBannered = false;
             _stuckShown.Clear();
             _bracePinged.Clear();
+            _threatPinged.Clear();
+            _cutSoonPinged.Clear();
             _chewPinged = false;
             _juice.CutAlarm(false);
             _buildingScale.Clear();
@@ -168,6 +172,7 @@ namespace ColonyHaul
             _juice.CutAlarm(_game.ActiveCut() != null && _game.Phase == Phase.Playing);
             PingBraceInbound();
             PingChew();
+            PingRailThreat();
             _juice.Tick(_cam, events);
             _hubFlash = Mathf.Max(0f, _hubFlash - Time.deltaTime);
             SyncAtmosphere();
@@ -444,12 +449,35 @@ namespace ColonyHaul
                 var pb = new Vector3(b.X, 0.48f, b.Z);
                 rail.position = (pa + pb) * 0.5f;
                 var cutRail = e.SabotagedUntil > _game.T;
-                var pulseW = cutRail ? 0.2f + 0.14f * Mathf.Abs(Mathf.Sin(Time.time * 9f)) : 0.2f;
-                rail.localScale = new Vector3(pulseW, cutRail ? 0.12f : 0.08f, Vector3.Distance(pa, pb));
+                var threat = !cutRail && _game.RailThreatened(e.Id);
+                var imminent = false;
+                if (threat)
+                {
+                    foreach (var en in _game.Enemies)
+                    {
+                        var te = _game.RunnerThreatEdge(en);
+                        if (te != null && te.Id == e.Id && _game.RunnerThreatImminent(en))
+                        {
+                            imminent = true;
+                            break;
+                        }
+                    }
+                }
+                var pulseW = cutRail || imminent ? 0.2f + 0.14f * Mathf.Abs(Mathf.Sin(Time.time * 9f))
+                    : threat ? 0.2f + 0.08f * Mathf.Abs(Mathf.Sin(Time.time * 7f))
+                    : 0.2f;
+                rail.localScale = new Vector3(pulseW, cutRail || imminent ? 0.12f : 0.08f, Vector3.Distance(pa, pb));
                 rail.rotation = Quaternion.LookRotation(pb - pa);
-                MesaView.Tint(rail.gameObject, cutRail
-                    ? Color.Lerp(MesaView.RailCut, new Color(1f, 0.82f, 0.28f), Mathf.Abs(Mathf.Sin(Time.time * 9f)))
-                    : MesaView.RailLive);
+                Color railColor;
+                if (cutRail)
+                    railColor = Color.Lerp(MesaView.RailCut, new Color(1f, 0.82f, 0.28f), Mathf.Abs(Mathf.Sin(Time.time * 9f)));
+                else if (imminent)
+                    railColor = Color.Lerp(new Color(0.95f, 0.42f, 0.78f), new Color(1f, 0.72f, 0.28f), Mathf.Abs(Mathf.Sin(Time.time * 11f)));
+                else if (threat)
+                    railColor = Color.Lerp(MesaView.RailLive, new Color(0.95f, 0.42f, 0.78f), 0.55f + 0.35f * Mathf.Abs(Mathf.Sin(Time.time * 6f)));
+                else
+                    railColor = MesaView.RailLive;
+                MesaView.Tint(rail.gameObject, railColor);
             }
 
             foreach (var e in _game.Edges.Values)
@@ -710,6 +738,14 @@ namespace ColonyHaul
                 live.Add(cut.Id);
                 PlaceGhost(cut, Color.Lerp(MesaView.RailCut, MesaView.PadRoute, 0.45f + 0.35f * Mathf.Abs(Mathf.Sin(Time.time * 8f))));
             }
+            var threat = _game.HottestRailThreat();
+            if (threat != null && (cut == null || cut.Id != threat.Id))
+            {
+                live.Add(threat.Id);
+                var mag = Color.Lerp(new Color(0.95f, 0.42f, 0.78f), new Color(1f, 0.72f, 0.35f),
+                    0.5f + 0.5f * Mathf.Abs(Mathf.Sin(Time.time * (_game.HottestThreatImminent() ? 11f : 6f))));
+                PlaceGhost(threat, mag);
+            }
             if (_game.SelectedTool == Tool.Route && _game.RouteFrom != null)
             {
                 foreach (var end in _game.RouteEnds())
@@ -899,6 +935,43 @@ namespace ColonyHaul
             if (_chewPinged) return;
             _chewPinged = true;
             _juice.Chew(0f, 0f);
+        }
+
+        void PingRailThreat()
+        {
+            var live = new HashSet<string>();
+            foreach (var e in _game.Enemies)
+            {
+                var edge = _game.RunnerThreatEdge(e);
+                if (edge == null) continue;
+                live.Add(edge.Id);
+                var a = _game.Nodes[edge.A];
+                var b = _game.Nodes[edge.B];
+                var mx = (a.X + b.X) * 0.5f;
+                var mz = (a.Z + b.Z) * 0.5f;
+                var imminent = _game.RunnerThreatImminent(e);
+                if (imminent)
+                {
+                    if (_cutSoonPinged.Add(edge.Id))
+                        _juice.RailThreat(mx, mz, true);
+                }
+                else if (_threatPinged.Add(edge.Id))
+                    _juice.RailThreat(mx, mz, false);
+            }
+            if (live.Count == 0)
+            {
+                _threatPinged.Clear();
+                _cutSoonPinged.Clear();
+                return;
+            }
+            var dead = new List<string>();
+            foreach (var id in _threatPinged)
+                if (!live.Contains(id)) dead.Add(id);
+            foreach (var id in dead) _threatPinged.Remove(id);
+            dead.Clear();
+            foreach (var id in _cutSoonPinged)
+                if (!live.Contains(id)) dead.Add(id);
+            foreach (var id in dead) _cutSoonPinged.Remove(id);
         }
 
         void SyncGunLocks()
@@ -1171,6 +1244,19 @@ namespace ColonyHaul
                     var chip = eta <= 0.35f ? "BRACE NOW" : "BRACE " + GameSim.CeilSecs(eta) + "s";
                     GUI.backgroundColor = new Color(0.12f, 0.42f, 0.55f, 0.9f);
                     GUI.Box(new Rect(ix - 46f, iy - 14f, 92f, 22f), chip);
+                    GUI.backgroundColor = Color.white;
+                }
+            }
+            var threat = _game.HottestRailThreat();
+            if (threat != null && _game.Nodes.TryGetValue(threat.A, out var ta) && _game.Nodes.TryGetValue(threat.B, out var tb))
+            {
+                var tmid = new Vector3((ta.X + tb.X) * 0.5f, 1.2f, (ta.Z + tb.Z) * 0.5f);
+                var tsp = _cam.WorldToScreenPoint(tmid);
+                if (tsp.z > 0f)
+                {
+                    GUI.backgroundColor = new Color(0.55f, 0.12f, 0.42f, 0.9f);
+                    GUI.Box(new Rect(tsp.x - 46f, Screen.height - tsp.y - 12f, 92f, 22f),
+                        _game.HottestThreatImminent() ? "CUT NOW" : "CUT?");
                     GUI.backgroundColor = Color.white;
                 }
             }

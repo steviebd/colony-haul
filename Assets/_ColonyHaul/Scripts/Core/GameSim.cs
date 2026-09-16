@@ -507,6 +507,97 @@ namespace ColonyHaul
             return "UNDER FIRE · " + n + (n == 1 ? " on Hub" : " on Hub");
         }
 
+        public SimEdge RunnerThreatEdge(Enemy e)
+        {
+            if (e == null || e.Type != EnemyType.Runner || e.Path.Count == 0) return null;
+            var edge = EdgeBetween(e.NodeId, e.Path[0]);
+            if (edge == null || !edge.Routed || edge.SabotagedUntil > T) return null;
+            return edge;
+        }
+
+        public bool RunnerThreatImminent(Enemy e)
+        {
+            var edge = RunnerThreatEdge(e);
+            if (edge == null || e.Path.Count == 0) return false;
+            if (!Nodes.TryGetValue(e.Path[0], out var next)) return false;
+            var dx = e.X - next.X;
+            var dz = e.Z - next.Z;
+            return Math.Sqrt(dx * dx + dz * dz) <= 2.2;
+        }
+
+        public bool RailThreatened(string edgeId)
+        {
+            if (string.IsNullOrEmpty(edgeId)) return false;
+            foreach (var e in Enemies)
+            {
+                var t = RunnerThreatEdge(e);
+                if (t != null && t.Id == edgeId) return true;
+            }
+            return false;
+        }
+
+        public SimEdge HottestRailThreat()
+        {
+            SimEdge best = null;
+            var bestD = float.PositiveInfinity;
+            foreach (var e in Enemies)
+            {
+                var edge = RunnerThreatEdge(e);
+                if (edge == null || e.Path.Count == 0) continue;
+                if (!Nodes.TryGetValue(e.Path[0], out var next)) continue;
+                var dx = e.X - next.X;
+                var dz = e.Z - next.Z;
+                var d = (float)Math.Sqrt(dx * dx + dz * dz);
+                if (d < bestD)
+                {
+                    bestD = d;
+                    best = edge;
+                }
+            }
+            return best;
+        }
+
+        public bool HottestThreatImminent()
+        {
+            var hot = HottestRailThreat();
+            if (hot == null) return false;
+            foreach (var e in Enemies)
+            {
+                var edge = RunnerThreatEdge(e);
+                if (edge == null || edge.Id != hot.Id) continue;
+                if (RunnerThreatImminent(e)) return true;
+            }
+            return false;
+        }
+
+        public string RailThreatTitle()
+        {
+            if (HottestRailThreat() == null) return null;
+            if (HottestThreatImminent() && BraceInbound() != null)
+                return "RAIL THREAT · BRACE haul in danger";
+            if (HottestThreatImminent()) return "RAIL THREAT · about to cut";
+            if (BraceInbound() != null) return "RAIL THREAT · runner on the brace line";
+            return "RAIL THREAT · runner on the rail";
+        }
+
+        public string RailThreatCopy()
+        {
+            var edge = HottestRailThreat();
+            if (edge == null) return null;
+            var name = RailName(edge);
+            if (HottestThreatImminent()) return "RUNNER about to cut " + name;
+            return "RUNNER on " + name;
+        }
+
+        static string RailName(SimEdge edge)
+        {
+            var a = edge.A;
+            var b = edge.B;
+            if (a == "pad_s" || b == "pad_s") return "farm rail";
+            if (a == "hub" || b == "hub") return "Hub rail";
+            return "mag-rail";
+        }
+
         public static float RangeOf(BuildingType type)
         {
             switch (type)

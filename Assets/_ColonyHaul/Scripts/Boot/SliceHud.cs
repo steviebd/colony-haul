@@ -93,6 +93,7 @@ namespace ColonyHaul
             var cut = game.ActiveCut();
             if (cut != null) GUI.contentColor = new Color(1f, 0.55f, 0.32f);
             else if (game.HubChewers() > 0) GUI.contentColor = new Color(1f, 0.38f, 0.28f);
+            else if (game.HottestRailThreat() != null) GUI.contentColor = new Color(0.95f, 0.42f, 0.78f);
             else if (game.Surging) GUI.contentColor = new Color(0.45f, 0.9f, 1f);
             else if (game.BraceInbound() != null) GUI.contentColor = new Color(0.45f, 0.9f, 1f);
             else if (game.HoldOrder == HoldOrder.Power) GUI.contentColor = new Color(0.4f, 0.75f, 1f);
@@ -103,6 +104,8 @@ namespace ColonyHaul
                 subCopy = "HAUL CUT · splice the orange rail · " + GameSim.CeilSecs(cut.SabotagedUntil - game.T) + "s";
             else if (game.HubChewers() > 0)
                 subCopy = game.HubChewTitle();
+            else if (game.HottestRailThreat() != null)
+                subCopy = game.RailThreatTitle();
             else if (game.Surging)
                 subCopy = "BRACE · Hub shrugs hits · " + GameSim.CeilSecs(game.SurgeLeft) + "s";
             else if (game.BraceInbound() != null)
@@ -169,9 +172,11 @@ namespace ColonyHaul
             GUI.Label(new Rect(Screen.width - 280, 172, 256, 20), LarderCopy(game));
             GUI.Label(new Rect(Screen.width - 280, 192, 256, 20), game.HoldOrderCopy());
             var chew = game.HubChewCopy();
+            var threat = game.RailThreatCopy();
             var brace = game.BraceInboundCopy();
             string raidRead;
             if (chew != null) raidRead = chew;
+            else if (threat != null) raidRead = threat;
             else if (brace != null) raidRead = brace;
             else if (game.LiveTowers() > 0 || game.RaidLive) raidRead = game.GunLockCopy();
             else raidRead = "Combat haul BRACEs the Hub";

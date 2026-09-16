@@ -121,6 +121,17 @@ namespace ColonyHaul
             Punch(0.55f);
         }
 
+        public void RailThreat(float x, float z, bool imminent)
+        {
+            SpawnPip(x, z, imminent ? "CUT?" : "THREAT", new Color(0.95f, 0.42f, 0.78f));
+            Spokes(x, z, imminent ? 1.8f : 1.3f, new Color(0.95f, 0.42f, 0.78f));
+            if (imminent)
+            {
+                SpawnBurst(x, z, new Color(0.95f, 0.42f, 0.78f, 0.5f), 2.8f);
+                Punch(0.4f);
+            }
+        }
+
         public void HubHit(bool braced)
         {
             if (braced)
