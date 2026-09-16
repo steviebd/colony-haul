@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -19,9 +20,12 @@ namespace ColonyHaul
         readonly Dictionary<string, Transform> _enemies = new Dictionary<string, Transform>();
         readonly Dictionary<string, Transform> _rails = new Dictionary<string, Transform>();
         readonly Dictionary<string, Transform> _barriers = new Dictionary<string, Transform>();
+        readonly Dictionary<string, Transform> _rings = new Dictionary<string, Transform>();
+        readonly Dictionary<string, Transform> _ghosts = new Dictionary<string, Transform>();
         Transform _root;
         Camera _cam;
         float _acc;
+        float _hubFlash;
         bool _pendingRestart;
         bool _pendingDemo;
         bool _pendingManual;
@@ -69,14 +73,17 @@ namespace ColonyHaul
             {
                 if (child.name == "Sun" || child.name == "Fill" || child.name == "Mesa" || child.name == "Cliff" || child.name == "HubRing")
                     continue;
-                if (child.name == "tracer") continue;
+                if (child.name == "tracer" || child.name == "pip" || child.name == "ring" || child.name == "ghost") continue;
             }
             ClearMap(_buildings);
             ClearMap(_haulers);
             ClearMap(_enemies);
             ClearMap(_rails);
             ClearMap(_barriers);
+            ClearMap(_rings);
+            ClearMap(_ghosts);
             ClearMap(_nodes);
+            _hubFlash = 0f;
             _buildingScale.Clear();
             _acc = 0f;
             BootMatch();
@@ -120,6 +127,7 @@ namespace ColonyHaul
             var events = _game.DrainEvents();
             foreach (var ev in events) Banner(ev);
             _juice.Tick(_cam, events);
+            _hubFlash = Mathf.Max(0f, _hubFlash - Time.deltaTime);
             SyncView(false);
         }
 
@@ -145,7 +153,10 @@ namespace ColonyHaul
                 case SimEventKind.Shot:
                 case SimEventKind.Splash:
                 case SimEventKind.Deposit:
+                    break;
                 case SimEventKind.Hit:
+                    if (ev.NodeId == "hub") _hubFlash = 0.4f;
+                    break;
                 case SimEventKind.Death:
                 case SimEventKind.WarnFood:
                 case SimEventKind.Build:
@@ -202,8 +213,12 @@ namespace ColonyHaul
                 var farmGlow = gate == "farm" && n.Kind == NodeKind.Pad && n.Id == "pad_s";
                 var hubGlow = gate == "route" && n.Id == "hub";
                 var routeGlow = _game.RouteFrom == n.Id || (cut != null && (cut.A == n.Id || cut.B == n.Id));
+                var inbound = n.Kind == NodeKind.Spawn &&
+                    (_game.IncomingAt(n.Id) > 0 ||
+                     (Array.IndexOf(_game.NextWaveSpawns(), n.Id) >= 0 && _game.NextWaveIn < 10f));
                 Color c;
-                if (n.Kind == NodeKind.Spawn) c = MesaView.Spawn;
+                if (inbound) c = MesaView.Spawn * pulse;
+                else if (n.Kind == NodeKind.Spawn) c = MesaView.Spawn;
                 else if (farmGlow) c = MesaView.PadFarm * pulse;
                 else if (hubGlow || routeGlow) c = MesaView.PadRoute * pulse;
                 else if (n.Kind == NodeKind.Hub) c = new Color(0.9f, 0.78f, 0.58f);
@@ -229,9 +244,20 @@ namespace ColonyHaul
                     _buildings[b.Id] = tr;
                     _buildingScale[b.Id] = scale;
                 }
+                var tint = MesaView.BuildingColor(b.Type);
+                var producer = b.Type == BuildingType.Mine || b.Type == BuildingType.Farm || b.Type == BuildingType.Power;
+                if (producer && !b.Staffed) tint *= 0.42f;
+                if ((b.Type == BuildingType.Kinetic || b.Type == BuildingType.Splash) && _game.PowerBrownout)
+                    tint = Color.Lerp(tint, new Color(1f, 0.28f, 0.22f), 0.55f);
+                if (b.Type == BuildingType.Hub && _hubFlash > 0f)
+                    tint = Color.Lerp(tint, new Color(1f, 0.22f, 0.18f), Mathf.Clamp01(_hubFlash * 2.4f));
+                MesaView.Tint(tr.gameObject, tint);
                 if (b.Type == BuildingType.Hub && _game.HubLevel >= 2)
                     tr.localScale = _buildingScale[b.Id] * 1.18f;
             }
+
+            SyncRings();
+            SyncGhostRails();
 
             foreach (var e in _game.Edges.Values)
             {
@@ -295,6 +321,7 @@ namespace ColonyHaul
                     _haulers[h.Id] = tr;
                 }
                 tr.position = new Vector3(h.X, 0.58f, h.Z);
+                tr.localScale = Vector3.one * (h.CargoAmount > 0 ? 0.5f : 0.38f);
                 var cargo = h.CargoAmount <= 0 ? new Color(0.31f, 0.8f, 0.77f)
                     : h.CargoKind == Resource.Food ? new Color(0.5f, 0.85f, 0.45f)
                     : h.CargoKind == Resource.Power ? new Color(0.35f, 0.7f, 1f)
@@ -329,6 +356,109 @@ namespace ColonyHaul
             Prune(_enemies, live);
         }
 
+        void SyncRings()
+        {
+            var live = new HashSet<string>();
+            foreach (var b in _game.Buildings.Values)
+            {
+                var range = GameSim.RangeOf(b.Type);
+                if (range <= 0f) continue;
+                var node = _game.Nodes[b.NodeId];
+                live.Add(b.Id);
+                EnsureRing(b.Id, node, range, b.Type == BuildingType.Splash
+                    ? new Color(0.94f, 0.63f, 0.38f, 0.35f)
+                    : b.Type == BuildingType.Hub
+                        ? new Color(0.9f, 0.78f, 0.58f, 0.28f)
+                        : new Color(0.55f, 0.9f, 0.88f, 0.32f));
+            }
+            if (_game.SelectedTool == Tool.Kinetic || _game.SelectedTool == Tool.Splash)
+            {
+                var range = _game.SelectedTool == Tool.Kinetic ? Balance.KineticRange : Balance.SplashRange;
+                var color = _game.SelectedTool == Tool.Splash
+                    ? new Color(0.94f, 0.63f, 0.38f, 0.22f)
+                    : new Color(0.55f, 0.9f, 0.88f, 0.2f);
+                foreach (var n in _game.Nodes.Values)
+                {
+                    if (n.Kind != NodeKind.Choke && n.Kind != NodeKind.Tower) continue;
+                    if (_game.Buildings.ContainsKey(n.Id)) continue;
+                    var id = "place-" + n.Id;
+                    live.Add(id);
+                    EnsureRing(id, n, range, color);
+                }
+            }
+            Prune(_rings, live);
+        }
+
+        void EnsureRing(string id, SimNode node, float range, Color color)
+        {
+            if (!_rings.TryGetValue(id, out var ring))
+            {
+                var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                go.name = "ring";
+                go.transform.SetParent(_root, false);
+                var col = go.GetComponent<Collider>();
+                if (col != null) UnityEngine.Object.Destroy(col);
+                ring = go.transform;
+                _rings[id] = ring;
+            }
+            ring.position = new Vector3(node.X, 0.46f, node.Z);
+            ring.localScale = new Vector3(range * 2f, 0.015f, range * 2f);
+            MesaView.Tint(ring.gameObject, color);
+        }
+
+        void SyncGhostRails()
+        {
+            var live = new HashSet<string>();
+            if (_game.SelectedTool == Tool.Route && _game.RouteFrom != null)
+            {
+                foreach (var end in _game.RouteEnds())
+                {
+                    var edge = _game.EdgeBetween(_game.RouteFrom, end);
+                    if (edge == null) continue;
+                    if (edge.Routed && edge.SabotagedUntil <= _game.T) continue;
+                    live.Add(edge.Id);
+                    if (!_ghosts.TryGetValue(edge.Id, out var rail))
+                    {
+                        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                        go.name = "ghost";
+                        go.transform.SetParent(_root, false);
+                        var col = go.GetComponent<Collider>();
+                        if (col != null) UnityEngine.Object.Destroy(col);
+                        rail = go.transform;
+                        _ghosts[edge.Id] = rail;
+                    }
+                    var a = _game.Nodes[edge.A];
+                    var b = _game.Nodes[edge.B];
+                    var pa = new Vector3(a.X, 0.52f, a.Z);
+                    var pb = new Vector3(b.X, 0.52f, b.Z);
+                    rail.position = (pa + pb) * 0.5f;
+                    rail.localScale = new Vector3(0.12f, 0.05f, Vector3.Distance(pa, pb));
+                    rail.rotation = Quaternion.LookRotation(pb - pa);
+                    MesaView.Tint(rail.gameObject, MesaView.PadRoute);
+                }
+            }
+            Prune(_ghosts, live);
+        }
+
+        void DrawEnemyHp()
+        {
+            if (_cam == null) return;
+            foreach (var e in _game.Enemies)
+            {
+                var sp = _cam.WorldToScreenPoint(new Vector3(e.X, 1.35f, e.Z));
+                if (sp.z <= 0f) continue;
+                var x = sp.x;
+                var y = Screen.height - sp.y;
+                var w = e.Type == EnemyType.Brute ? 48f : 34f;
+                var pct = Mathf.Clamp01(e.Hp / Mathf.Max(1f, e.MaxHp));
+                GUI.backgroundColor = new Color(0f, 0f, 0f, 0.65f);
+                GUI.Box(new Rect(x - w * 0.5f, y, w, 7f), "");
+                GUI.backgroundColor = Color.Lerp(new Color(0.85f, 0.18f, 0.16f), new Color(0.45f, 0.85f, 0.32f), pct);
+                GUI.Box(new Rect(x - w * 0.5f, y, w * pct, 7f), "");
+                GUI.backgroundColor = Color.white;
+            }
+        }
+
         static void Prune(Dictionary<string, Transform> map, HashSet<string> live)
         {
             var dead = new List<string>();
@@ -344,6 +474,7 @@ namespace ColonyHaul
         {
             if (_hud == null || _game == null) return;
             _hud.Draw(_game);
+            DrawEnemyHp();
             if (_hud.ClickedTool == Tool.Upgrade) _game.TryUpgrade(out _);
             else if (_hud.ClickedTool.HasValue) _game.SetTool(_hud.ClickedTool.Value);
             if (_hud.ConsumeBootDemo) _pendingDemo = true;

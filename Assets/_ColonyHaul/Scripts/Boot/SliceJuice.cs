@@ -14,8 +14,17 @@ namespace ColonyHaul
             public float Until;
         }
 
+        struct Pip
+        {
+            public Transform T;
+            public TextMesh Mesh;
+            public float Until;
+            public Vector3 Vel;
+        }
+
         readonly List<Tracer> _tracers = new List<Tracer>();
         readonly List<LineRenderer> _pool = new List<LineRenderer>();
+        readonly List<Pip> _pips = new List<Pip>();
         readonly Transform _root;
         readonly AudioSource _audio;
         readonly AudioClip _deposit;
@@ -56,6 +65,7 @@ namespace ColonyHaul
                     0f,
                     Mathf.Cos(Time.time * 63f) * j);
             }
+            TickPips();
             for (var i = _tracers.Count - 1; i >= 0; i--)
                 if (Time.time > _tracers[i].Until) _tracers.RemoveAt(i);
             while (_pool.Count < _tracers.Count)
@@ -106,6 +116,7 @@ namespace ColonyHaul
                     break;
                 case SimEventKind.Deposit:
                     _audio.PlayOneShot(_deposit, 0.4f);
+                    SpawnPip(0f, 0f, "+" + Mathf.RoundToInt(ev.Amount) + " " + ResLabel(ev.Resource), ResColor(ev.Resource));
                     break;
                 case SimEventKind.Sabotage:
                     _audio.PlayOneShot(_cut, 0.6f);
@@ -122,8 +133,10 @@ namespace ColonyHaul
                     Punch(0.2f);
                     break;
                 case SimEventKind.Hit:
+                    if (ev.NodeId == "hub") Punch(0.6f);
                     break;
                 case SimEventKind.Death:
+                    SpawnPip(ev.X, ev.Z, "+" + Mathf.RoundToInt(ev.Amount) + " scrap", new Color(0.94f, 0.64f, 0.23f));
                     break;
                 case SimEventKind.WarnFood:
                     break;
@@ -147,6 +160,65 @@ namespace ColonyHaul
                 default:
                     throw new ArgumentOutOfRangeException(nameof(ev.Kind), ev.Kind, null);
             }
+        }
+
+        void TickPips()
+        {
+            for (var i = _pips.Count - 1; i >= 0; i--)
+            {
+                var p = _pips[i];
+                if (p.T == null || Time.time > p.Until)
+                {
+                    if (p.T != null) UnityEngine.Object.Destroy(p.T.gameObject);
+                    _pips.RemoveAt(i);
+                    continue;
+                }
+                p.T.position += p.Vel * Time.deltaTime;
+                if (p.Mesh != null)
+                {
+                    var t = Mathf.Clamp01((p.Until - Time.time) / 0.85f);
+                    var c = p.Mesh.color;
+                    c.a = t;
+                    p.Mesh.color = c;
+                }
+                _pips[i] = p;
+            }
+        }
+
+        void SpawnPip(float x, float z, string text, Color color)
+        {
+            var go = new GameObject("pip");
+            go.transform.SetParent(_root, false);
+            go.transform.position = new Vector3(x, 1.55f, z);
+            go.transform.rotation = Quaternion.Euler(90f, 45f, 0f);
+            var tm = go.AddComponent<TextMesh>();
+            tm.text = text;
+            tm.color = color;
+            tm.anchor = TextAnchor.MiddleCenter;
+            tm.alignment = TextAlignment.Center;
+            tm.fontSize = 48;
+            tm.characterSize = 0.07f;
+            _pips.Add(new Pip
+            {
+                T = go.transform,
+                Mesh = tm,
+                Until = Time.time + 0.85f,
+                Vel = new Vector3(0f, 1.7f, 0f)
+            });
+        }
+
+        static string ResLabel(Resource? res)
+        {
+            if (res == Resource.Food) return "FOOD";
+            if (res == Resource.Power) return "PWR";
+            return "ORE";
+        }
+
+        static Color ResColor(Resource? res)
+        {
+            if (res == Resource.Food) return new Color(0.5f, 0.85f, 0.48f);
+            if (res == Resource.Power) return new Color(0.4f, 0.75f, 1f);
+            return new Color(0.94f, 0.64f, 0.23f);
         }
 
         void AddTracer(SimEvent ev, Color color)

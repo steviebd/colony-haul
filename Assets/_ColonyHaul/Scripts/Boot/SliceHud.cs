@@ -48,6 +48,7 @@ namespace ColonyHaul
             var e = Event.current;
 
             DrawTop(game);
+            DrawLogistics(game);
             DrawTray(game);
             DrawHint(game);
             DrawBanner();
@@ -82,6 +83,21 @@ namespace ColonyHaul
                     : $"WAVE {game.WaveIndex} / {Balance.WavesToWin} · {game.Enemies.Count} LIVE");
             GUI.Label(new Rect(Screen.width - 280, 40, 260, 20),
                 $"Hub HP {Mathf.CeilToInt(game.HubHp)} · L{game.HubLevel} · {game.Haulers.Count} haul");
+        }
+
+        static void DrawLogistics(GameSim game)
+        {
+            GUI.backgroundColor = new Color(0.05f, 0.09f, 0.11f, 0.88f);
+            GUI.Box(new Rect(Screen.width - 292, 88, 280, 70), "");
+            GUI.backgroundColor = Color.white;
+            var cut = game.ActiveCut();
+            var haul = cut != null
+                ? "HAUL CUT — splice · " + GameSim.CeilSecs(cut.SabotagedUntil - game.T) + "s left"
+                : "Haul " + game.HaulersLoaded + " loaded · " + (game.Haulers.Count - game.HaulersLoaded) + " idle";
+            GUI.Label(new Rect(Screen.width - 280, 92, 256, 20), haul);
+            GUI.Label(new Rect(Screen.width - 280, 112, 256, 20),
+                "Raid " + game.Enemies.Count + " live · " + game.IncomingRaiders + " inbound");
+            GUI.Label(new Rect(Screen.width - 280, 132, 256, 22), game.NextWaveCopy());
         }
 
         static void Chip(float x, float y, string label, string value, Color color)
