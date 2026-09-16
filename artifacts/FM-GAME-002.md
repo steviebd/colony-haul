@@ -5,15 +5,15 @@ GitHub (cold-open / Hub / Cursor): **https://github.com/steviebd/colony-haul**
 | Field | Value |
 | --- | --- |
 | Hub-ready | **Yes** |
-| Origin SHA | `3653b90e0b6845200e4bb2fc8fc424ed49959a07` |
-| GitHub SHA | `7f4decc0cb049d7da04aa3f8cc852d7c08351ec8` |
+| Origin SHA | `082510e70ce2343afe5247535f6a1aa53f4c8977` |
+| GitHub SHA | `8710426497bd1a29d888c96bee07b4235a64905a` |
 | Kernel | seed-7 playtest **win** (`phase=won`, t≈184.45, Hub L2, minHp≈50.4, sabotages=4, brownouts=1) |
 | Nested opening | **pass** (Farm → Route → Hub still deposits) |
 | Hold order | **pass** (locked until wave 4 + L2; then GUNS chase Power) |
 | Product | Unity 2022.3.50f1 URP under `Assets/_ColonyHaul` — not Vite |
 | Feature freeze | **No** — keep deepening Unity until **~16:30 AEST**, then lock SHAs for the 17:00 captain package. |
 
-Pass 9 trees match on the five edited paths (byte-identical). Cold clone still has `Assets/`, `Packages/`, `ProjectSettings/`, USB, `playable/`, artifacts tape. Import workflows self-delete.
+Pass 10 trees match on the five edited paths (byte-identical). Cold clone still has `Assets/`, `Packages/`, `ProjectSettings/`, USB, `playable/`, artifacts tape. Import workflows self-delete.
 
 ## Unity feature list
 
@@ -59,9 +59,13 @@ One Game tick. Demo stays on Hold **Auto**, so seed-7 is the same run as Pass 4/
 
 17. **RAIL THREAT** — a runner on a live mag-rail paints that line magenta before sabotage. Midpoint chip **CUT?** then **CUT NOW** when they are 2.2 from the next pad (the tick that can snap the rail). Title: **RAIL THREAT**. If a BRACE haul is inbound it reads **BRACE haul in danger**. Already-cut rails stay orange SPLICE. Sabotage chance/timing unchanged.
 
-**Pass 9 — this beat**
+**Pass 9 — kept**
 
 18. **GUNS DRY** — when Power drops below a kinetic shot and towers are live, the title holds **GUNS DRY** until Power recovers. A Power haul paints an amber line and chips **POWER IN Xs** / **POWER NOW**. Hub pad reads DRY. Splice / UNDER FIRE / RAIL THREAT still outrank this. Brownout chance/timing unchanged. Seed-7 fires this once.
+
+**Pass 10 — this beat**
+
+19. **CORE BOUND** — raiders whose next pad is Hub paint a red last-hop line. Title: **CORE BOUND**. Chip **IN** then **PAD** at 2.4 from the core (the tick before CHEW / UNDER FIRE). If a BRACE haul is inbound it reads **BRACE haul racing them**. Hub pad reads IN / PAD. Splice / UNDER FIRE / RAIL THREAT still outrank this. Tick unchanged. Fires every raid on seed-7.
 
 ## How to play (Editor)
 
@@ -81,17 +85,17 @@ Win: 6 waves **and** Hub L2. Lose: Hub HP 0, or food stays at 0 for 14s.
 
 **Hold order in a raid:** when guns go hungry, coach says `H for GUNS`. Press H — haulers peel toward the Power pad, deposits BRACE the Hub. If the larder is thin instead, `H for CREW`. Press again to flip. Cut rails still flash SPLICE first.
 
-**Pass 6–9 in a raid:** LOCK beam = who the gun will shoot. FOOD/PWR/ORE haul = BRACE IN Xs. Spawn pads ghost the next mix. Raiders on the Hub = CHEW / UNDER FIRE. Magenta rail + CUT? = a runner is about to snap that line — splice the moment it goes orange. Title **GUNS DRY** + amber POWER line = towers clicked empty — keep the Power rail live.
+**Pass 6–10 in a raid:** LOCK beam = who the gun will shoot. FOOD/PWR/ORE haul = BRACE IN Xs. Spawn pads ghost the next mix. Magenta rail + CUT? = splice before the snap. Title **GUNS DRY** + amber POWER line = towers clicked empty. Red last-hop line + **CORE BOUND** = they are on the Hub pad next — CHEW / UNDER FIRE follows.
 
 ## Fun call
 
-Towers going silent is now a picture. The title holds GUNS DRY, the Hub says DRY, and if a Power haul is already on the rail it chips POWER IN Xs. Splice still first. UNDER FIRE still first. Hold order still flips GUNS vs CREW.
+You see them commit to the Hub before they chew it. CORE BOUND → PAD → UNDER FIRE. If a Power haul is racing them, the title already says the BRACE is in a footrace. Splice still first. Hold order still flips GUNS vs CREW.
 
 ## Gaps
 
 - This VM has no Unity Editor — Play Mode is documented, not screenshot-verified.
 - Runtime art is procedural low-poly, not authored FBX.
 - Origin remote stays `tmp-*`. GitHub is the Hub/Cursor clone.
-- GitHub SHA ≠ Origin SHA (parallel history); pass-9 file bytes match.
+- GitHub SHA ≠ Origin SHA (parallel history); pass-10 file bytes match.
 - Hold order does not reroute haulers already carrying cargo — they finish the trip, then obey.
 - Out of scope: multiplayer, cloud meta, deep tech tree, campaign.
