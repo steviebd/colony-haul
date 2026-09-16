@@ -106,6 +106,14 @@ namespace ColonyHaul
             Punch(0.45f);
         }
 
+        public void PackIn(float x, float z, int count)
+        {
+            SpawnPip(x, z, count > 0 ? "PACK " + count : "PACK", new Color(0.86f, 0.28f, 0.24f));
+            Spokes(x, z, 1.7f, new Color(0.86f, 0.28f, 0.24f));
+            SpawnBurst(x, z, new Color(0.86f, 0.24f, 0.24f, 0.42f), 3.6f);
+            Punch(0.28f);
+        }
+
         public void BraceComing(float x, float z)
         {
             SpawnPip(x, z, "INBOUND", new Color(0.45f, 0.9f, 1f));

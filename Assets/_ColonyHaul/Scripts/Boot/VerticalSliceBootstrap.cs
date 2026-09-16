@@ -56,6 +56,7 @@ namespace ColonyHaul
         string _stretchPinged;
         bool _holdReadyPinged;
         bool _homeFlash;
+        int _packPinged = -1;
         Transform _root;
         Camera _cam;
         float _acc;
@@ -159,6 +160,7 @@ namespace ColonyHaul
             _holdReadyPinged = false;
             _homePinged.Clear();
             _homeFlash = false;
+            _packPinged = -1;
             _juice.CutAlarm(false);
             _buildingScale.Clear();
             _acc = 0f;
@@ -226,6 +228,7 @@ namespace ColonyHaul
             PingStretch();
             PingHoldReady();
             PingHomeInbound();
+            PingPackIn();
             _juice.Tick(_cam, events);
             _hubFlash = Mathf.Max(0f, _hubFlash - Time.deltaTime);
             SyncAtmosphere();
@@ -414,6 +417,8 @@ namespace ColonyHaul
                         ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(1f, 0.86f, 0.4f), pulse)
                         : _game.HoldReadyWorld()
                         ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(0.92f, 0.78f, 0.42f), pulse)
+                        : _game.PackInLive()
+                        ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(0.86f, 0.28f, 0.24f), pulse)
                         : _game.HoldOrder == HoldOrder.Power
                         ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(0.4f, 0.75f, 1f), pulse)
                         : _game.HoldOrder == HoldOrder.Food
@@ -434,6 +439,7 @@ namespace ColonyHaul
                         : _game.HubRaising ? "L2"
                         : _game.L2ReadyWorld() ? "READY"
                         : _game.HoldReadyWorld() ? "HOLD"
+                        : _game.PackInLive() ? "PACK"
                         : _game.HoldOrder == HoldOrder.Power ? "GUNS"
                         : _game.HoldOrder == HoldOrder.Food ? "CREW"
                         : hubGlow ? "2 HUB" : "HUB");
@@ -1377,6 +1383,29 @@ namespace ColonyHaul
             _juice.HaulHome(h.X, h.Z, GameSim.CargoTag(h.CargoKind));
         }
 
+        void PingPackIn()
+        {
+            if (!_game.PackInLive())
+            {
+                _packPinged = -1;
+                return;
+            }
+            var next = _game.WaveIndex + 1;
+            if (_packPinged == next) return;
+            _packPinged = next;
+            foreach (var spawnId in _game.NextWaveSpawns())
+            {
+                if (!_game.Nodes.TryGetValue(spawnId, out var spawn)) continue;
+                var n = _game.NextWaveCount(spawnId, EnemyType.Grunt)
+                    + _game.NextWaveCount(spawnId, EnemyType.Brute)
+                    + _game.NextWaveCount(spawnId, EnemyType.Runner);
+                if (n <= 0) continue;
+                _juice.PackIn(spawn.X, spawn.Z, n);
+            }
+            _hud.Flash(_game.PackInFlash() ?? "PACK IN — gun the lane / haul Power", 2.0f,
+                new Color(0.55f, 0.12f, 0.1f, 0.95f));
+        }
+
         void SyncGunLocks()
         {
             var live = new HashSet<string>();
@@ -1687,11 +1716,13 @@ namespace ColonyHaul
                         var offset = outward * 1.15f + side * ((slot - 1) * 0.55f);
                         ghost.position = new Vector3(spawn.X + offset.x, 0.7f, spawn.Z + offset.z);
                         var scale = MesaView.EnemyScale(type) * (0.72f + 0.04f * n);
-                        var pulse = 0.85f + 0.15f * Mathf.Abs(Mathf.Sin(Time.time * 4f + slot));
+                        var pulse = _game.PackInLive()
+                            ? 0.92f + 0.18f * Mathf.Abs(Mathf.Sin(Time.time * 7f + slot))
+                            : 0.85f + 0.15f * Mathf.Abs(Mathf.Sin(Time.time * 4f + slot));
                         ghost.localScale = scale * pulse;
                         var c = MesaView.EnemyColor(type);
-                        c.a = 0.45f;
-                        MesaView.Tint(ghost.gameObject, c * 0.55f);
+                        c.a = _game.PackInLive() ? 0.62f : 0.45f;
+                        MesaView.Tint(ghost.gameObject, c * (_game.PackInLive() ? 0.75f : 0.55f));
                         slot++;
                     }
                 }
@@ -1858,6 +1889,13 @@ namespace ColonyHaul
                         GUI.backgroundColor = new Color(0.42f, 0.32f, 0.08f, 0.92f);
                         GUI.Box(new Rect(hx - 46f, hy - 18f, 92f, 16f),
                             _game.HoldReadyChip() ?? "HOLD");
+                        GUI.backgroundColor = Color.white;
+                    }
+                    else if (_game.PackInLive())
+                    {
+                        GUI.backgroundColor = new Color(0.55f, 0.12f, 0.1f, 0.92f);
+                        GUI.Box(new Rect(hx - 46f, hy - 18f, 92f, 16f),
+                            _game.PackInChip() ?? "PACK");
                         GUI.backgroundColor = Color.white;
                     }
                 }

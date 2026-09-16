@@ -403,6 +403,49 @@ namespace ColonyHaul
         public bool WaveForecastLive =>
             Phase == Phase.Playing && WaveIndex < Balance.WavesToWin && NextWaveIn <= 14f && IncomingRaiders == 0;
 
+        public bool PackInLive()
+        {
+            return WaveForecastLive && NextWaveIn <= 8f;
+        }
+
+        public string PackInCall()
+        {
+            var next = WaveIndex + 1;
+            switch (next)
+            {
+                case 1: return "4 grunts EAST";
+                case 2: return "NORTH grunts · EAST runner";
+                case 3: return "WEST grunts · EAST brute";
+                case 4: return "three lanes · runners + brute";
+                case 5: return "LAST RAIDS · brutes EAST";
+                case 6: return "LAST RAID · all spawns";
+                default: throw new ArgumentOutOfRangeException(nameof(WaveIndex), WaveIndex, null);
+            }
+        }
+
+        public string PackInTitle()
+        {
+            if (!PackInLive()) return null;
+            return "PACK IN " + CeilSecs(NextWaveIn) + "s · " + PackInCall();
+        }
+
+        public string PackInCopy()
+        {
+            if (!PackInLive()) return null;
+            return "PACK IN " + CeilSecs(NextWaveIn) + "s — " + PackInCall() + " · splice / haul / gun";
+        }
+
+        public string PackInChip()
+        {
+            if (!PackInLive()) return null;
+            return "PACK " + CeilSecs(NextWaveIn) + "s";
+        }
+
+        public string PackInFlash()
+        {
+            return "PACK IN " + CeilSecs(NextWaveIn) + "s — " + PackInCall();
+        }
+
         public string SpawnForecastCopy(string spawnId)
         {
             var inbound = IncomingAt(spawnId);
@@ -416,6 +459,7 @@ namespace ColonyHaul
             if (g > 0) bits += g + "G";
             if (b > 0) bits += (bits.Length > 0 ? " " : "") + b + "B";
             if (r > 0) bits += (bits.Length > 0 ? " " : "") + r + "R";
+            if (PackInLive()) return "PACK " + bits + " · " + CeilSecs(NextWaveIn) + "s";
             return bits + " · " + CeilSecs(NextWaveIn) + "s";
         }
 
