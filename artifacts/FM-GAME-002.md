@@ -5,15 +5,15 @@ GitHub (cold-open / Hub / Cursor): **https://github.com/steviebd/colony-haul**
 | Field | Value |
 | --- | --- |
 | Hub-ready | **Yes** |
-| Origin SHA | `d18d1ab4506e9022fc03ecd0576df8d191962d8a` |
-| GitHub SHA | `2fc63a8838ed84ecf9b61f93e29bdcfea6ecce11` |
+| Origin SHA | `2acaef292f6342c0f4a7363f30bb4cfc03066c07` |
+| GitHub SHA | `a885d15fb6540fc72bd0807303213c51f2f2e81d` |
 | Kernel | seed-7 playtest **win** (`phase=won`, t≈184.45, Hub L2, minHp≈50.4, sabotages=4, brownouts=1) |
 | Nested opening | **pass** (Farm → Route → Hub still deposits) |
 | Hold order | **pass** (locked until wave 4 + L2; then GUNS chase Power) |
 | Product | Unity 2022.3.50f1 URP under `Assets/_ColonyHaul` — not Vite |
 | Feature freeze | **No** — keep deepening Unity until **~16:30 AEST**, then lock SHAs for the 17:00 captain package. |
 
-Pass 11 trees match on the five edited paths (byte-identical). Cold clone still has `Assets/`, `Packages/`, `ProjectSettings/`, USB, `playable/`, artifacts tape. Import workflows self-delete.
+Pass 12 trees match on the six edited paths (byte-identical). Cold clone still has `Assets/`, `Packages/`, `ProjectSettings/`, USB, `playable/`, artifacts tape. Import workflows self-delete.
 
 ## Unity feature list
 
@@ -67,9 +67,13 @@ One Game tick. Demo stays on Hold **Auto**, so seed-7 is the same run as Pass 4/
 
 19. **CORE BOUND** — raiders whose next pad is Hub paint a red last-hop line. Title: **CORE BOUND**. Chip **IN** then **PAD** at 2.4 from the core (the tick before CHEW / UNDER FIRE). If a BRACE haul is inbound it reads **BRACE haul racing them**. Hub pad reads IN / PAD. Splice / UNDER FIRE / RAIL THREAT still outrank this. Tick unchanged. Fires every raid on seed-7.
 
-**Pass 11 — this beat**
+**Pass 11 — kept**
 
 20. **WAVE CLEAR** — when a raid dies and the next wave is still queued, the title holds **CLEAR** with the next-raid clock and the next readable call (raise Hub L2 / Splash WEST / haul Power). Hub pad reads CLEAR. Logistics shows food and gun clocks. Splice / UNDER FIRE / RAIL THREAT / CORE BOUND / GUNS DRY still outrank this. Tick unchanged. Fires after waves 1–5 on seed-7.
+
+**Pass 12 — this beat**
+
+21. **HAUL CUT stakes** — a snapped rail names why splice now. Title/coach/chip: **BRACE stuck** if a loaded haul is trapped during a raid, **Power rail down** if the pylon pad is cut (guns starve until splice), **farm rail down** if the larder line is cut, **ore rail** otherwise. Midpoint chip reads BRACE / PWR / FARM / ORE + countdown. Pads still say SPLICE (the click). HAUL CUT still outranks UNDER FIRE / RAIL THREAT / CORE BOUND / GUNS DRY / WAVE CLEAR. Tick and sabotage chance unchanged. Seed-7 still fires 4 cuts.
 
 ## How to play (Editor)
 
@@ -89,17 +93,17 @@ Win: 6 waves **and** Hub L2. Lose: Hub HP 0, or food stays at 0 for 14s.
 
 **Hold order in a raid:** when guns go hungry, coach says `H for GUNS`. Press H — haulers peel toward the Power pad, deposits BRACE the Hub. If the larder is thin instead, `H for CREW`. Press again to flip. Cut rails still flash SPLICE first.
 
-**Pass 6–11 in a raid:** LOCK beam = who the gun will shoot. FOOD/PWR/ORE haul = BRACE IN Xs. Magenta rail + CUT? = splice before the snap. GUNS DRY + amber POWER line = towers clicked empty. CORE BOUND = they are on the Hub pad next. After the last raider drops, **CLEAR** names the next 26s — Hub L2, Splash WEST, or haul Power before the next pack.
+**Pass 6–12 in a raid:** LOCK beam = who the gun will shoot. FOOD/PWR/ORE haul = BRACE IN Xs. Magenta rail + CUT? = splice before the snap. After the snap, the orange chip names the stake — BRACE / PWR / FARM — so splice is a recovery, not a generic repair. GUNS DRY + amber POWER line = towers clicked empty. CORE BOUND = they are on the Hub pad next. After the last raider drops, **CLEAR** names the next 26s — Hub L2, Splash WEST, or haul Power before the next pack.
 
 ## Fun call
 
-The raid ending is now a picture. CLEAR names what to do with the breath you just bought. Combat still reads CORE BOUND → PAD → UNDER FIRE. Hold order still flips GUNS vs CREW.
+A cut is no longer a generic orange timer. Splice because the BRACE haul is stuck, or because guns/larder sit behind that pad. Combat still reads CORE BOUND → PAD → UNDER FIRE. Hold order still flips GUNS vs CREW.
 
 ## Gaps
 
 - This VM has no Unity Editor — Play Mode is documented, not screenshot-verified.
 - Runtime art is procedural low-poly, not authored FBX.
 - Origin remote stays `tmp-*`. GitHub is the Hub/Cursor clone.
-- GitHub SHA ≠ Origin SHA (parallel history); pass-11 file bytes match.
+- GitHub SHA ≠ Origin SHA (parallel history); pass-12 file bytes match.
 - Hold order does not reroute haulers already carrying cargo — they finish the trip, then obey.
 - Out of scope: multiplayer, cloud meta, deep tech tree, campaign.
