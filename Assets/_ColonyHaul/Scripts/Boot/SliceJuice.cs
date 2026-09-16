@@ -199,6 +199,14 @@ namespace ColonyHaul
             Punch(0.22f);
         }
 
+        public void SlowChoke(float x, float z, string lane)
+        {
+            SpawnPip(x, z, string.IsNullOrEmpty(lane) ? "SLOW" : lane, new Color(0.95f, 0.32f, 0.34f));
+            Spokes(x, z, 1.5f, new Color(0.95f, 0.32f, 0.34f));
+            SpawnBurst(x, z, new Color(0.95f, 0.28f, 0.32f, 0.42f), 2.8f);
+            Punch(0.2f);
+        }
+
         public void HubHit(bool braced)
         {
             if (braced)

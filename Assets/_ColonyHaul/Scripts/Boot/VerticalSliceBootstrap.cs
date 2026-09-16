@@ -50,6 +50,7 @@ namespace ColonyHaul
         string _sitPinged;
         bool _l2ReadyPinged;
         string _openPinged;
+        string _slowPinged;
         Transform _root;
         Camera _cam;
         float _acc;
@@ -147,6 +148,7 @@ namespace ColonyHaul
             _sitPinged = null;
             _l2ReadyPinged = false;
             _openPinged = null;
+            _slowPinged = null;
             _juice.CutAlarm(false);
             _buildingScale.Clear();
             _acc = 0f;
@@ -210,6 +212,7 @@ namespace ColonyHaul
             PingSitting();
             PingL2Ready();
             PingOpenChoke();
+            PingSlowChoke();
             _juice.Tick(_cam, events);
             _hubFlash = Mathf.Max(0f, _hubFlash - Time.deltaTime);
             SyncAtmosphere();
@@ -376,6 +379,8 @@ namespace ColonyHaul
                 else if (splashWest) c = new Color(0.94f * pulse, 0.63f * pulse, 0.38f);
                 else if (_game.OpenChokeId() == n.Id)
                     c = Color.Lerp(new Color(0.62f, 0.52f, 0.4f), new Color(1f * pulse, 0.38f * pulse, 0.22f), 0.7f);
+                else if (_game.SlowChokeId() == n.Id)
+                    c = Color.Lerp(new Color(0.62f, 0.52f, 0.4f), new Color(0.95f * pulse, 0.32f * pulse, 0.34f), 0.7f);
                 else if (n.Kind == NodeKind.Choke && (chokeHot || near > 0))
                     c = Color.Lerp(new Color(0.62f, 0.52f, 0.4f), MesaView.Spawn * pulse,
                         Mathf.Clamp01(near / 4f + (chokeHot ? 0.35f : 0f)));
@@ -419,6 +424,7 @@ namespace ColonyHaul
                 else if (n.Kind == NodeKind.Choke)
                     MesaView.SetLabel(mark, splashWest ? "SPLASH"
                         : _game.OpenChokeId() == n.Id ? "OPEN"
+                        : _game.SlowChokeId() == n.Id ? "SLOW"
                         : ChokeLabel(n.Id, near, chokeHot));
                 else if (n.Kind == NodeKind.Pad)
                 {
@@ -764,6 +770,13 @@ namespace ColonyHaul
                     : Balance.KineticRange;
                 var openGlow = 0.36f + 0.08f * Mathf.Abs(Mathf.Sin(Time.time * 7f));
                 EnsureRing("open-choke", openNode, openRange, new Color(1f, 0.38f, 0.22f, openGlow));
+            }
+            var slowId = _game.SlowChokeId();
+            if (slowId != null && _game.Nodes.TryGetValue(slowId, out var slowNode))
+            {
+                live.Add("slow-choke");
+                var slowGlow = 0.34f + 0.08f * Mathf.Abs(Mathf.Sin(Time.time * 8f));
+                EnsureRing("slow-choke", slowNode, 3.4f, new Color(0.95f, 0.32f, 0.34f, slowGlow));
             }
             if (_game.HubChewers() > 0 && !_game.Surging && _game.Nodes.TryGetValue("hub", out var chewHub))
             {
@@ -1254,6 +1267,22 @@ namespace ColonyHaul
             _juice.OpenChoke(node.X, node.Z, _game.OpenChokeLane() ?? "OPEN");
             _hud.Flash(_game.OpenChokeFlash() ?? "OPEN CHOKE — plant a gun", 1.8f,
                 new Color(0.72f, 0.22f, 0.12f, 0.95f));
+        }
+
+        void PingSlowChoke()
+        {
+            var id = _game.SlowChokeId();
+            if (id == null)
+            {
+                _slowPinged = null;
+                return;
+            }
+            if (_slowPinged == id) return;
+            _slowPinged = id;
+            if (!_game.Nodes.TryGetValue(id, out var node)) return;
+            _juice.SlowChoke(node.X, node.Z, _game.SlowChokeLane() ?? "SLOW");
+            _hud.Flash(_game.SlowChokeFlash() ?? "SLOW — Barrier the choke", 1.7f,
+                new Color(0.72f, 0.18f, 0.16f, 0.95f));
         }
 
         void SyncGunLocks()
@@ -1774,6 +1803,18 @@ namespace ColonyHaul
                     GUI.backgroundColor = new Color(0.62f, 0.18f, 0.1f, 0.92f);
                     GUI.Box(new Rect(osp.x - 50f, Screen.height - osp.y - 12f, 100f, 22f),
                         _game.OpenChokeChip() ?? "OPEN");
+                    GUI.backgroundColor = Color.white;
+                }
+            }
+            var slowId = _game.SlowChokeId();
+            if (slowId != null && _game.Nodes.TryGetValue(slowId, out var slowHud))
+            {
+                var slp = _cam.WorldToScreenPoint(new Vector3(slowHud.X, 1.55f, slowHud.Z));
+                if (slp.z > 0f)
+                {
+                    GUI.backgroundColor = new Color(0.62f, 0.14f, 0.16f, 0.92f);
+                    GUI.Box(new Rect(slp.x - 50f, Screen.height - slp.y - 12f, 100f, 22f),
+                        _game.SlowChokeChip() ?? "SLOW");
                     GUI.backgroundColor = Color.white;
                 }
             }

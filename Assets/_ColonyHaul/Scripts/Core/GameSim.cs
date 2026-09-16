@@ -924,6 +924,78 @@ namespace ColonyHaul
             return "OPEN " + lane + " — plant a gun";
         }
 
+        public string SlowChokeId()
+        {
+            if (Phase != Phase.Playing) return null;
+            if (OpeningStep() != 0) return null;
+            var hot = HottestLane();
+            string choke;
+            switch (hot)
+            {
+                case "east": choke = "choke_e"; break;
+                case "west": choke = "choke_w"; break;
+                case "north": choke = "choke_n"; break;
+                default: throw new ArgumentOutOfRangeException(nameof(hot), hot, null);
+            }
+            if (!NodeArmed(choke)) return null;
+            if (ChokeBarred(choke)) return null;
+            if (choke == "choke_w" && SplashFresh()) return null;
+            var lanes = Lanes();
+            int pressure;
+            switch (hot)
+            {
+                case "east": pressure = lanes.East; break;
+                case "west": pressure = lanes.West; break;
+                case "north": pressure = lanes.North; break;
+                default: throw new ArgumentOutOfRangeException(nameof(hot), hot, null);
+            }
+            if (pressure <= 0) return null;
+            return choke;
+        }
+
+        public string SlowChokeLane()
+        {
+            var id = SlowChokeId();
+            if (id == null) return null;
+            switch (id)
+            {
+                case "choke_e": return "EAST";
+                case "choke_n": return "NORTH";
+                case "choke_w": return "WEST";
+                default: throw new ArgumentOutOfRangeException(nameof(id), id, null);
+            }
+        }
+
+        public string SlowChokeTitle()
+        {
+            var lane = SlowChokeLane();
+            if (lane == null) return null;
+            if (CanAfford(Tool.Barrier)) return "SLOW " + lane + " · Barrier";
+            return "SLOW " + lane + " · ore short";
+        }
+
+        public string SlowChokeCopy()
+        {
+            var lane = SlowChokeLane();
+            if (lane == null) return null;
+            if (RaidLive) return "SLOW " + lane + " — Barrier buys guns / BRACE time";
+            return "SLOW " + lane + " — Barrier before they pad";
+        }
+
+        public string SlowChokeChip()
+        {
+            var lane = SlowChokeLane();
+            if (lane == null) return null;
+            return "SLOW " + lane;
+        }
+
+        public string SlowChokeFlash()
+        {
+            var lane = SlowChokeLane();
+            if (lane == null) return "SLOW — Barrier the choke";
+            return "SLOW " + lane + " — Barrier the approach";
+        }
+
         public Hauler BlockedLoadedHauler()
         {
             foreach (var h in Haulers)
