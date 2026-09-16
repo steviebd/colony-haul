@@ -2256,6 +2256,32 @@ namespace ColonyHaul
                 }
             }
             var stretchId = _game.StretchPad();
+            if (_game.LarderLive())
+            {
+                var larder = _game.LarderChip();
+                if (larder != null)
+                {
+                    Color larderColor;
+                    if (_game.StarveTimer > 0.2f) larderColor = new Color(0.72f, 0.18f, 0.1f, 0.92f);
+                    else if (_game.Food < 11f) larderColor = new Color(0.72f, 0.42f, 0.08f, 0.92f);
+                    else larderColor = new Color(0.18f, 0.42f, 0.16f, 0.88f);
+                    var sitId = sit != null ? sit.NodeId : null;
+                    foreach (var b in _game.Buildings.Values)
+                    {
+                        if (b.Type != BuildingType.Farm) continue;
+                        if (!b.Staffed || b.BuildLeft > 0f) continue;
+                        if (!_game.Nodes.TryGetValue(b.NodeId, out var farmNode)) continue;
+                        var height = 2.2f;
+                        if (offId == b.NodeId || sitId == b.NodeId || stretchId == b.NodeId)
+                            height = 2.65f;
+                        var lsp = _cam.WorldToScreenPoint(new Vector3(farmNode.X, height, farmNode.Z));
+                        if (lsp.z <= 0f) continue;
+                        GUI.backgroundColor = larderColor;
+                        GUI.Box(new Rect(lsp.x - 46f, Screen.height - lsp.y - 10f, 92f, 18f), larder);
+                        GUI.backgroundColor = Color.white;
+                    }
+                }
+            }
             if (stretchId != null && _game.Nodes.TryGetValue(stretchId, out var stretchNode))
             {
                 var tsp = _cam.WorldToScreenPoint(new Vector3(stretchNode.X, 1.55f, stretchNode.Z));

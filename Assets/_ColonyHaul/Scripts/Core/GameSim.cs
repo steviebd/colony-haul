@@ -1962,6 +1962,26 @@ namespace ColonyHaul
             return "FUSE " + CeilSecs(GunSecondsLeft()) + "s";
         }
 
+        public int StaffedFarms()
+        {
+            var n = 0;
+            foreach (var b in Buildings.Values)
+                if (b.Type == BuildingType.Farm && b.Staffed && b.BuildLeft <= 0f) n++;
+            return n;
+        }
+
+        public bool LarderLive()
+        {
+            return Phase == Phase.Playing && StaffedFarms() > 0;
+        }
+
+        public string LarderChip()
+        {
+            if (!LarderLive()) return null;
+            if (StarveTimer > 0.2f) return "STARVE";
+            return "LARDER " + CeilSecs(FoodSecondsLeft()) + "s";
+        }
+
         public float ProducerFill(Building b)
         {
             if (b.Type == BuildingType.Mine) return b.Buffer[Resource.Ore] / 22f;
