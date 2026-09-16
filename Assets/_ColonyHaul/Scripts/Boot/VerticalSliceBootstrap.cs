@@ -2011,6 +2011,15 @@ namespace ColonyHaul
                         : Color.Lerp(new Color(0.85f, 0.18f, 0.16f), new Color(0.9f, 0.78f, 0.5f), hp);
                     GUI.Box(new Rect(hx - 42f, hy, 84f * hp, 9f), "");
                     GUI.backgroundColor = Color.white;
+                    if (_game.HubHpLive())
+                    {
+                        GUI.backgroundColor = _game.CoreThin
+                            ? new Color(0.72f, 0.18f, 0.1f, 0.92f)
+                            : new Color(0.42f, 0.32f, 0.12f, 0.88f);
+                        GUI.Box(new Rect(hx + 44f, hy - 5f, 52f, 18f),
+                            _game.HubHpChip() ?? "HP");
+                        GUI.backgroundColor = Color.white;
+                    }
                     if (_game.StaffLive())
                     {
                         Color staffColor;

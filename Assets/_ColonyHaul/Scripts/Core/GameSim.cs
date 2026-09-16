@@ -111,6 +111,17 @@ namespace ColonyHaul
             return "THIN";
         }
 
+        public bool HubHpLive()
+        {
+            return Phase == Phase.Playing;
+        }
+
+        public string HubHpChip()
+        {
+            if (!HubHpLive()) return null;
+            return "HP " + CeilSecs(HubHp);
+        }
+
         public bool CrewStretched()
         {
             return ProducerCount() > WorkersTotal;
