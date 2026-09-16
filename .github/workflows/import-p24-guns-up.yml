@@ -1,0 +1,35 @@
+name: import-p24-guns-up
+on:
+  push:
+    paths:
+      - '.github/workflows/import-p24-guns-up.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import Pass 24 GUNS UP
+        env:
+          URL: https://n.uguu.se/VzBDFnvL.tgz
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/p24.tgz "$URL"
+          tar -xzf /tmp/p24.tgz -C .
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md \
+            Assets/_ColonyHaul/Scripts/Boot/SliceHud.cs \
+            Assets/_ColonyHaul/Scripts/Boot/SliceJuice.cs \
+            Assets/_ColonyHaul/Scripts/Boot/VerticalSliceBootstrap.cs \
+            Assets/_ColonyHaul/Scripts/Core/GameSim.cs
+          git diff --cached --quiet || git commit -m "Unity slice: GUNS UP names a new Kinetic or Splash for 8s."
+          git push
+          rm -f .github/workflows/import-p24-guns-up.yml
+          git add -A .github/workflows || true
+          if git status --porcelain | grep -q .github; then
+            git commit -m "Drop Pass 24 import workflow."
+            git push
+          fi
