@@ -2060,6 +2060,17 @@ namespace ColonyHaul
             }
         }
 
+        public bool StaffLive()
+        {
+            return Phase == Phase.Playing && ProducerCount() > 0;
+        }
+
+        public string StaffChip()
+        {
+            if (!StaffLive()) return null;
+            return "STAFF " + StaffedProducers() + "/" + WorkersTotal;
+        }
+
         public float ProducerFill(Building b)
         {
             if (b.Type == BuildingType.Mine) return b.Buffer[Resource.Ore] / 22f;

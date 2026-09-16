@@ -2011,6 +2011,17 @@ namespace ColonyHaul
                         : Color.Lerp(new Color(0.85f, 0.18f, 0.16f), new Color(0.9f, 0.78f, 0.5f), hp);
                     GUI.Box(new Rect(hx - 42f, hy, 84f * hp, 9f), "");
                     GUI.backgroundColor = Color.white;
+                    if (_game.StaffLive())
+                    {
+                        Color staffColor;
+                        if (_game.CrewStretched()) staffColor = new Color(0.72f, 0.42f, 0.08f, 0.92f);
+                        else if (_game.CrewUpLive()) staffColor = new Color(0.16f, 0.42f, 0.18f, 0.92f);
+                        else staffColor = new Color(0.22f, 0.32f, 0.28f, 0.88f);
+                        GUI.backgroundColor = staffColor;
+                        GUI.Box(new Rect(hx - 40f, hy + 12f, 80f, 16f),
+                            _game.StaffChip() ?? "STAFF");
+                        GUI.backgroundColor = Color.white;
+                    }
                     var chewers = _game.HubChewers();
                     if (chewers > 0)
                     {
