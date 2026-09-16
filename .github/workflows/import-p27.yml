@@ -1,0 +1,30 @@
+name: import-p27-crew-up
+on:
+  push:
+    paths:
+      - '.github/workflows/import-p27.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch and commit Unity drop
+        run: |
+          set -euo pipefail
+          curl -fsSL -o drop.tgz https://h.uguu.se/xqJAJFOY.tgz
+          tar -xzf drop.tgz
+          git config user.name "colony-haul-import"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md \
+            Assets/_ColonyHaul/Scripts/Core/GameSim.cs \
+            Assets/_ColonyHaul/Scripts/Boot/SliceHud.cs \
+            Assets/_ColonyHaul/Scripts/Boot/SliceJuice.cs \
+            Assets/_ColonyHaul/Scripts/Boot/VerticalSliceBootstrap.cs
+          if git diff --cached --quiet; then echo "no file changes"; else git commit -m "Unity slice: CREW UP names the extra haul after Hub L2."; fi
+          rm -f .github/workflows/import-p27.yml
+          git add .github/workflows/import-p27.yml
+          if git diff --cached --quiet; then echo "no workflow change"; else git commit -m "Drop Pass 27 import workflow."; fi
+          git push
