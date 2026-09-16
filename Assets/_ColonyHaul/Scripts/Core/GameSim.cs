@@ -145,6 +145,54 @@ namespace ColonyHaul
 
         public bool HoldReady => HubLevel >= 2 && WaveIndex >= 4;
 
+        public bool HoldReadyLive()
+        {
+            return Phase == Phase.Playing
+                && HoldReady
+                && HoldOrder == HoldOrder.Auto
+                && WaveIndex == 4;
+        }
+
+        public bool HoldReadyWorld()
+        {
+            return HoldReadyLive()
+                && !WaveClearLive()
+                && !GunsLow()
+                && !GunsDry()
+                && !CoreThinLive()
+                && HubChewers() == 0
+                && HubClosers() == 0
+                && ActiveCut() == null
+                && HottestRailThreat() == null;
+        }
+
+        public string HoldReadyTitle()
+        {
+            if (!HoldReadyLive()) return null;
+            if (GunsHungry()) return "HOLD READY · H for GUNS";
+            if (FoodSecondsLeft() < 28f) return "HOLD READY · H for CREW";
+            return "HOLD READY · H locks GUNS or CREW";
+        }
+
+        public string HoldReadyCopy()
+        {
+            if (!HoldReadyLive()) return null;
+            if (GunsHungry()) return "HOLD READY — H sends haulers to Power";
+            if (FoodSecondsLeft() < 28f) return "HOLD READY — H sends haulers to Food";
+            return "HOLD READY — H locks haulers on Power or Food";
+        }
+
+        public string HoldReadyChip()
+        {
+            if (!HoldReadyLive()) return null;
+            return "HOLD";
+        }
+
+        public string HoldReadyFlash()
+        {
+            return "HOLD READY — H locks haulers on Power or Food";
+        }
+
         public string HoldOrderCopy()
         {
             if (!HoldReady) return HoldCopy();

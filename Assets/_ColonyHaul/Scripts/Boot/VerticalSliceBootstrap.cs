@@ -52,6 +52,7 @@ namespace ColonyHaul
         string _openPinged;
         string _slowPinged;
         string _stretchPinged;
+        bool _holdReadyPinged;
         Transform _root;
         Camera _cam;
         float _acc;
@@ -151,6 +152,7 @@ namespace ColonyHaul
             _openPinged = null;
             _slowPinged = null;
             _stretchPinged = null;
+            _holdReadyPinged = false;
             _juice.CutAlarm(false);
             _buildingScale.Clear();
             _acc = 0f;
@@ -216,6 +218,7 @@ namespace ColonyHaul
             PingOpenChoke();
             PingSlowChoke();
             PingStretch();
+            PingHoldReady();
             _juice.Tick(_cam, events);
             _hubFlash = Mathf.Max(0f, _hubFlash - Time.deltaTime);
             SyncAtmosphere();
@@ -402,6 +405,8 @@ namespace ColonyHaul
                         ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(1f, 0.28f, 0.18f), pulse)
                         : _game.L2ReadyWorld()
                         ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(1f, 0.86f, 0.4f), pulse)
+                        : _game.HoldReadyWorld()
+                        ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(0.92f, 0.78f, 0.42f), pulse)
                         : _game.HoldOrder == HoldOrder.Power
                         ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(0.4f, 0.75f, 1f), pulse)
                         : _game.HoldOrder == HoldOrder.Food
@@ -421,6 +426,7 @@ namespace ColonyHaul
                         : _game.CoreThinLive() ? "THIN"
                         : _game.HubRaising ? "L2"
                         : _game.L2ReadyWorld() ? "READY"
+                        : _game.HoldReadyWorld() ? "HOLD"
                         : _game.HoldOrder == HoldOrder.Power ? "GUNS"
                         : _game.HoldOrder == HoldOrder.Food ? "CREW"
                         : hubGlow ? "2 HUB" : "HUB");
@@ -499,6 +505,8 @@ namespace ColonyHaul
                     tint = Color.Lerp(tint, new Color(0.55f, 0.9f, 0.5f), 0.4f + 0.15f * pulse);
                 else if (b.Type == BuildingType.Hub && _game.L2ReadyWorld())
                     tint = Color.Lerp(tint, new Color(1f, 0.86f, 0.42f), 0.4f + 0.18f * pulse);
+                else if (b.Type == BuildingType.Hub && _game.HoldReadyWorld())
+                    tint = Color.Lerp(tint, new Color(0.92f, 0.78f, 0.42f), 0.4f + 0.18f * pulse);
                 if (b.Type == BuildingType.Hub && _hubFlash > 0f)
                     tint = Color.Lerp(tint,
                         _hubBraceFlash ? new Color(0.4f, 0.9f, 1f) : new Color(1f, 0.22f, 0.18f),
@@ -827,6 +835,12 @@ namespace ColonyHaul
                 live.Add("l2-ready");
                 var l2Pulse = 3.2f + 0.35f * Mathf.Abs(Mathf.Sin(Time.time * 6f));
                 EnsureRing("l2-ready", l2Hub, l2Pulse, new Color(1f, 0.86f, 0.42f, 0.38f));
+            }
+            if (_game.HoldReadyWorld() && _game.Nodes.TryGetValue("hub", out var holdReadyHub))
+            {
+                live.Add("hold-ready");
+                var holdPulse = 3.4f + 0.3f * Mathf.Abs(Mathf.Sin(Time.time * 5.5f));
+                EnsureRing("hold-ready", holdReadyHub, holdPulse, new Color(0.92f, 0.78f, 0.42f, 0.36f));
             }
             if (_game.Surging && _game.Nodes.TryGetValue("hub", out var hubNode))
             {
@@ -1319,6 +1333,20 @@ namespace ColonyHaul
                 new Color(0.72f, 0.38f, 0.12f, 0.95f));
         }
 
+        void PingHoldReady()
+        {
+            if (!_game.HoldReadyLive())
+            {
+                _holdReadyPinged = false;
+                return;
+            }
+            if (_holdReadyPinged) return;
+            _holdReadyPinged = true;
+            _juice.HoldReady();
+            _hud.Flash(_game.HoldReadyFlash() ?? "HOLD READY — H locks haulers on Power or Food", 2.2f,
+                new Color(0.55f, 0.42f, 0.12f, 0.95f));
+        }
+
         void SyncGunLocks()
         {
             var live = new HashSet<string>();
@@ -1749,6 +1777,13 @@ namespace ColonyHaul
                         GUI.backgroundColor = new Color(0.48f, 0.36f, 0.08f, 0.92f);
                         GUI.Box(new Rect(hx - 46f, hy - 18f, 92f, 16f),
                             _game.L2ReadyChip() ?? "L2 READY");
+                        GUI.backgroundColor = Color.white;
+                    }
+                    else if (_game.HoldReadyWorld())
+                    {
+                        GUI.backgroundColor = new Color(0.42f, 0.32f, 0.08f, 0.92f);
+                        GUI.Box(new Rect(hx - 46f, hy - 18f, 92f, 16f),
+                            _game.HoldReadyChip() ?? "HOLD");
                         GUI.backgroundColor = Color.white;
                     }
                 }

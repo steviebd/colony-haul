@@ -214,6 +214,15 @@ namespace ColonyHaul
             Punch(0.16f);
         }
 
+        public void HoldReady()
+        {
+            SpawnPip(0f, 0f, "HOLD", new Color(0.92f, 0.78f, 0.42f));
+            Spokes(0f, 0f, 1.7f, new Color(0.92f, 0.78f, 0.42f));
+            SpawnBurst(0f, 0f, new Color(0.9f, 0.74f, 0.38f, 0.42f), 3.4f);
+            Punch(0.22f);
+            _audio.PlayOneShot(_deposit, 0.45f);
+        }
+
         public void CoreThin()
         {
             SpawnPip(0f, 0f, "THIN", new Color(1f, 0.32f, 0.22f));
