@@ -2145,6 +2145,19 @@ namespace ColonyHaul
                     GUI.backgroundColor = Color.white;
                 }
             }
+            foreach (var haul in _game.Haulers)
+            {
+                if (!_game.CargoRollLive(haul)) continue;
+                if (inbound != null && haul.Id == inbound.Id) continue;
+                if (power != null && haul.Id == power.Id) continue;
+                if (home != null && haul.Id == home.Id) continue;
+                var rsp = _cam.WorldToScreenPoint(new Vector3(haul.X, 1.55f, haul.Z));
+                if (rsp.z <= 0f) continue;
+                GUI.backgroundColor = HomeCargoColor(haul.CargoKind, 0.88f);
+                GUI.Box(new Rect(rsp.x - 40f, Screen.height - rsp.y - 14f, 80f, 20f),
+                    _game.CargoRollChip(haul) ?? "ROLL");
+                GUI.backgroundColor = Color.white;
+            }
             var closer = _game.HottestCloser();
             if (closer != null)
             {

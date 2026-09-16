@@ -738,6 +738,23 @@ namespace ColonyHaul
             return "HAUL HOME — " + CargoTag(h.CargoKind) + " on the rail";
         }
 
+        public bool CargoRollLive(Hauler h)
+        {
+            if (Phase != Phase.Playing || h == null) return false;
+            if (h.CargoAmount <= 0) return false;
+            if (HaulerBlocked(h)) return false;
+            return HaulEtaToHub(h) >= 0f;
+        }
+
+        public string CargoRollChip(Hauler h)
+        {
+            if (!CargoRollLive(h)) return null;
+            var tag = CargoTag(h.CargoKind);
+            var eta = HaulEtaToHub(h);
+            if (eta <= 0.35f) return tag + " NOW";
+            return tag + " " + CeilSecs(eta) + "s";
+        }
+
         public Hauler BraceInbound()
         {
             if (Phase != Phase.Playing || !RaidLive || Surging) return null;
