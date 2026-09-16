@@ -22,9 +22,19 @@ namespace ColonyHaul
             public Vector3 Vel;
         }
 
+        struct Burst
+        {
+            public Transform T;
+            public float Until;
+            public float Start;
+            public float Size;
+            public Color Color;
+        }
+
         readonly List<Tracer> _tracers = new List<Tracer>();
         readonly List<LineRenderer> _pool = new List<LineRenderer>();
         readonly List<Pip> _pips = new List<Pip>();
+        readonly List<Burst> _bursts = new List<Burst>();
         readonly Transform _root;
         readonly AudioSource _audio;
         readonly AudioClip _deposit;
@@ -33,6 +43,8 @@ namespace ColonyHaul
         readonly AudioClip _wave;
         readonly AudioClip _win;
         readonly AudioClip _lose;
+        readonly AudioClip _surge;
+        readonly AudioClip _dry;
         float _shake;
         Vector3 _camHome;
 
@@ -49,6 +61,8 @@ namespace ColonyHaul
             _wave = Beep(240f, 0.22f);
             _win = Beep(660f, 0.35f);
             _lose = Beep(110f, 0.4f);
+            _surge = Beep(990f, 0.12f);
+            _dry = Beep(140f, 0.2f);
         }
 
         public void Punch(float amount) => _shake = Mathf.Max(_shake, amount);
@@ -66,6 +80,7 @@ namespace ColonyHaul
                     Mathf.Cos(Time.time * 63f) * j);
             }
             TickPips();
+            TickBursts();
             for (var i = _tracers.Count - 1; i >= 0; i--)
                 if (Time.time > _tracers[i].Until) _tracers.RemoveAt(i);
             while (_pool.Count < _tracers.Count)
@@ -74,8 +89,8 @@ namespace ColonyHaul
                 go.transform.SetParent(_root, false);
                 var lr = go.AddComponent<LineRenderer>();
                 lr.positionCount = 2;
-                lr.startWidth = 0.08f;
-                lr.endWidth = 0.02f;
+                lr.startWidth = 0.14f;
+                lr.endWidth = 0.04f;
                 var shader = Shader.Find("Hidden/Internal-Colored")
                     ?? Shader.Find("Sprites/Default")
                     ?? Shader.Find("Unlit/Color")
@@ -106,31 +121,44 @@ namespace ColonyHaul
             switch (ev.Kind)
             {
                 case SimEventKind.Shot:
-                    AddTracer(ev, new Color(0.55f, 0.95f, 0.9f));
+                    AddTracer(ev, new Color(0.55f, 0.95f, 0.9f), 0.14f);
                     _audio.PlayOneShot(_shot, 0.35f);
                     break;
                 case SimEventKind.Splash:
-                    AddTracer(ev, new Color(0.95f, 0.7f, 0.35f));
+                    AddTracer(ev, new Color(0.95f, 0.7f, 0.35f), 0.18f);
+                    Spokes(ev.ToX, ev.ToZ, 1.6f, new Color(0.95f, 0.7f, 0.35f));
+                    SpawnBurst(ev.ToX, ev.ToZ, new Color(0.94f, 0.63f, 0.38f, 0.55f), 3.2f);
                     _audio.PlayOneShot(_shot, 0.45f);
                     Punch(0.4f);
                     break;
                 case SimEventKind.Deposit:
                     _audio.PlayOneShot(_deposit, 0.4f);
                     SpawnPip(0f, 0f, "+" + Mathf.RoundToInt(ev.Amount) + " " + ResLabel(ev.Resource), ResColor(ev.Resource));
+                    Spokes(0f, 0f, 1.1f, ResColor(ev.Resource));
+                    Punch(0.16f);
                     break;
                 case SimEventKind.Sabotage:
                     _audio.PlayOneShot(_cut, 0.6f);
                     Punch(0.9f);
+                    SpawnPip(ev.X, ev.Z, "CUT", new Color(1f, 0.38f, 0.22f));
+                    Spokes(ev.X, ev.Z, 1.8f, new Color(1f, 0.38f, 0.22f));
+                    SpawnBurst(ev.X, ev.Z, new Color(1f, 0.38f, 0.22f, 0.6f), 2.4f);
                     break;
                 case SimEventKind.Wave:
                     _audio.PlayOneShot(_wave, 0.5f);
                     Punch(0.55f);
+                    SpawnBurst(0f, 0f, new Color(0.86f, 0.24f, 0.24f, 0.4f), 6f);
                     break;
                 case SimEventKind.Brownout:
-                    Punch(0.25f);
+                    Punch(0.35f);
+                    _audio.PlayOneShot(_dry, 0.55f);
+                    SpawnPip(ev.X, ev.Z, "DRY", new Color(1f, 0.35f, 0.32f));
                     break;
                 case SimEventKind.Barrier:
-                    Punch(0.2f);
+                    Punch(0.28f);
+                    _audio.PlayOneShot(_cut, 0.28f);
+                    SpawnPip(ev.X, ev.Z, "SLOW", MesaView.Barrier);
+                    SpawnBurst(ev.X, ev.Z, new Color(0.95f, 0.28f, 0.32f, 0.5f), 2.8f);
                     break;
                 case SimEventKind.Hit:
                     if (ev.NodeId == "hub") Punch(0.6f);
@@ -149,9 +177,11 @@ namespace ColonyHaul
                 case SimEventKind.Upgrade:
                     _audio.PlayOneShot(_wave, 0.4f);
                     Punch(0.35f);
+                    SpawnBurst(0f, 0f, new Color(0.9f, 0.78f, 0.5f, 0.55f), 4.2f);
                     break;
                 case SimEventKind.Win:
                     _audio.PlayOneShot(_win, 0.8f);
+                    SpawnBurst(0f, 0f, new Color(0.5f, 0.85f, 0.48f, 0.5f), 7f);
                     break;
                 case SimEventKind.Lose:
                     _audio.PlayOneShot(_lose, 0.8f);
@@ -159,6 +189,13 @@ namespace ColonyHaul
                     break;
                 case SimEventKind.Route:
                     _audio.PlayOneShot(_deposit, 0.25f);
+                    break;
+                case SimEventKind.Surge:
+                    _audio.PlayOneShot(_surge, 0.45f);
+                    Punch(0.22f);
+                    SpawnPip(0f, 0f, "SURGE", new Color(0.45f, 0.9f, 1f));
+                    Spokes(0f, 0f, 1.5f, new Color(0.45f, 0.9f, 1f));
+                    SpawnBurst(0f, 0f, new Color(0.45f, 0.9f, 1f, 0.45f), 3.6f);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(ev.Kind), ev.Kind, null);
@@ -226,7 +263,58 @@ namespace ColonyHaul
 
         void AddTracer(SimEvent ev, Color color)
         {
-            AddTracer(ev.FromX, ev.FromZ, 1.2f, ev.ToX, ev.ToZ, 0.7f, color, 0.09f);
+            AddTracer(ev, color, 0.14f);
+        }
+
+        void AddTracer(SimEvent ev, Color color, float life)
+        {
+            AddTracer(ev.FromX, ev.FromZ, 1.25f, ev.ToX, ev.ToZ, 0.7f, color, life);
+        }
+
+        void Spokes(float x, float z, float reach, Color color)
+        {
+            AddTracer(x - reach, z, 1.1f, x + reach, z, 1.1f, color, 0.12f);
+            AddTracer(x, z - reach, 1.1f, x, z + reach, 1.1f, color, 0.12f);
+        }
+
+        void SpawnBurst(float x, float z, Color color, float size)
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            go.name = "burst";
+            go.transform.SetParent(_root, false);
+            var col = go.GetComponent<Collider>();
+            if (col != null) UnityEngine.Object.Destroy(col);
+            go.transform.position = new Vector3(x, 0.47f, z);
+            go.transform.localScale = new Vector3(0.4f, 0.012f, 0.4f);
+            MesaView.Tint(go, color);
+            _bursts.Add(new Burst
+            {
+                T = go.transform,
+                Until = Time.time + 0.38f,
+                Start = Time.time,
+                Size = size,
+                Color = color
+            });
+        }
+
+        void TickBursts()
+        {
+            for (var i = _bursts.Count - 1; i >= 0; i--)
+            {
+                var b = _bursts[i];
+                if (b.T == null || Time.time > b.Until)
+                {
+                    if (b.T != null) UnityEngine.Object.Destroy(b.T.gameObject);
+                    _bursts.RemoveAt(i);
+                    continue;
+                }
+                var t = Mathf.Clamp01((Time.time - b.Start) / 0.38f);
+                var s = Mathf.Lerp(0.4f, b.Size, t);
+                b.T.localScale = new Vector3(s, 0.012f, s);
+                var c = b.Color;
+                c.a *= 1f - t;
+                MesaView.Tint(b.T.gameObject, c);
+            }
         }
 
         void AddTracer(float ax, float az, float ay, float bx, float bz, float by, Color color, float life)

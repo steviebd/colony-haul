@@ -24,6 +24,7 @@ namespace ColonyHaul
         readonly Dictionary<string, Transform> _ghosts = new Dictionary<string, Transform>();
         readonly Dictionary<string, Transform> _buffers = new Dictionary<string, Transform>();
         readonly Dictionary<string, LineRenderer> _trails = new Dictionary<string, LineRenderer>();
+        readonly Dictionary<string, Transform> _shadows = new Dictionary<string, Transform>();
         Transform _root;
         Camera _cam;
         float _acc;
@@ -75,7 +76,7 @@ namespace ColonyHaul
             {
                 if (child.name == "Sun" || child.name == "Fill" || child.name == "Mesa" || child.name == "Cliff" || child.name == "HubRing")
                     continue;
-                if (child.name == "tracer" || child.name == "pip" || child.name == "ring" || child.name == "ghost" || child.name == "buffer" || child.name == "trail") continue;
+                if (child.name == "tracer" || child.name == "pip" || child.name == "ring" || child.name == "ghost" || child.name == "buffer" || child.name == "trail" || child.name == "shadow" || child.name == "burst") continue;
             }
             ClearMap(_buildings);
             ClearMap(_haulers);
@@ -86,6 +87,7 @@ namespace ColonyHaul
             ClearMap(_ghosts);
             ClearMap(_buffers);
             ClearMap(_nodes);
+            ClearMap(_shadows);
             ClearTrails();
             _hubFlash = 0f;
             _buildingScale.Clear();
@@ -149,10 +151,11 @@ namespace ColonyHaul
                     _hud.Flash("Barrier up — spawn approach slowed", 1.8f);
                     break;
                 case SimEventKind.Wave:
-                    _hud.Flash("Wave " + ev.Wave + " inbound", 1.6f);
+                    _hud.WaveCall(_game.WaveBannerCopy(), 3.2f);
                     break;
                 case SimEventKind.Upgrade:
-                    if (_game.HubLevel >= 2) _hud.Flash("Hub Level 2 — Splash unlocked", 2f);
+                    if (_game.HubLevel >= 2) _hud.Flash("Hub Level 2 — Splash unlocked · WEST choke", 2.6f);
+                    else _hud.Flash("Hub L2 raising", 1.6f);
                     break;
                 case SimEventKind.Shot:
                 case SimEventKind.Splash:
@@ -167,6 +170,9 @@ namespace ColonyHaul
                 case SimEventKind.Win:
                 case SimEventKind.Lose:
                 case SimEventKind.Route:
+                    break;
+                case SimEventKind.Surge:
+                    _hud.Flash("RAIL SURGE — haul braces the Hub", 1.1f);
                     break;
                 default:
                     throw new System.ArgumentOutOfRangeException(nameof(ev.Kind), ev.Kind, null);
@@ -225,26 +231,37 @@ namespace ColonyHaul
                     ((n.Id == "choke_e" && hotLane == "east") ||
                      (n.Id == "choke_n" && hotLane == "north") ||
                      (n.Id == "choke_w" && hotLane == "west"));
+                var splashWest = _game.SplashFresh() && n.Id == "choke_w";
                 var near = n.Kind == NodeKind.Choke ? _game.EnemiesNear(n.Id, 4.8f) : 0;
                 Color c;
                 if (inbound) c = MesaView.Spawn * pulse;
                 else if (n.Kind == NodeKind.Spawn) c = MesaView.Spawn;
                 else if (farmGlow) c = MesaView.PadFarm * pulse;
                 else if (hubGlow || routeGlow) c = MesaView.PadRoute * pulse;
+                else if (splashWest) c = new Color(0.94f * pulse, 0.63f * pulse, 0.38f);
                 else if (n.Kind == NodeKind.Choke && (chokeHot || near > 0))
                     c = Color.Lerp(new Color(0.62f, 0.52f, 0.4f), MesaView.Spawn * pulse,
                         Mathf.Clamp01(near / 4f + (chokeHot ? 0.35f : 0f)));
-                else if (n.Kind == NodeKind.Hub) c = new Color(0.9f, 0.78f, 0.58f);
+                else if (n.Kind == NodeKind.Hub)
+                    c = _game.HubRaising
+                        ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(1f, 0.86f, 0.4f), pulse)
+                        : new Color(0.9f, 0.78f, 0.58f);
                 else c = MesaView.PadIdle;
                 MesaView.Tint(mark.gameObject, c);
                 if (n.Id == "pad_s")
                     MesaView.SetLabel(mark, farmGlow ? "1 FARM" : "PAD");
                 else if (n.Id == "hub")
-                    MesaView.SetLabel(mark, hubGlow ? "2 HUB" : "HUB");
+                    MesaView.SetLabel(mark, _game.HubRaising ? "L2" : hubGlow ? "2 HUB" : "HUB");
                 else if (n.Kind == NodeKind.Spawn)
                     MesaView.SetLabel(mark, inbound ? "IN " + _game.IncomingAt(n.Id) : "RAID");
                 else if (n.Kind == NodeKind.Choke)
-                    MesaView.SetLabel(mark, ChokeLabel(n.Id, near, chokeHot));
+                    MesaView.SetLabel(mark, splashWest ? "SPLASH" : ChokeLabel(n.Id, near, chokeHot));
+                else if (n.Kind == NodeKind.Pad && n.Id != "pad_s")
+                {
+                    if (_game.Buildings.TryGetValue(n.Id, out var pb) && pb.Type == BuildingType.Power && _game.GunsHungry())
+                        MesaView.SetLabel(mark, "FEED");
+                    else MesaView.SetLabel(mark, "PAD");
+                }
             }
 
             foreach (var b in _game.Buildings.Values)
@@ -270,11 +287,19 @@ namespace ColonyHaul
                 if (producer && !b.Staffed) tint *= 0.42f;
                 if ((b.Type == BuildingType.Kinetic || b.Type == BuildingType.Splash) && _game.PowerBrownout)
                     tint = Color.Lerp(tint, new Color(1f, 0.28f, 0.22f), 0.55f);
+                else if ((b.Type == BuildingType.Kinetic || b.Type == BuildingType.Splash) && _game.GunsHungry())
+                    tint = Color.Lerp(tint, new Color(1f, 0.72f, 0.28f), 0.4f * pulse);
+                if (b.Type == BuildingType.Power && _game.GunsHungry())
+                    tint = Color.Lerp(tint, new Color(0.45f, 0.9f, 1f), 0.45f * pulse);
+                if (b.Type == BuildingType.Hub && _game.HubRaising)
+                    tint = Color.Lerp(tint, new Color(1f, 0.86f, 0.42f), 0.55f * pulse);
                 if (b.Type == BuildingType.Hub && _hubFlash > 0f)
                     tint = Color.Lerp(tint, new Color(1f, 0.22f, 0.18f), Mathf.Clamp01(_hubFlash * 2.4f));
                 MesaView.Tint(tr.gameObject, tint);
                 if (b.Type == BuildingType.Hub && _game.HubLevel >= 2)
                     tr.localScale = _buildingScale[b.Id] * 1.18f;
+                else if (b.Type == BuildingType.Hub && _game.HubRaising)
+                    tr.localScale = _buildingScale[b.Id] * (1f + 0.18f * (1f - Mathf.Clamp01(_game.HubUpgradeLeft / Balance.HubL2Time)));
             }
 
             SyncRings();
@@ -326,6 +351,7 @@ namespace ColonyHaul
             SyncHaulers();
             SyncTrails();
             SyncEnemies();
+            SyncShadows();
         }
 
         static string ChokeLabel(string id, int near, bool hot)
@@ -376,13 +402,13 @@ namespace ColonyHaul
                 live.Add(e.Id);
                 if (!_enemies.TryGetValue(e.Id, out var tr))
                 {
-                    var go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                    var go = GameObject.CreatePrimitive(MesaView.EnemyPrim(e.Type));
                     go.name = e.Type.ToString();
                     go.transform.SetParent(_root, false);
                     tr = go.transform;
-                    tr.localScale = e.Type == EnemyType.Brute ? new Vector3(0.95f, 0.65f, 0.95f)
-                        : e.Type == EnemyType.Runner ? new Vector3(0.38f, 0.5f, 0.38f)
-                        : new Vector3(0.48f, 0.48f, 0.48f);
+                    tr.localScale = MesaView.EnemyScale(e.Type);
+                    if (e.Type == EnemyType.Runner)
+                        tr.rotation = Quaternion.Euler(0f, 45f, 0f);
                     _enemies[e.Id] = tr;
                 }
                 tr.position = new Vector3(e.X, 0.62f, e.Z);
@@ -393,6 +419,30 @@ namespace ColonyHaul
                 MesaView.Tint(tr.gameObject, c);
             }
             Prune(_enemies, live);
+        }
+
+        void SyncShadows()
+        {
+            var live = new HashSet<string>();
+            foreach (var e in _game.Enemies)
+            {
+                live.Add(e.Id);
+                if (!_shadows.TryGetValue(e.Id, out var sh))
+                {
+                    var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                    go.name = "shadow";
+                    go.transform.SetParent(_root, false);
+                    var col = go.GetComponent<Collider>();
+                    if (col != null) Destroy(col);
+                    sh = go.transform;
+                    _shadows[e.Id] = sh;
+                }
+                var wide = e.Type == EnemyType.Brute ? 1.15f : e.Type == EnemyType.Runner ? 0.42f : 0.7f;
+                sh.position = new Vector3(e.X, 0.43f, e.Z);
+                sh.localScale = new Vector3(wide, 0.012f, wide);
+                MesaView.Tint(sh.gameObject, new Color(0.04f, 0.05f, 0.06f, 0.65f));
+            }
+            Prune(_shadows, live);
         }
 
         void SyncRings()

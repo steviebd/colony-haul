@@ -99,7 +99,8 @@ namespace ColonyHaul
         Win,
         Lose,
         Route,
-        Barrier
+        Barrier,
+        Surge
     }
 
     public sealed class SimEvent

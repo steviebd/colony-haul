@@ -62,6 +62,7 @@ export class Game {
   foodWarned = false;
   brownoutAt = -99;
   hubGunCd = 0;
+  surgeUntil = 0;
   config: GameConfig;
   rng: () => number;
 
@@ -541,12 +542,17 @@ export class Game {
   private onHaulerArrive(h: Hauler): void {
     if (h.cargo && h.nodeId === 'hub') {
       const kind = h.cargo.kind;
-      this.stock[kind] += h.cargo.amount;
-      this.deliveredWindow.push({ t: this.t, kind, amount: h.cargo.amount });
-      this.emit({ kind: 'deposit', nodeId: 'hub', resource: kind, amount: h.cargo.amount, x: 0, z: 0 });
+      const amount = h.cargo.amount;
+      this.stock[kind] += amount;
+      this.deliveredWindow.push({ t: this.t, kind, amount });
+      this.emit({ kind: 'deposit', nodeId: 'hub', resource: kind, amount, x: 0, z: 0 });
       h.cargo = null;
       h.wait = BALANCE.depositBusy;
       h.busyAt = 'hub';
+      if (this.enemies.length > 0 || this.pending.length > 0) {
+        this.surgeUntil = this.t + 0.55;
+        this.emit({ kind: 'surge', nodeId: 'hub', resource: kind, amount, x: 0, z: 0 });
+      }
       return;
     }
     const b = this.buildings.get(h.nodeId);
@@ -663,9 +669,11 @@ export class Game {
         } else {
           e.attackCd -= dt;
           if (e.attackCd <= 0) {
-            this.hubHp = Math.max(0, this.hubHp - spec.damage);
+            let dmg = spec.damage;
+            if (this.surgeUntil > this.t) dmg *= 0.72;
+            this.hubHp = Math.max(0, this.hubHp - dmg);
             e.attackCd = 0.85;
-            this.emit({ kind: 'hit', nodeId: 'hub', x: 0, z: 0, amount: spec.damage });
+            this.emit({ kind: 'hit', nodeId: 'hub', x: 0, z: 0, amount: dmg });
           }
         }
       } else {

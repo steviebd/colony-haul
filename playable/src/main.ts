@@ -239,6 +239,9 @@ function juice(events: JuiceEvent[]): void {
         audio.build();
         hud.flashBanner('Barrier up — spawn approach slowed', 1600);
         break;
+      case 'surge':
+        hud.flashBanner('RAIL SURGE — haul braces the Hub', 1100);
+        break;
       case 'death':
         break;
       default: {

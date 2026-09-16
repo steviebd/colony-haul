@@ -31,6 +31,8 @@ namespace ColonyHaul
         int _seq = 1;
         float _brownoutAt = -99f;
         float _hubGunCd;
+        float _hubL2At = -99f;
+        float _surgeUntil;
         readonly float[] _waveGap = { 42f, 28f, 28f, 27f, 26f, 26f };
 
         public float LastBrownoutAt => _brownoutAt;
@@ -59,6 +61,34 @@ namespace ColonyHaul
         }
 
         public int IncomingRaiders => _pending.Count;
+
+        public bool RaidLive => Enemies.Count > 0 || IncomingRaiders > 0;
+
+        public bool HubRaising => HubUpgradeLeft > 0;
+
+        public bool GunsHungry()
+        {
+            return LiveTowers() > 0 && (PowerBrownout || GunSecondsLeft() < 9f);
+        }
+
+        public bool SplashFresh()
+        {
+            return HubLevel >= 2 && !HasType(BuildingType.Splash) && _hubL2At > 0f && T - _hubL2At < 16f;
+        }
+
+        public string WaveBannerCopy()
+        {
+            switch (WaveIndex)
+            {
+                case 1: return "WAVE 1 — 4 grunts  ·  EAST choke";
+                case 2: return "WAVE 2 — 5 grunts NORTH  ·  runner EAST";
+                case 3: return "WAVE 3 — 4 grunts WEST  ·  2 brutes EAST";
+                case 4: return "WAVE 4 — mixed three lanes  ·  runners + brute";
+                case 5: return "WAVE 5 — brutes EAST  ·  runners WEST  ·  grunts NORTH";
+                case 6: return "WAVE 6 — FULL RAID  ·  all spawns";
+                default: throw new ArgumentOutOfRangeException(nameof(WaveIndex), WaveIndex, null);
+            }
+        }
 
         public int HaulersLoaded
         {
@@ -286,6 +316,14 @@ namespace ColonyHaul
             }
             if (HubLevel < 2 && HubUpgradeLeft <= 0 && CanAfford(Tool.Upgrade))
                 return Call("Hub L2 is in stock — Splash unlocks after this", Tool.Upgrade);
+            if (Food < 8f)
+                return Call("Larder ~" + CeilSecs(FoodSecondsLeft()) + "s — farm rail must stay live", Tool.Farm);
+            if (SplashFresh())
+            {
+                if (CanAfford(Tool.Splash))
+                    return Call("Splash is live — plant it on the WEST choke", Tool.Splash);
+                return Call("Splash unlocked — stock 28 ore + 6 pwr for west", Tool.Splash);
+            }
             if (Food < 11f)
                 return Call("Larder ~" + CeilSecs(FoodSecondsLeft()) + "s — farm rail must stay live", Tool.Farm);
             var hot = HottestLane();
@@ -728,6 +766,7 @@ namespace ColonyHaul
             if (HubUpgradeLeft > 0) return;
             HubUpgradeLeft = 0;
             HubLevel = 2;
+            _hubL2At = T;
             Emit(SimEventKind.Upgrade, "hub");
             WorkersTotal += Balance.ExtraWorkers;
             var depot = Nodes["depot"];
@@ -834,6 +873,11 @@ namespace ColonyHaul
                 h.Wait = Balance.DepositBusy;
                 h.BusyAt = "hub";
                 Emit(SimEventKind.Deposit, "hub", amount: amount, resource: kind);
+                if (RaidLive)
+                {
+                    _surgeUntil = T + 0.55f;
+                    Emit(SimEventKind.Surge, "hub", amount: amount, resource: kind);
+                }
                 return;
             }
             if (h.CargoAmount == 0 && Buildings.TryGetValue(h.NodeId, out var b) &&
@@ -965,6 +1009,7 @@ namespace ColonyHaul
                         e.AttackCd -= dt;
                         if (e.AttackCd <= 0)
                         {
+                            if (_surgeUntil > T) dmg *= 0.72f;
                             HubHp = Math.Max(0, HubHp - dmg);
                             e.AttackCd = 0.85f;
                             Emit(SimEventKind.Hit, "hub", amount: dmg);
@@ -1208,6 +1253,7 @@ namespace ColonyHaul
                         case SimEventKind.Lose:
                         case SimEventKind.Route:
                         case SimEventKind.Barrier:
+                        case SimEventKind.Surge:
                             break;
                         default:
                             throw new ArgumentOutOfRangeException(nameof(ev.Kind), ev.Kind, null);

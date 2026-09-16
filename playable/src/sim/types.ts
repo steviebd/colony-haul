@@ -41,7 +41,8 @@ export type JuiceKind =
   | 'win'
   | 'lose'
   | 'route'
-  | 'barrier';
+  | 'barrier'
+  | 'surge';
 
 export interface SimNode {
   id: string;

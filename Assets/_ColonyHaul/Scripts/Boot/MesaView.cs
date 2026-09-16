@@ -137,6 +137,28 @@ namespace ColonyHaul
             }
         }
 
+        public static PrimitiveType EnemyPrim(EnemyType type)
+        {
+            switch (type)
+            {
+                case EnemyType.Grunt: return PrimitiveType.Cube;
+                case EnemyType.Brute: return PrimitiveType.Capsule;
+                case EnemyType.Runner: return PrimitiveType.Cylinder;
+                default: throw new System.ArgumentOutOfRangeException(nameof(type), type, null);
+            }
+        }
+
+        public static Vector3 EnemyScale(EnemyType type)
+        {
+            switch (type)
+            {
+                case EnemyType.Grunt: return new Vector3(0.52f, 0.52f, 0.52f);
+                case EnemyType.Brute: return new Vector3(1.05f, 0.72f, 1.05f);
+                case EnemyType.Runner: return new Vector3(0.28f, 0.62f, 0.28f);
+                default: throw new System.ArgumentOutOfRangeException(nameof(type), type, null);
+            }
+        }
+
         static Transform New(Transform parent, string name)
         {
             var t = new GameObject(name).transform;
