@@ -68,7 +68,7 @@ def unregister_handler(method: str) -> None:
 
 
 def on_event(method: str):
-    """Decorator: @on_event(\"unity/hierarchyChanged\")"""
+    """Decorator: @on_event("unity/hierarchyChanged")"""
     def decorator(fn: Callable[..., Any]):
         register_handler(method, fn)
         return fn
