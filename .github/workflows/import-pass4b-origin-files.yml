@@ -1,0 +1,26 @@
+name: import-pass4b
+on:
+  push:
+    paths:
+      - '.github/workflows/import-pass4b-origin-files.yml'
+  workflow_dispatch:
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch Origin pass-4b Unity deltas
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/delta.tgz https://h.uguu.se/YGCLyFbq.tgz
+          echo "d0e77880c1dd25a581f344b823eb880a5a8f2131389e8d54fdc42486cd4d7ec4  /tmp/delta.tgz" | sha256sum -c
+          tar -xzf /tmp/delta.tgz -C .
+          rm -f .github/workflows/import-pass4b-origin-files.yml
+          git config user.name "cursor-agent"
+          git config user.email "cursoragent@cursor.com"
+          git add README.md Assets/_ColonyHaul/Scripts/Boot/SliceHud.cs Assets/_ColonyHaul/Scripts/Boot/SliceJuice.cs Assets/_ColonyHaul/Scripts/Boot/VerticalSliceBootstrap.cs Assets/_ColonyHaul/Scripts/Core/GameSim.cs playable/src/main.ts playable/src/sim/game.ts
+          git add -u .github/workflows/import-pass4b-origin-files.yml
+          git commit -m "Unity slice: BRACE shield, splice snap, and win/lose punch."
+          git push
