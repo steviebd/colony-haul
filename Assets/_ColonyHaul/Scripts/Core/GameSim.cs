@@ -961,8 +961,143 @@ namespace ColonyHaul
                     throw new ArgumentOutOfRangeException(nameof(b.Type), b.Type, null);
             }
         }
+
+        bool HaulerBoundFor(string nodeId)
+        {
+            foreach (var h in Haulers)
+            {
+                if (h.NodeId == nodeId) return true;
+                if (h.Path.Contains(nodeId)) return true;
+            }
+            return false;
+        }
+
+        public Hauler IdleHauler()
+        {
+            foreach (var h in Haulers)
+            {
+                if (HaulerBlocked(h)) continue;
+                if (h.CargoAmount > 0 || h.Wait > 0 || h.Path.Count > 0) continue;
+                return h;
+            }
+            return null;
+        }
+
+        public Building SittingStock()
+        {
+            if (Phase != Phase.Playing) return null;
+            if (ActiveCut() != null) return null;
+            if (OfflinePad() != null) return null;
+            Building best = null;
+            var bestScore = 5.5f;
+            foreach (var b in Buildings.Values)
+            {
+                if (b.Type != BuildingType.Mine && b.Type != BuildingType.Farm && b.Type != BuildingType.Power) continue;
+                if (b.BuildLeft > 0 || !b.Staffed) continue;
+                if (HaulerBoundFor(b.NodeId)) continue;
+                if (Pathfind(b.NodeId, "hub", true, false, false) == null) continue;
+                var res = ResourceOf(b.Type);
+                var amt = b.Buffer[res];
+                if (amt < 6f) continue;
+                var score = amt;
+                if (res == Resource.Power && GunsHungry()) score += 40f;
+                else if (res == Resource.Food && Food < 12f) score += 24f;
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    best = b;
+                }
+            }
+            return best;
+        }
+
+        public string SittingTitle()
+        {
+            var b = SittingStock();
+            if (b == null) return null;
+            var pad = PadCall(b.NodeId);
+            switch (b.Type)
+            {
+                case BuildingType.Power:
+                    return GunsHungry() || GunsDry()
+                        ? "SIT · Power piled · haul " + pad
+                        : "SIT · Power piled on " + pad;
+                case BuildingType.Farm:
+                    return "SIT · farm piled · larder ~" + CeilSecs(FoodSecondsLeft()) + "s";
+                case BuildingType.Mine:
+                    return "SIT · ore piled on " + pad;
+                case BuildingType.Hub:
+                case BuildingType.Depot:
+                case BuildingType.Kinetic:
+                case BuildingType.Splash:
+                    return null;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(CutStake), CutStakeOf(), null);
+                    throw new ArgumentOutOfRangeException(nameof(b.Type), b.Type, null);
+            }
+        }
+
+        public string SittingCopy()
+        {
+            var b = SittingStock();
+            if (b == null) return null;
+            var pad = PadCall(b.NodeId);
+            var amt = (int)b.Buffer[ResourceOf(b.Type)];
+            switch (b.Type)
+            {
+                case BuildingType.Power:
+                    return GunsHungry() || GunsDry()
+                        ? "SIT " + pad + " Power " + amt + " — guns wait on a haul"
+                        : "SIT " + pad + " Power " + amt + " — haul it";
+                case BuildingType.Farm:
+                    return "SIT " + pad + " farm " + amt + " — haul Food";
+                case BuildingType.Mine:
+                    return "SIT " + pad + " ore " + amt + " — haul it";
+                case BuildingType.Hub:
+                case BuildingType.Depot:
+                case BuildingType.Kinetic:
+                case BuildingType.Splash:
+                    return null;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(b.Type), b.Type, null);
+            }
+        }
+
+        public string SittingChip()
+        {
+            var b = SittingStock();
+            if (b == null) return null;
+            switch (b.Type)
+            {
+                case BuildingType.Power: return "HAUL PWR";
+                case BuildingType.Farm: return "HAUL FOOD";
+                case BuildingType.Mine: return "HAUL ORE";
+                case BuildingType.Hub:
+                case BuildingType.Depot:
+                case BuildingType.Kinetic:
+                case BuildingType.Splash:
+                    return null;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(b.Type), b.Type, null);
+            }
+        }
+
+        public string SittingFlash()
+        {
+            var b = SittingStock();
+            if (b == null) return null;
+            var pad = PadCall(b.NodeId);
+            switch (b.Type)
+            {
+                case BuildingType.Power: return "SIT — haul " + pad + " Power";
+                case BuildingType.Farm: return "SIT — haul " + pad + " Food";
+                case BuildingType.Mine: return "SIT — haul " + pad + " ore";
+                case BuildingType.Hub:
+                case BuildingType.Depot:
+                case BuildingType.Kinetic:
+                case BuildingType.Splash:
+                    return null;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(b.Type), b.Type, null);
             }
         }
 

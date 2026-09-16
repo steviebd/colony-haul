@@ -175,6 +175,13 @@ namespace ColonyHaul
             Punch(0.22f);
         }
 
+        public void SittingStock(float x, float z, string tag)
+        {
+            SpawnPip(x, z, tag, new Color(0.95f, 0.78f, 0.32f));
+            Spokes(x, z, 1.4f, new Color(0.95f, 0.78f, 0.32f));
+            Punch(0.18f);
+        }
+
         public void HubHit(bool braced)
         {
             if (braced)

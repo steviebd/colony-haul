@@ -39,12 +39,14 @@ namespace ColonyHaul
         LineRenderer _braceLine;
         LineRenderer _powerLine;
         LineRenderer _offlineLine;
+        LineRenderer _sitLine;
         bool _chewPinged;
         bool _closePinged;
         bool _atPadPinged;
         bool _clearPinged;
         bool _braceCutPinged;
         string _offlinePinged;
+        string _sitPinged;
         Transform _root;
         Camera _cam;
         float _acc;
@@ -122,6 +124,7 @@ namespace ColonyHaul
             ClearBraceLine();
             ClearPowerLine();
             ClearOfflineLine();
+            ClearSitLine();
             _hubFlash = 0f;
             _hubBraceFlash = false;
             _coreAlarm = false;
@@ -137,6 +140,7 @@ namespace ColonyHaul
             _clearPinged = false;
             _braceCutPinged = false;
             _offlinePinged = null;
+            _sitPinged = null;
             _juice.CutAlarm(false);
             _buildingScale.Clear();
             _acc = 0f;
@@ -196,6 +200,7 @@ namespace ColonyHaul
             PingWaveClear();
             PingCutStake();
             PingOffline();
+            PingSitting();
             _juice.Tick(_cam, events);
             _hubFlash = Mathf.Max(0f, _hubFlash - Time.deltaTime);
             SyncAtmosphere();
@@ -356,6 +361,8 @@ namespace ColonyHaul
                 else if (farmGlow || holdCrew) c = MesaView.PadFarm * pulse;
                 else if (holdGuns) c = new Color(0.32f * pulse, 0.68f * pulse, 0.94f);
                 else if (_game.OfflinePad() == n.Id) c = new Color(0.92f * pulse, 0.55f * pulse, 0.22f);
+                else if (_game.SittingStock() != null && _game.SittingStock().NodeId == n.Id)
+                    c = new Color(0.95f * pulse, 0.78f * pulse, 0.32f);
                 else if (hubGlow || routeGlow) c = MesaView.PadRoute * pulse;
                 else if (splashWest) c = new Color(0.94f * pulse, 0.63f * pulse, 0.38f);
                 else if (n.Kind == NodeKind.Choke && (chokeHot || near > 0))
@@ -409,6 +416,8 @@ namespace ColonyHaul
                         MesaView.SetLabel(mark, "CREW");
                     else if (_game.OfflinePad() == n.Id)
                         MesaView.SetLabel(mark, "OFFLINE");
+                    else if (_game.SittingStock() != null && _game.SittingStock().NodeId == n.Id)
+                        MesaView.SetLabel(mark, _game.SittingChip() ?? "HAUL");
                     else if (n.Id == "pad_s")
                         MesaView.SetLabel(mark, farmGlow ? "1 FARM" : "PAD");
                     else if (_game.Buildings.TryGetValue(n.Id, out var pb) && pb.Type == BuildingType.Power && _game.GunsHungry())
@@ -552,6 +561,7 @@ namespace ColonyHaul
             SyncBraceLine();
             SyncPowerLine();
             SyncOfflineLine();
+            SyncSitLine();
             SyncForecasts();
             SyncEnemies();
             SyncShadows();
@@ -1129,6 +1139,36 @@ namespace ColonyHaul
                 new Color(0.92f, 0.55f, 0.22f, 0.95f));
         }
 
+        void PingSitting()
+        {
+            var b = _game.SittingStock();
+            if (b == null)
+            {
+                _sitPinged = null;
+                return;
+            }
+            if (_sitPinged == b.NodeId) return;
+            _sitPinged = b.NodeId;
+            if (!_game.Nodes.TryGetValue(b.NodeId, out var node)) return;
+            string tag;
+            switch (b.Type)
+            {
+                case BuildingType.Power: tag = "PWR"; break;
+                case BuildingType.Farm: tag = "FOOD"; break;
+                case BuildingType.Mine: tag = "ORE"; break;
+                case BuildingType.Hub:
+                case BuildingType.Depot:
+                case BuildingType.Kinetic:
+                case BuildingType.Splash:
+                    return;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(b.Type), b.Type, null);
+            }
+            _juice.SittingStock(node.X, node.Z, tag);
+            _hud.Flash(_game.SittingFlash() ?? "SIT — haul the piled pad", 1.6f,
+                new Color(0.95f, 0.72f, 0.28f, 0.95f));
+        }
+
         void SyncGunLocks()
         {
             var live = new HashSet<string>();
@@ -1299,6 +1339,30 @@ namespace ColonyHaul
             _offlineLine.endColor = color;
         }
 
+        void SyncSitLine()
+        {
+            var b = _game.SittingStock();
+            var h = _game.IdleHauler();
+            if (b == null || h == null || !_game.Nodes.TryGetValue(b.NodeId, out var node))
+            {
+                if (_sitLine != null) _sitLine.enabled = false;
+                return;
+            }
+            if (_sitLine == null)
+                _sitLine = MesaView.MakeLine(_root, "sit-line", 0.09f, 0.03f);
+            _sitLine.enabled = true;
+            _sitLine.positionCount = 2;
+            _sitLine.SetPosition(0, new Vector3(h.X, 0.62f, h.Z));
+            _sitLine.SetPosition(1, new Vector3(node.X, 0.78f, node.Z));
+            var pulse = 0.4f + 0.35f * Mathf.Abs(Mathf.Sin(Time.time * 5.5f));
+            Color color;
+            if (b.Type == BuildingType.Power) color = new Color(0.4f, 0.75f, 1f, pulse);
+            else if (b.Type == BuildingType.Farm) color = new Color(0.5f, 0.85f, 0.48f, pulse);
+            else color = new Color(0.94f, 0.64f, 0.23f, pulse);
+            _sitLine.startColor = color;
+            _sitLine.endColor = color;
+        }
+
         void SyncCargoTags()
         {
             var live = new HashSet<string>();
@@ -1443,6 +1507,15 @@ namespace ColonyHaul
             }
         }
 
+        void ClearSitLine()
+        {
+            if (_sitLine != null)
+            {
+                Destroy(_sitLine.gameObject);
+                _sitLine = null;
+            }
+        }
+
         void DrawWorldBars()
         {
             if (_cam == null) return;
@@ -1570,6 +1643,18 @@ namespace ColonyHaul
                 {
                     GUI.backgroundColor = new Color(0.62f, 0.32f, 0.08f, 0.92f);
                     GUI.Box(new Rect(osp.x - 46f, Screen.height - osp.y - 12f, 92f, 22f), "OFFLINE");
+                    GUI.backgroundColor = Color.white;
+                }
+            }
+            var sit = _game.SittingStock();
+            if (sit != null && _game.Nodes.TryGetValue(sit.NodeId, out var sitNode))
+            {
+                var ssp = _cam.WorldToScreenPoint(new Vector3(sitNode.X, 1.55f, sitNode.Z));
+                if (ssp.z > 0f)
+                {
+                    GUI.backgroundColor = new Color(0.55f, 0.38f, 0.08f, 0.92f);
+                    GUI.Box(new Rect(ssp.x - 50f, Screen.height - ssp.y - 12f, 100f, 22f),
+                        _game.SittingChip() ?? "HAUL");
                     GUI.backgroundColor = Color.white;
                 }
             }
