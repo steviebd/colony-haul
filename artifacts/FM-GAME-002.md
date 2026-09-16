@@ -5,15 +5,15 @@ GitHub (cold-open / Hub / Cursor): **https://github.com/steviebd/colony-haul**
 | Field | Value |
 | --- | --- |
 | Hub-ready | **Yes** |
-| Origin SHA | `1b65fb8b064756214399fe2524d42d4c201fc95e` |
-| GitHub SHA | `030ea7086db1715d3bdd6921be8cc4b0350f299f` |
+| Origin SHA | `ba42d1be7962968c5a6fae4b7571fea189e34354` |
+| GitHub SHA | `e76f818036216b3bb549f4a10d0eda60bbd8bef2` |
 | Kernel | seed-7 playtest **win** (`phase=won`, t≈184.45, Hub L2, minHp≈50.4, sabotages=4) |
 | Nested opening | **pass** (Farm → Route → Hub still deposits) |
 | Hold order | **pass** (locked until wave 4 + L2; then GUNS chase Power) |
 | Product | Unity 2022.3.50f1 URP under `Assets/_ColonyHaul` — not Vite |
-| Feature freeze | **No** — unfrozen. Hold order stays. Deepen Unity until **~16:30 AEST**, then lock SHAs for the 17:00 captain package. |
+| Feature freeze | **No** — keep deepening Unity until **~16:30 AEST**, then lock SHAs for the 17:00 captain package. |
 
-Pass 6 trees match on the six edited paths (byte-identical). Cold clone still has `Assets/`, `Packages/`, `ProjectSettings/`, USB, `playable/`, artifacts tape. Import workflows self-delete.
+Pass 7 trees match on the five edited paths (byte-identical). Cold clone still has `Assets/`, `Packages/`, `ProjectSettings/`, USB, `playable/`, artifacts tape. Import workflows self-delete.
 
 ## Unity feature list
 
@@ -45,11 +45,15 @@ One Game tick. Demo stays on Hold **Auto**, so seed-7 is the same run as Pass 4/
     - Consequence is immediate: idle haulers replan on the same tick. Hub ring + pad labels read GUNS or CREW.
     - Splice still outranks this. No new costs. If the preferred pad is empty, haulers take whatever is live — no soft-lock.
 
-**Pass 6 — this unfreeze**
+**Pass 6 — kept**
 
 13. **Gun LOCK** — live Kinetic / Splash / Hub guns draw a beam to the raider they will shoot (same brute → grunt → runner score as fire). Dry guns go red. Locked raiders flash. Range rings brighten on lock.
-14. **BRACE inbound** — during a raid, the nearest loaded haul paints a cyan line to the Hub and calls **BRACE IN Xs** (or BRACE NOW) before the shield pops. INBOUND pip at ~2.4s. Splice and live BRACE still outrank this in the title.
-15. **Cargo stamps + spawn forecast** — loaded haulers read FOOD / PWR / ORE. Last 14s before a wave, spawn pads ghost the pack (`4G · 8s`) so the next lane is readable.
+14. **BRACE inbound** — during a raid, the nearest loaded haul paints a cyan line to the Hub and calls **BRACE IN Xs** (or BRACE NOW) before the shield pops. INBOUND pip at ~2.4s.
+15. **Cargo stamps + spawn forecast** — loaded haulers read FOOD / PWR / ORE. Last 14s before a wave, spawn pads ghost the pack (`4G · 8s`).
+
+**Pass 7 — this beat**
+
+16. **UNDER FIRE** — raiders in Hub melee (same 0.9 range as chew) paint CHEW beams to the core. Hub pad reads CHEW. Title: **UNDER FIRE**. If a haul is inbound it becomes **UNDER FIRE · BRACE IN Xs**. If the shield is up, **UNDER FIRE · BRACE shrugs** and the chew beams go cyan. Splice still outranks this. CHEW pip once when the first raider arrives.
 
 ## How to play (Editor)
 
@@ -69,17 +73,17 @@ Win: 6 waves **and** Hub L2. Lose: Hub HP 0, or food stays at 0 for 14s.
 
 **Hold order in a raid:** when guns go hungry, coach says `H for GUNS`. Press H — haulers peel toward the Power pad, deposits BRACE the Hub. If the larder is thin instead, `H for CREW`. Press again to flip. Cut rails still flash SPLICE first.
 
-**Pass 6 in a raid:** watch the LOCK beam — that is who the gun will shoot. A FOOD/PWR/ORE haul on the rail calls BRACE IN Xs; keep that rail live. Before the next wave, spawn pads show the mix (`4G · 8s`).
+**Pass 6–7 in a raid:** LOCK beam = who the gun will shoot. FOOD/PWR/ORE haul on the rail = BRACE IN Xs. Spawn pads ghost the next mix. When raiders reach the Hub, CHEW beams + UNDER FIRE. If that haul is still coming, the title reads UNDER FIRE · BRACE IN Xs — keep the rail live.
 
 ## Fun call
 
-You can see the save coming. A Power haul on the rail is not a surprise BRACE — it is a countdown. Guns tell you who they have. The next wave is on the spawn pad before it hits the choke. Hold order still flips GUNS vs CREW. Splice still interrupts.
+The lose condition is now a picture. You see who is chewing the core, and whether a haul will shrug it. Guns still tell you who they have. Hold order still flips GUNS vs CREW. Splice still interrupts.
 
 ## Gaps
 
 - This VM has no Unity Editor — Play Mode is documented, not screenshot-verified.
 - Runtime art is procedural low-poly, not authored FBX.
 - Origin remote stays `tmp-*`. GitHub is the Hub/Cursor clone.
-- GitHub SHA ≠ Origin SHA (parallel history); pass-6 file bytes match.
+- GitHub SHA ≠ Origin SHA (parallel history); pass-7 file bytes match.
 - Hold order does not reroute haulers already carrying cargo — they finish the trip, then obey.
 - Out of scope: multiplayer, cloud meta, deep tech tree, campaign.
