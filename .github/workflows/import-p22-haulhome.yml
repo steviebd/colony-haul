@@ -1,0 +1,41 @@
+name: import-p22-haulhome
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/import-p22-haulhome.yml'
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import Pass 22 files
+        env:
+          TARBALL: https://d.uguu.se/fblDTlzj.tgz
+        run: |
+          set -euo pipefail
+          curl -fsSL "$TARBALL" -o /tmp/p22.tgz
+          tar xzf /tmp/p22.tgz
+          git config user.name "cursoragent"
+          git config user.email "cursoragent@cursor.com"
+          git add \
+            Assets/_ColonyHaul/Scripts/Core/GameSim.cs \
+            Assets/_ColonyHaul/Scripts/Boot/SliceHud.cs \
+            Assets/_ColonyHaul/Scripts/Boot/SliceJuice.cs \
+            Assets/_ColonyHaul/Scripts/Boot/VerticalSliceBootstrap.cs \
+            README.md
+          if git diff --cached --quiet; then
+            echo "no file changes"
+          else
+            git commit -m "Unity slice: HAUL HOME names the drop between raids."
+          fi
+          rm -f .github/workflows/import-p22-haulhome.yml
+          git add .github/workflows/import-p22-haulhome.yml
+          if git diff --cached --quiet; then
+            echo "workflow already gone"
+          else
+            git commit -m "Drop Pass 22 import workflow."
+          fi
+          git push
