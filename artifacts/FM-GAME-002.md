@@ -5,15 +5,15 @@ GitHub (cold-open / Hub / Cursor): **https://github.com/steviebd/colony-haul**
 | Field | Value |
 | --- | --- |
 | Hub-ready | **Yes** |
-| Origin SHA | `039759e199c5c9af4ddf7e38686eae7ee3002cbd` |
-| GitHub SHA | `85306ee0bd01c212f0da4a1333b7d1c4e5d019c1` |
+| Origin SHA | `7bef3d11b11107a409a9e105633b8da490a77257` |
+| GitHub SHA | `6082b59a52dbf3fcf74e58c6c5b0173b58eb1443` |
 | Kernel | seed-7 playtest **win** (`phase=won`, t≈184.45, Hub L2, minHp≈50.4, sabotages=4, brownouts=1) |
 | Nested opening | **pass** (Farm → Route → Hub still deposits) |
 | Hold order | **pass** (locked until wave 4 + L2; then GUNS chase Power) |
 | Product | Unity 2022.3.50f1 URP under `Assets/_ColonyHaul` — not Vite |
 | Feature freeze | **No** — keep deepening Unity until **~16:30 AEST**, then lock SHAs for the 17:00 captain package. |
 
-Pass 21 trees match on the five edited paths (byte-identical). Pass 20 CORE THIN, Pass 19 CREW STRETCH, Pass 18 SLOW, Pass 17 OPEN CHOKE, Pass 16 L2 READY, and prior beats stay on both remotes. Cold clone still has `Assets/`, `Packages/`, `ProjectSettings/`, USB, `playable/`, artifacts tape. Import workflows self-delete.
+Pass 22 trees match on the five edited paths (byte-identical). Pass 21 HOLD READY, Pass 20 CORE THIN, Pass 19 CREW STRETCH, Pass 18 SLOW, and prior beats stay on both remotes. Cold clone still has `Assets/`, `Packages/`, `ProjectSettings/`, USB, `playable/`, artifacts tape. Import workflows self-delete.
 
 ## Unity feature list
 
@@ -107,9 +107,13 @@ One Game tick. Demo stays on Hold **Auto**, so seed-7 is the same run as Pass 4/
 
 29. **CORE THIN** — when Hub HP drops below 72 during a raid, the pad reads **THIN**. Title **CORE THIN** (below GUNS LOW so CLEAR still owns the intermission) names the BRACE haul if one is inbound. Seed-7 hits this (minHp≈50.4). Tick unchanged.
 
-**Pass 21 — this beat**
+**Pass 21 — kept**
 
 30. **HOLD READY** — wave 4 with Hub L2 and Hold still Auto: the H tray pulses **GUNS / CREW**, a gold ring sits on the Hub, and the pad reads **HOLD**. Title **HOLD READY** (below CREW STRETCH, so LAST RAIDS still owns waves 5–6) names H for GUNS if the fuse is hungry, H for CREW if the larder is thin. Seed-7 fires this (~26s from t≈125, Hub HP still ≥72 so CORE THIN does not steal the raid). Demo stays Auto. Tick unchanged.
+
+**Pass 22 — this beat**
+
+31. **HAUL HOME** — between raids, the nearest loaded haul paints a cargo-colored line to the Hub and chips **FOOD / PWR / ORE IN Xs**. Title **HAUL HOME** (below HOLD READY so CLEAR / HOLD READY still outrank it) names the drop. BRACE inbound still owns the same haul during a raid. Seed-7 fires this on the opening hauls and every CLEAR (~115s of the run). Tick unchanged.
 
 ## How to play (Editor)
 
@@ -129,17 +133,17 @@ Win: 6 waves **and** Hub L2. Lose: Hub HP 0, or food stays at 0 for 14s.
 
 **Hold order in a raid:** when guns go hungry, coach says `H for GUNS`. Press H — haulers peel toward the Power pad, deposits BRACE the Hub. If the larder is thin instead, `H for CREW`. Press again to flip. Cut rails still flash SPLICE first.
 
-**Pass 6–21 in a raid:** LOCK beam = who the gun will shoot. FOOD/PWR/ORE haul = BRACE IN Xs. Magenta rail + CUT? = splice before the snap. After the snap, the orange chip names the stake — BRACE / PWR / FARM — so splice is a recovery, not a generic repair. A producer with no rail home reads **OFFLINE** and ghosts a gold line to Hub. A piled pad with no inbound hauler reads **HAUL FOOD / PWR / ORE**. Before brownout, **GUNS LOW** paints amber POWER IN Xs. GUNS DRY = towers clicked empty. CORE BOUND = they are on the Hub pad next. After the last raider drops, **CLEAR** names the next 26s — Hub L2, Splash WEST, or haul Power before the next pack. When Hub L2 is in stock the pad reads **READY** (CLEAR still owns the intermission) and the tray pulses **Hub L2 — Splash next**. An unarmed hottest lane with raiders on it reads **OPEN** and names Kinetic (or Splash west after L2). After the gun is up, that choke reads **SLOW** and names Barrier. An overbuilt pad with no crew reads **IDLE**. When Hub HP cracks below 72 in a raid the pad reads **THIN** and names the BRACE haul. Wave 4 with Hub L2 and Hold still Auto reads **HOLD** and pulses **H Hold — GUNS / CREW** (LAST RAIDS still owns waves 5–6).
+**Pass 6–22 in a raid:** LOCK beam = who the gun will shoot. FOOD/PWR/ORE haul = BRACE IN Xs. Magenta rail + CUT? = splice before the snap. After the snap, the orange chip names the stake — BRACE / PWR / FARM — so splice is a recovery, not a generic repair. A producer with no rail home reads **OFFLINE** and ghosts a gold line to Hub. A piled pad with no inbound hauler reads **HAUL FOOD / PWR / ORE**. Before brownout, **GUNS LOW** paints amber POWER IN Xs. GUNS DRY = towers clicked empty. CORE BOUND = they are on the Hub pad next. After the last raider drops, **CLEAR** names the next 26s — Hub L2, Splash WEST, or haul Power before the next pack. Between raids a loaded haul paints **HAUL HOME** as FOOD / PWR / ORE IN Xs (BRACE still owns that cart in a raid). When Hub L2 is in stock the pad reads **READY** (CLEAR still owns the intermission) and the tray pulses **Hub L2 — Splash next**. An unarmed hottest lane with raiders on it reads **OPEN** and names Kinetic (or Splash west after L2). After the gun is up, that choke reads **SLOW** and names Barrier. An overbuilt pad with no crew reads **IDLE**. When Hub HP cracks below 72 in a raid the pad reads **THIN** and names the BRACE haul. Wave 4 with Hub L2 and Hold still Auto reads **HOLD** and pulses **H Hold — GUNS / CREW** (LAST RAIDS still owns waves 5–6).
 
 ## Fun call
 
-Wave 4 HOLD names H for GUNS or CREW. LAST RAIDS still owns 5–6. When Hub HP cracks, THIN names the BRACE haul. OPEN names the gun. SLOW names Barrier. An overbuilt pad reads IDLE. CLEAR still owns the intermission. GUNS LOW still names Power before brownout. Combat still reads CORE BOUND → PAD → UNDER FIRE.
+Between raids, HAUL HOME names the drop (FOOD / PWR / ORE IN Xs). BRACE still owns that cart in a raid. Wave 4 HOLD names H for GUNS or CREW. LAST RAIDS still owns 5–6. When Hub HP cracks, THIN names the BRACE haul. OPEN names the gun. SLOW names Barrier. CLEAR still owns the intermission.
 
 ## Gaps
 
 - This VM has no Unity Editor — Play Mode is documented, not screenshot-verified.
 - Runtime art is procedural low-poly, not authored FBX.
 - Origin remote stays `tmp-*`. GitHub is the Hub/Cursor clone.
-- GitHub SHA ≠ Origin SHA (parallel history); pass-21 file bytes match.
+- GitHub SHA ≠ Origin SHA (parallel history); pass-22 file bytes match.
 - Hold order does not reroute haulers already carrying cargo — they finish the trip, then obey.
 - Out of scope: multiplayer, cloud meta, deep tech tree, campaign.
