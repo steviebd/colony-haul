@@ -34,7 +34,9 @@ namespace ColonyHaul
         readonly HashSet<string> _bracePinged = new HashSet<string>();
         readonly HashSet<string> _threatPinged = new HashSet<string>();
         readonly HashSet<string> _cutSoonPinged = new HashSet<string>();
+        readonly HashSet<string> _powerPinged = new HashSet<string>();
         LineRenderer _braceLine;
+        LineRenderer _powerLine;
         bool _chewPinged;
         Transform _root;
         Camera _cam;
@@ -110,6 +112,7 @@ namespace ColonyHaul
             ClearForecasts();
             ClearCargoTags();
             ClearBraceLine();
+            ClearPowerLine();
             _hubFlash = 0f;
             _hubBraceFlash = false;
             _coreAlarm = false;
@@ -118,6 +121,7 @@ namespace ColonyHaul
             _bracePinged.Clear();
             _threatPinged.Clear();
             _cutSoonPinged.Clear();
+            _powerPinged.Clear();
             _chewPinged = false;
             _juice.CutAlarm(false);
             _buildingScale.Clear();
@@ -173,6 +177,7 @@ namespace ColonyHaul
             PingBraceInbound();
             PingChew();
             PingRailThreat();
+            PingGunsDry();
             _juice.Tick(_cam, events);
             _hubFlash = Mathf.Max(0f, _hubFlash - Time.deltaTime);
             SyncAtmosphere();
@@ -184,7 +189,7 @@ namespace ColonyHaul
             switch (ev.Kind)
             {
                 case SimEventKind.Brownout:
-                    _hud.Flash("Brownout — towers dry", 2.2f, new Color(0.85f, 0.28f, 0.22f, 0.95f));
+                    _hud.Flash("GUNS DRY — haul Power", 2.2f, new Color(0.85f, 0.28f, 0.22f, 0.95f));
                     break;
                 case SimEventKind.Sabotage:
                     _hud.Flash("HAUL CUT — splice the orange rail", 1.6f, new Color(0.95f, 0.38f, 0.18f, 0.95f));
@@ -340,6 +345,8 @@ namespace ColonyHaul
                 else if (n.Kind == NodeKind.Hub)
                     c = _game.HubChewers() > 0
                         ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(1f, 0.28f, 0.18f), pulse)
+                        : _game.GunsDry()
+                        ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(1f, 0.48f, 0.18f), pulse)
                         : _game.HoldOrder == HoldOrder.Power
                         ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(0.4f, 0.75f, 1f), pulse)
                         : _game.HoldOrder == HoldOrder.Food
@@ -353,6 +360,7 @@ namespace ColonyHaul
                     MesaView.SetLabel(mark, cut != null && (cut.A == n.Id || cut.B == n.Id)
                         ? "SPLICE"
                         : _game.HubChewers() > 0 ? "CHEW"
+                        : _game.GunsDry() ? "DRY"
                         : _game.HubRaising ? "L2"
                         : _game.HoldOrder == HoldOrder.Power ? "GUNS"
                         : _game.HoldOrder == HoldOrder.Food ? "CREW"
@@ -415,6 +423,8 @@ namespace ColonyHaul
                     tint = Color.Lerp(tint, new Color(0.95f, 0.22f, 0.18f), 0.4f + 0.2f * pulse);
                 if (b.Type == BuildingType.Hub && _game.HubChewers() > 0)
                     tint = Color.Lerp(tint, new Color(1f, 0.18f, 0.12f), 0.45f + 0.2f * pulse);
+                else if (b.Type == BuildingType.Hub && _game.GunsDry())
+                    tint = Color.Lerp(tint, new Color(1f, 0.48f, 0.18f), 0.4f + 0.2f * pulse);
                 if (b.Type == BuildingType.Hub && _hubFlash > 0f)
                     tint = Color.Lerp(tint,
                         _hubBraceFlash ? new Color(0.4f, 0.9f, 1f) : new Color(1f, 0.22f, 0.18f),
@@ -508,6 +518,7 @@ namespace ColonyHaul
             SyncGunLocks();
             SyncChews();
             SyncBraceLine();
+            SyncPowerLine();
             SyncForecasts();
             SyncEnemies();
             SyncShadows();
@@ -531,6 +542,7 @@ namespace ColonyHaul
         {
             var live = new HashSet<string>();
             var inboundHaul = _game.BraceInbound();
+            var powerHaul = _game.PowerInbound();
             foreach (var h in _game.Haulers)
             {
                 live.Add(h.Id);
@@ -546,6 +558,7 @@ namespace ColonyHaul
                 tr.position = new Vector3(h.X, 0.58f, h.Z);
                 var blocked = _game.HaulerBlocked(h);
                 var inbound = inboundHaul != null && inboundHaul.Id == h.Id;
+                var feeding = powerHaul != null && powerHaul.Id == h.Id;
                 if (blocked)
                 {
                     if (_stuckShown.Add(h.Id)) _juice.Stuck(h.X, h.Z);
@@ -553,14 +566,15 @@ namespace ColonyHaul
                 else if (_stuckShown.Remove(h.Id) && h.Path.Count > 0)
                     _juice.Rolling(h.X, h.Z);
                 var waitPulse = h.Wait > 0 || blocked ? 1f + 0.16f * Mathf.Abs(Mathf.Sin(Time.time * 9f)) : 1f;
-                if (inbound) waitPulse *= 1f + 0.12f * Mathf.Abs(Mathf.Sin(Time.time * 7f));
+                if (inbound || feeding) waitPulse *= 1f + 0.12f * Mathf.Abs(Mathf.Sin(Time.time * 7f));
                 tr.localScale = Vector3.one * ((h.CargoAmount > 0 ? 0.5f : 0.38f) * waitPulse);
                 var cargo = h.CargoAmount <= 0 ? new Color(0.31f, 0.8f, 0.77f)
                     : h.CargoKind == Resource.Food ? new Color(0.5f, 0.85f, 0.45f)
                     : h.CargoKind == Resource.Power ? new Color(0.35f, 0.7f, 1f)
                     : new Color(0.94f, 0.64f, 0.23f);
                 if (blocked) cargo = Color.Lerp(cargo, new Color(1f, 0.5f, 0.22f), 0.62f);
-                if (inbound) cargo = Color.Lerp(cargo, new Color(0.45f, 0.9f, 1f), 0.4f);
+                if (feeding) cargo = Color.Lerp(cargo, new Color(1f, 0.55f, 0.2f), 0.5f);
+                else if (inbound) cargo = Color.Lerp(cargo, new Color(0.45f, 0.9f, 1f), 0.4f);
                 MesaView.Tint(tr.gameObject, cargo);
             }
             Prune(_haulers, live);
@@ -675,6 +689,12 @@ namespace ColonyHaul
                 live.Add("chew-ring");
                 var chewPulse = 2.4f + 0.35f * Mathf.Abs(Mathf.Sin(Time.time * 9f));
                 EnsureRing("chew-ring", chewHub, chewPulse, new Color(1f, 0.28f, 0.16f, 0.4f));
+            }
+            if (_game.GunsDry() && _game.Nodes.TryGetValue("hub", out var dryHub))
+            {
+                live.Add("guns-dry");
+                var dryPulse = 3.0f + 0.3f * Mathf.Abs(Mathf.Sin(Time.time * 10f));
+                EnsureRing("guns-dry", dryHub, dryPulse, new Color(1f, 0.45f, 0.18f, 0.38f));
             }
             if (_game.Surging && _game.Nodes.TryGetValue("hub", out var hubNode))
             {
@@ -974,6 +994,21 @@ namespace ColonyHaul
             foreach (var id in dead) _cutSoonPinged.Remove(id);
         }
 
+        void PingGunsDry()
+        {
+            if (!_game.GunsDry())
+            {
+                _powerPinged.Clear();
+                return;
+            }
+            var h = _game.PowerInbound();
+            if (h == null) return;
+            var eta = _game.HaulEtaToHub(h);
+            if (eta < 0f || eta > 2.4f) return;
+            if (!_powerPinged.Add(h.Id)) return;
+            _juice.PowerComing(h.X, h.Z);
+        }
+
         void SyncGunLocks()
         {
             var live = new HashSet<string>();
@@ -1050,6 +1085,9 @@ namespace ColonyHaul
         void SyncBraceLine()
         {
             var h = _game.BraceInbound();
+            var power = _game.PowerInbound();
+            if (h != null && power != null && h.Id == power.Id)
+                h = null;
             if (h == null)
             {
                 if (_braceLine != null) _braceLine.enabled = false;
@@ -1065,6 +1103,26 @@ namespace ColonyHaul
             var color = new Color(0.45f, 0.9f, 1f, pulse);
             _braceLine.startColor = color;
             _braceLine.endColor = color;
+        }
+
+        void SyncPowerLine()
+        {
+            var h = _game.PowerInbound();
+            if (h == null)
+            {
+                if (_powerLine != null) _powerLine.enabled = false;
+                return;
+            }
+            if (_powerLine == null)
+                _powerLine = MesaView.MakeLine(_root, "power-line", 0.13f, 0.04f);
+            _powerLine.enabled = true;
+            _powerLine.positionCount = 2;
+            _powerLine.SetPosition(0, new Vector3(h.X, 0.78f, h.Z));
+            _powerLine.SetPosition(1, new Vector3(0f, 0.95f, 0f));
+            var pulse = 0.6f + 0.35f * Mathf.Abs(Mathf.Sin(Time.time * 9f));
+            var color = new Color(1f, 0.5f, 0.2f, pulse);
+            _powerLine.startColor = color;
+            _powerLine.endColor = color;
         }
 
         void SyncCargoTags()
@@ -1186,6 +1244,15 @@ namespace ColonyHaul
             }
         }
 
+        void ClearPowerLine()
+        {
+            if (_powerLine != null)
+            {
+                Destroy(_powerLine.gameObject);
+                _powerLine = null;
+            }
+        }
+
         void DrawWorldBars()
         {
             if (_cam == null) return;
@@ -1230,10 +1297,17 @@ namespace ColonyHaul
                             _game.Surging ? "SHRUG " + chewers : "CHEW " + chewers);
                         GUI.backgroundColor = Color.white;
                     }
+                    else if (_game.GunsDry())
+                    {
+                        GUI.backgroundColor = new Color(0.72f, 0.28f, 0.08f, 0.92f);
+                        GUI.Box(new Rect(hx - 46f, hy - 18f, 92f, 16f), "DRY");
+                        GUI.backgroundColor = Color.white;
+                    }
                 }
             }
             var inbound = _game.BraceInbound();
-            if (inbound != null)
+            var power = _game.PowerInbound();
+            if (inbound != null && (power == null || power.Id != inbound.Id))
             {
                 var isp = _cam.WorldToScreenPoint(new Vector3(inbound.X, 1.55f, inbound.Z));
                 if (isp.z > 0f)
@@ -1244,6 +1318,18 @@ namespace ColonyHaul
                     var chip = eta <= 0.35f ? "BRACE NOW" : "BRACE " + GameSim.CeilSecs(eta) + "s";
                     GUI.backgroundColor = new Color(0.12f, 0.42f, 0.55f, 0.9f);
                     GUI.Box(new Rect(ix - 46f, iy - 14f, 92f, 22f), chip);
+                    GUI.backgroundColor = Color.white;
+                }
+            }
+            if (power != null)
+            {
+                var psp = _cam.WorldToScreenPoint(new Vector3(power.X, 1.55f, power.Z));
+                if (psp.z > 0f)
+                {
+                    var eta = _game.HaulEtaToHub(power);
+                    var chip = eta <= 0.35f ? "POWER NOW" : "POWER " + GameSim.CeilSecs(eta) + "s";
+                    GUI.backgroundColor = new Color(0.72f, 0.28f, 0.08f, 0.9f);
+                    GUI.Box(new Rect(psp.x - 46f, Screen.height - psp.y - 14f, 92f, 22f), chip);
                     GUI.backgroundColor = Color.white;
                 }
             }

@@ -598,6 +598,59 @@ namespace ColonyHaul
             return "mag-rail";
         }
 
+        public bool GunsDry()
+        {
+            return PowerBrownout && LiveTowers() > 0;
+        }
+
+        public Hauler PowerInbound()
+        {
+            if (Phase != Phase.Playing || !GunsDry()) return null;
+            Hauler best = null;
+            var bestEta = float.PositiveInfinity;
+            foreach (var h in Haulers)
+            {
+                if (h.CargoAmount <= 0 || h.CargoKind != Resource.Power) continue;
+                if (HaulerBlocked(h)) continue;
+                var eta = HaulEtaToHub(h);
+                if (eta < 0f) continue;
+                if (eta < bestEta)
+                {
+                    bestEta = eta;
+                    best = h;
+                }
+            }
+            return best;
+        }
+
+        public string GunsDryTitle()
+        {
+            if (!GunsDry()) return null;
+            var h = PowerInbound();
+            if (h != null)
+            {
+                var eta = HaulEtaToHub(h);
+                if (eta <= 0.35f) return "GUNS DRY · POWER NOW";
+                return "GUNS DRY · POWER IN " + CeilSecs(eta) + "s";
+            }
+            if (HoldOrder == HoldOrder.Power) return "GUNS DRY · crew rushing Power";
+            if (HoldReady) return "GUNS DRY · H for GUNS";
+            return "GUNS DRY · haul Power";
+        }
+
+        public string GunsDryCopy()
+        {
+            if (!GunsDry()) return null;
+            var h = PowerInbound();
+            if (h != null)
+            {
+                var eta = HaulEtaToHub(h);
+                if (eta <= 0.35f) return "POWER at Hub — guns about to live";
+                return "POWER inbound · " + CeilSecs(eta) + "s to feed guns";
+            }
+            return "GUNS DRY — haul Power now";
+        }
+
         public static float RangeOf(BuildingType type)
         {
             switch (type)

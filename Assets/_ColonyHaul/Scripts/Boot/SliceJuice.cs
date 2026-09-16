@@ -132,6 +132,13 @@ namespace ColonyHaul
             }
         }
 
+        public void PowerComing(float x, float z)
+        {
+            SpawnPip(x, z, "POWER", new Color(0.4f, 0.75f, 1f));
+            Spokes(x, z, 1.4f, new Color(1f, 0.55f, 0.22f));
+            SpawnBurst(x, z, new Color(1f, 0.48f, 0.18f, 0.4f), 2.6f);
+        }
+
         public void HubHit(bool braced)
         {
             if (braced)
@@ -230,9 +237,11 @@ namespace ColonyHaul
                     SpawnBurst(0f, 0f, new Color(0.86f, 0.24f, 0.24f, 0.4f), 6f);
                     break;
                 case SimEventKind.Brownout:
-                    Punch(0.35f);
+                    Punch(0.45f);
                     _audio.PlayOneShot(_dry, 0.55f);
-                    SpawnPip(ev.X, ev.Z, "DRY", new Color(1f, 0.35f, 0.32f));
+                    SpawnPip(ev.X, ev.Z, "DRY", new Color(1f, 0.45f, 0.22f));
+                    Spokes(ev.X, ev.Z, 1.6f, new Color(1f, 0.5f, 0.2f));
+                    SpawnBurst(ev.X, ev.Z, new Color(1f, 0.4f, 0.18f, 0.5f), 3.0f);
                     break;
                 case SimEventKind.Barrier:
                     Punch(0.28f);
