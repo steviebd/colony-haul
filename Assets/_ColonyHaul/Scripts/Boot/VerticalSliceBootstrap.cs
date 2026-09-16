@@ -2230,6 +2230,31 @@ namespace ColonyHaul
                     GUI.backgroundColor = Color.white;
                 }
             }
+            if (_game.GunFuseLive())
+            {
+                var fuse = _game.GunFuseChip();
+                if (fuse != null)
+                {
+                    Color fuseColor;
+                    if (_game.GunsDry()) fuseColor = new Color(0.72f, 0.18f, 0.1f, 0.92f);
+                    else if (_game.GunsHungry()) fuseColor = new Color(0.72f, 0.42f, 0.08f, 0.92f);
+                    else fuseColor = new Color(0.12f, 0.38f, 0.4f, 0.88f);
+                    foreach (var b in _game.Buildings.Values)
+                    {
+                        if (b.Type != BuildingType.Kinetic && b.Type != BuildingType.Splash) continue;
+                        if (b.BuildLeft > 0f) continue;
+                        if (!_game.Nodes.TryGetValue(b.NodeId, out var gunNode)) continue;
+                        var height = 2.2f;
+                        if (openId == b.NodeId || slowId == b.NodeId || gunsUpHudId == b.NodeId)
+                            height = 2.65f;
+                        var fsp = _cam.WorldToScreenPoint(new Vector3(gunNode.X, height, gunNode.Z));
+                        if (fsp.z <= 0f) continue;
+                        GUI.backgroundColor = fuseColor;
+                        GUI.Box(new Rect(fsp.x - 40f, Screen.height - fsp.y - 10f, 80f, 18f), fuse);
+                        GUI.backgroundColor = Color.white;
+                    }
+                }
+            }
             var stretchId = _game.StretchPad();
             if (stretchId != null && _game.Nodes.TryGetValue(stretchId, out var stretchNode))
             {

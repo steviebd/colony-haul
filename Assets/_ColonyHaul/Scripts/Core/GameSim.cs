@@ -1950,6 +1950,18 @@ namespace ColonyHaul
             return Power / drain;
         }
 
+        public bool GunFuseLive()
+        {
+            return Phase == Phase.Playing && LiveTowers() > 0;
+        }
+
+        public string GunFuseChip()
+        {
+            if (!GunFuseLive()) return null;
+            if (GunsDry()) return "DRY";
+            return "FUSE " + CeilSecs(GunSecondsLeft()) + "s";
+        }
+
         public float ProducerFill(Building b)
         {
             if (b.Type == BuildingType.Mine) return b.Buffer[Resource.Ore] / 22f;
