@@ -5,15 +5,15 @@ GitHub (cold-open / Hub / Cursor): **https://github.com/steviebd/colony-haul**
 | Field | Value |
 | --- | --- |
 | Hub-ready | **Yes** |
-| Origin SHA | `12f3ed00448115363acf1853622cd4c3b488d298` |
-| GitHub SHA | `b2f723c90106ea6778c889107d521d540202c136` |
+| Origin SHA | `2776b22f996fcba5b3bc77dab8a6bd93a0bf4c4d` |
+| GitHub SHA | `558eed44ecc9aa0047eb51fb8ac427775d6ec08d` |
 | Kernel | seed-7 playtest **win** (`phase=won`, t≈184.45, Hub L2, minHp≈50.4, sabotages=4, brownouts=1) |
 | Nested opening | **pass** (Farm → Route → Hub still deposits) |
 | Hold order | **pass** (locked until wave 4 + L2; then GUNS chase Power) |
 | Product | Unity 2022.3.50f1 URP under `Assets/_ColonyHaul` — not Vite |
 | Feature freeze | **No** — keep deepening Unity until **~16:30 AEST**, then lock SHAs for the 17:00 captain package. |
 
-Pass 15 trees match on the four edited paths (byte-identical). Pass 14 SIT stock, Pass 13 PAD OFFLINE, and Pass 12 HAUL CUT stakes stay on both remotes. Cold clone still has `Assets/`, `Packages/`, `ProjectSettings/`, USB, `playable/`, artifacts tape. Import workflows self-delete.
+Pass 16 trees match on the five edited paths (byte-identical). Pass 15 GUNS LOW, Pass 14 SIT stock, Pass 13 PAD OFFLINE, and Pass 12 HAUL CUT stakes stay on both remotes. Cold clone still has `Assets/`, `Packages/`, `ProjectSettings/`, USB, `playable/`, artifacts tape. Import workflows self-delete.
 
 ## Unity feature list
 
@@ -83,9 +83,13 @@ One Game tick. Demo stays on Hold **Auto**, so seed-7 is the same run as Pass 4/
 
 23. **SIT stock** — a staffed producer with ≥6 stock and no hauler bound for it reads **HAUL FOOD / PWR / ORE**. Power piles score higher when guns are hungry; farm piles when the larder is thin. An idle hauler paints a colored line to that pad. Title sits below WAVE CLEAR / PAD OFFLINE. Tick unchanged.
 
-**Pass 15 — this beat**
+**Pass 15 — kept**
 
 24. **GUNS LOW** — when towers have under 9s of fire left but are not yet dry, a Power haul paints amber **POWER IN Xs**. Title **GUNS LOW** (below WAVE CLEAR so CLEAR still owns the intermission). BRACE inbound still wins the same hauler during a raid. GUNS DRY still takes over at brownout. Tick unchanged.
+
+**Pass 16 — this beat**
+
+25. **L2 READY** — when Hub L2 is in stock, a gold ring sits on the Hub and the pad reads **READY**. Title **L2 READY** (below CLEAR / GUNS LOW / OFFLINE / SIT so WAVE CLEAR still owns the intermission — CLEAR already says raise Hub L2). Tray pulses **Hub L2 — Splash next**. Press U to spend ore/food/pwr and unlock Splash. Tick unchanged.
 
 ## How to play (Editor)
 
@@ -105,17 +109,17 @@ Win: 6 waves **and** Hub L2. Lose: Hub HP 0, or food stays at 0 for 14s.
 
 **Hold order in a raid:** when guns go hungry, coach says `H for GUNS`. Press H — haulers peel toward the Power pad, deposits BRACE the Hub. If the larder is thin instead, `H for CREW`. Press again to flip. Cut rails still flash SPLICE first.
 
-**Pass 6–15 in a raid:** LOCK beam = who the gun will shoot. FOOD/PWR/ORE haul = BRACE IN Xs. Magenta rail + CUT? = splice before the snap. After the snap, the orange chip names the stake — BRACE / PWR / FARM — so splice is a recovery, not a generic repair. A producer with no rail home reads **OFFLINE** and ghosts a gold line to Hub. A piled pad with no inbound hauler reads **HAUL FOOD / PWR / ORE**. Before brownout, **GUNS LOW** paints amber POWER IN Xs. GUNS DRY = towers clicked empty. CORE BOUND = they are on the Hub pad next. After the last raider drops, **CLEAR** names the next 26s — Hub L2, Splash WEST, or haul Power before the next pack.
+**Pass 6–16 in a raid:** LOCK beam = who the gun will shoot. FOOD/PWR/ORE haul = BRACE IN Xs. Magenta rail + CUT? = splice before the snap. After the snap, the orange chip names the stake — BRACE / PWR / FARM — so splice is a recovery, not a generic repair. A producer with no rail home reads **OFFLINE** and ghosts a gold line to Hub. A piled pad with no inbound hauler reads **HAUL FOOD / PWR / ORE**. Before brownout, **GUNS LOW** paints amber POWER IN Xs. GUNS DRY = towers clicked empty. CORE BOUND = they are on the Hub pad next. After the last raider drops, **CLEAR** names the next 26s — Hub L2, Splash WEST, or haul Power before the next pack. When Hub L2 is in stock the pad reads **READY** (CLEAR still owns the intermission) and the tray pulses **Hub L2 — Splash next**.
 
 ## Fun call
 
-A piled pad names which stock to empty. GUNS LOW names the Power haul before the pylon clicks empty — BRACE still wins that same haul in a raid. Combat still reads CORE BOUND → PAD → UNDER FIRE. Hold order still flips GUNS vs CREW.
+When stocks cover Hub L2, the Hub names the spend — U unlocks Splash on the west choke. CLEAR still owns the intermission clock. GUNS LOW still names the Power haul before brownout. Combat still reads CORE BOUND → PAD → UNDER FIRE.
 
 ## Gaps
 
 - This VM has no Unity Editor — Play Mode is documented, not screenshot-verified.
 - Runtime art is procedural low-poly, not authored FBX.
 - Origin remote stays `tmp-*`. GitHub is the Hub/Cursor clone.
-- GitHub SHA ≠ Origin SHA (parallel history); pass-15 file bytes match.
+- GitHub SHA ≠ Origin SHA (parallel history); pass-16 file bytes match.
 - Hold order does not reroute haulers already carrying cargo — they finish the trip, then obey.
 - Out of scope: multiplayer, cloud meta, deep tech tree, campaign.
