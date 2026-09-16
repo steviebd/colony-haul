@@ -35,6 +35,11 @@ namespace ColonyHaul
         float _hubL2At = -99f;
         float _lastTowerLiveAt = -99f;
         string _lastTowerNodeId;
+        float _railLiveUntil = -99f;
+        CutStake _railLiveStake = CutStake.Generic;
+        string _railLiveEdgeId;
+        string _railLiveA;
+        string _railLiveB;
         float _surgeUntil;
         readonly float[] _waveGap = { 42f, 28f, 28f, 27f, 26f, 26f };
 
@@ -1462,6 +1467,101 @@ namespace ColonyHaul
             }
         }
 
+        public bool RailLiveLive()
+        {
+            return Phase == Phase.Playing
+                && ActiveCut() == null
+                && !string.IsNullOrEmpty(_railLiveEdgeId)
+                && T < _railLiveUntil;
+        }
+
+        public string RailLiveEdgeId()
+        {
+            return RailLiveLive() ? _railLiveEdgeId : null;
+        }
+
+        public string RailLivePingKey()
+        {
+            if (!RailLiveLive()) return null;
+            return _railLiveEdgeId + "@" + _railLiveUntil.ToString("0.00");
+        }
+
+        public bool RailLiveTouches(string nodeId)
+        {
+            if (!RailLiveLive() || string.IsNullOrEmpty(nodeId)) return false;
+            return nodeId == _railLiveA || nodeId == _railLiveB;
+        }
+
+        public string RailLiveCall()
+        {
+            if (!RailLiveLive()) return null;
+            switch (_railLiveStake)
+            {
+                case CutStake.Brace:
+                    return RaidLive ? "BRACE rolling" : "haul rolling";
+                case CutStake.Power:
+                    return "Power rolling";
+                case CutStake.Farm:
+                    return "farm rolling";
+                case CutStake.Ore:
+                    return "ore rolling";
+                case CutStake.Generic:
+                    return "haulers rolling";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(_railLiveStake), _railLiveStake, null);
+            }
+        }
+
+        public string RailLiveTitle()
+        {
+            if (!RailLiveLive()) return null;
+            return "RAIL LIVE · " + RailLiveCall();
+        }
+
+        public string RailLiveCopy()
+        {
+            if (!RailLiveLive()) return null;
+            switch (_railLiveStake)
+            {
+                case CutStake.Brace:
+                    return RaidLive
+                        ? "RAIL LIVE — BRACE haul is rolling again"
+                        : "RAIL LIVE — haul is rolling again";
+                case CutStake.Power:
+                    return "RAIL LIVE — Power haul is rolling again";
+                case CutStake.Farm:
+                    return "RAIL LIVE — farm haul is rolling again";
+                case CutStake.Ore:
+                    return "RAIL LIVE — ore haul is rolling again";
+                case CutStake.Generic:
+                    return "RAIL LIVE — haulers are rolling again";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(_railLiveStake), _railLiveStake, null);
+            }
+        }
+
+        public string RailLiveChip()
+        {
+            if (!RailLiveLive()) return null;
+            switch (_railLiveStake)
+            {
+                case CutStake.Brace: return "LIVE";
+                case CutStake.Power: return "PWR LIVE";
+                case CutStake.Farm: return "FARM LIVE";
+                case CutStake.Ore: return "ORE LIVE";
+                case CutStake.Generic: return "LIVE";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(_railLiveStake), _railLiveStake, null);
+            }
+        }
+
+        public string RailLiveFlash()
+        {
+            var call = RailLiveCall();
+            if (call == null) return "RAIL LIVE — haulers rolling";
+            return "RAIL LIVE — " + call;
+        }
+
         public string OfflinePad()
         {
             if (Phase != Phase.Playing) return null;
@@ -2221,9 +2321,18 @@ namespace ColonyHaul
             if (edge.Routed && edge.SabotagedUntil <= T) { why = "already routed"; return false; }
             if (Ore < Balance.RouteCost) { why = "need ore"; return false; }
             var splice = edge.Routed && edge.SabotagedUntil > T;
+            var liveStake = splice ? CutStakeOf() : CutStake.Generic;
             Ore -= Balance.RouteCost;
             edge.Routed = true;
             edge.SabotagedUntil = 0;
+            if (splice)
+            {
+                _railLiveStake = liveStake;
+                _railLiveEdgeId = edge.Id;
+                _railLiveA = edge.A;
+                _railLiveB = edge.B;
+                _railLiveUntil = T + 4.2f;
+            }
             var a = Nodes[edge.A];
             var b = Nodes[edge.B];
             RouteFrom = null;

@@ -98,6 +98,14 @@ namespace ColonyHaul
             SpawnBurst(x, z, new Color(0.42f, 0.92f, 0.88f, 0.45f), 1.8f);
         }
 
+        public void RailLive(float x, float z, string tag)
+        {
+            SpawnPip(x, z, string.IsNullOrEmpty(tag) ? "LIVE" : tag, new Color(0.42f, 0.92f, 0.88f));
+            Spokes(x, z, 1.6f, new Color(0.2f, 0.55f, 0.52f));
+            SpawnBurst(x, z, new Color(0.42f, 0.92f, 0.88f, 0.42f), 3.2f);
+            Punch(0.22f);
+        }
+
         public void Inbound(float x, float z, int count)
         {
             SpawnPip(x, z, "IN " + count, new Color(0.86f, 0.24f, 0.24f));
