@@ -958,6 +958,54 @@ namespace ColonyHaul
             return "GUNS DRY — haul Power now";
         }
 
+        public bool GunsBackLive()
+        {
+            if (Phase != Phase.Playing) return false;
+            if (GunsDry()) return false;
+            if (LiveTowers() <= 0) return false;
+            if (_brownoutAt < 0f) return false;
+            return T >= _brownoutAt && T - _brownoutAt <= 8f;
+        }
+
+        public string GunsBackPingKey()
+        {
+            if (!GunsBackLive()) return null;
+            return _brownoutAt.ToString("0.00");
+        }
+
+        public string GunsBackCall()
+        {
+            if (!GunsBackLive()) return null;
+            if (GunsHungry()) return "haul Power before they dry";
+            return "keep Power rolling";
+        }
+
+        public string GunsBackTitle()
+        {
+            if (!GunsBackLive()) return null;
+            return "GUNS BACK · " + GunsBackCall();
+        }
+
+        public string GunsBackCopy()
+        {
+            if (!GunsBackLive()) return null;
+            if (GunsHungry())
+                return "GUNS BACK — towers live · haul Power before they dry";
+            return "GUNS BACK — towers live · keep Power on the rail";
+        }
+
+        public string GunsBackChip()
+        {
+            if (!GunsBackLive()) return null;
+            return "BACK";
+        }
+
+        public string GunsBackFlash()
+        {
+            if (GunsHungry()) return "GUNS BACK — guns firing · haul Power before they dry";
+            return "GUNS BACK — guns firing · keep Power rolling";
+        }
+
         public bool GunsLow()
         {
             return GunsHungry() && !GunsDry();
@@ -1978,6 +2026,8 @@ namespace ColonyHaul
                     return Call("Guns hungry — H for GUNS so haulers rush Power", Tool.None);
                 return Call("Haul POWER — towers are on the last of the pylon", Tool.Route);
             }
+            if (GunsBackLive())
+                return Call("GUNS BACK — guns firing · keep Power on the rail", Tool.Power);
             if (HubLevel < 2 && HubUpgradeLeft <= 0 && CanAfford(Tool.Upgrade))
                 return Call("Hub L2 is in stock — Splash unlocks after this", Tool.Upgrade);
             if (Food < 8f)

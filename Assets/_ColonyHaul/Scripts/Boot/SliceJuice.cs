@@ -131,6 +131,15 @@ namespace ColonyHaul
             _audio.PlayOneShot(_deposit, 0.4f);
         }
 
+        public void GunsBack(float x, float z)
+        {
+            SpawnPip(x, z, "BACK", new Color(0.48f, 0.95f, 0.62f));
+            Spokes(x, z, 1.6f, new Color(0.48f, 0.95f, 0.62f));
+            SpawnBurst(x, z, new Color(0.48f, 0.95f, 0.62f, 0.42f), 3.2f);
+            Punch(0.22f);
+            _audio.PlayOneShot(_deposit, 0.38f);
+        }
+
         public void BraceComing(float x, float z)
         {
             SpawnPip(x, z, "INBOUND", new Color(0.45f, 0.9f, 1f));

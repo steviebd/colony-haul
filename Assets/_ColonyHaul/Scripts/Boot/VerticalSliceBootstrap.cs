@@ -59,6 +59,7 @@ namespace ColonyHaul
         int _packPinged = -1;
         string _gunsUpPinged;
         string _railLivePinged;
+        string _gunsBackPinged;
         Transform _root;
         Camera _cam;
         float _acc;
@@ -165,6 +166,7 @@ namespace ColonyHaul
             _packPinged = -1;
             _gunsUpPinged = null;
             _railLivePinged = null;
+            _gunsBackPinged = null;
             _juice.CutAlarm(false);
             _buildingScale.Clear();
             _acc = 0f;
@@ -235,6 +237,7 @@ namespace ColonyHaul
             PingPackIn();
             PingGunsUp();
             PingRailLive();
+            PingGunsBack();
             _juice.Tick(_cam, events);
             _hubFlash = Mathf.Max(0f, _hubFlash - Time.deltaTime);
             SyncAtmosphere();
@@ -408,6 +411,9 @@ namespace ColonyHaul
                     c = Color.Lerp(new Color(0.62f, 0.52f, 0.4f), new Color(0.95f * pulse, 0.32f * pulse, 0.34f), 0.7f);
                 else if (_game.GunsUpNodeId() == n.Id)
                     c = Color.Lerp(new Color(0.62f, 0.52f, 0.4f), new Color(0.45f * pulse, 0.9f * pulse, 0.88f), 0.75f);
+                else if (_game.GunsBackLive() && _game.Buildings.ContainsKey(n.Id)
+                         && (n.Kind == NodeKind.Choke || n.Kind == NodeKind.Tower))
+                    c = Color.Lerp(new Color(0.62f, 0.52f, 0.4f), new Color(0.48f * pulse, 0.95f * pulse, 0.62f), 0.7f);
                 else if (n.Kind == NodeKind.Choke && (chokeHot || near > 0))
                     c = Color.Lerp(new Color(0.62f, 0.52f, 0.4f), MesaView.Spawn * pulse,
                         Mathf.Clamp01(near / 4f + (chokeHot ? 0.35f : 0f)));
@@ -420,6 +426,8 @@ namespace ColonyHaul
                         ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(1f, 0.48f, 0.18f), pulse)
                         : _game.RailLiveLive()
                         ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(0.42f, 0.92f, 0.88f), pulse)
+                        : _game.GunsBackLive()
+                        ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(0.48f, 0.95f, 0.62f), pulse)
                         : _game.WaveClearLive()
                         ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(0.55f, 0.9f, 0.5f), pulse)
                         : _game.CoreThinLive()
@@ -448,6 +456,7 @@ namespace ColonyHaul
                         : _game.HubClosers() > 0 ? (_game.AnyCloseImminent() ? "PAD" : "IN")
                         : _game.GunsDry() ? "DRY"
                         : _game.RailLiveLive() ? "LIVE"
+                        : _game.GunsBackLive() ? "BACK"
                         : _game.WaveClearLive() ? "CLEAR"
                         : _game.CoreThinLive() ? "THIN"
                         : _game.HubRaising ? "L2"
@@ -468,9 +477,11 @@ namespace ColonyHaul
                         : _game.OpenChokeId() == n.Id ? "OPEN"
                         : _game.SlowChokeId() == n.Id ? "SLOW"
                         : _game.GunsUpNodeId() == n.Id ? "UP"
+                        : _game.GunsBackLive() && _game.Buildings.ContainsKey(n.Id) ? "BACK"
                         : ChokeLabel(n.Id, near, chokeHot));
                 else if (n.Kind == NodeKind.Tower)
-                    MesaView.SetLabel(mark, _game.GunsUpNodeId() == n.Id ? "UP" : "GUN");
+                    MesaView.SetLabel(mark, _game.GunsUpNodeId() == n.Id ? "UP"
+                        : _game.GunsBackLive() ? "BACK" : "GUN");
                 else if (n.Kind == NodeKind.Pad)
                 {
                     if (cut != null && (cut.A == n.Id || cut.B == n.Id))
@@ -492,7 +503,7 @@ namespace ColonyHaul
                     else if (n.Id == "pad_s")
                         MesaView.SetLabel(mark, farmGlow ? "1 FARM" : "PAD");
                     else if (_game.Buildings.TryGetValue(n.Id, out var pb) && pb.Type == BuildingType.Power
-                             && (_game.GunsHungry() || _game.GunsUpLive()))
+                             && (_game.GunsHungry() || _game.GunsUpLive() || _game.GunsBackLive()))
                         MesaView.SetLabel(mark, "FEED");
                     else MesaView.SetLabel(mark, "PAD");
                 }
@@ -521,12 +532,14 @@ namespace ColonyHaul
                 if (producer && !b.Staffed) tint *= 0.42f;
                 if ((b.Type == BuildingType.Kinetic || b.Type == BuildingType.Splash) && _game.PowerBrownout)
                     tint = Color.Lerp(tint, new Color(1f, 0.28f, 0.22f), 0.55f);
+                else if ((b.Type == BuildingType.Kinetic || b.Type == BuildingType.Splash) && _game.GunsBackLive())
+                    tint = Color.Lerp(tint, new Color(0.48f, 0.95f, 0.62f), 0.45f * pulse);
                 else if ((b.Type == BuildingType.Kinetic || b.Type == BuildingType.Splash) && _game.GunsHungry())
                     tint = Color.Lerp(tint, new Color(1f, 0.72f, 0.28f), 0.4f * pulse);
                 else if ((b.Type == BuildingType.Kinetic || b.Type == BuildingType.Splash)
                          && _game.GunsUpNodeId() == b.NodeId)
                     tint = Color.Lerp(tint, new Color(0.45f, 0.9f, 0.88f), 0.45f * pulse);
-                if (b.Type == BuildingType.Power && (_game.GunsHungry() || _game.GunsUpLive() || _game.RailLiveTouches(b.NodeId)))
+                if (b.Type == BuildingType.Power && (_game.GunsHungry() || _game.GunsUpLive() || _game.GunsBackLive() || _game.RailLiveTouches(b.NodeId)))
                     tint = Color.Lerp(tint, new Color(0.45f, 0.9f, 1f), 0.45f * pulse);
                 if (b.Type == BuildingType.Hub && _game.HubRaising)
                     tint = Color.Lerp(tint, new Color(1f, 0.86f, 0.42f), 0.55f * pulse);
@@ -540,6 +553,8 @@ namespace ColonyHaul
                     tint = Color.Lerp(tint, new Color(1f, 0.48f, 0.18f), 0.4f + 0.2f * pulse);
                 else if (b.Type == BuildingType.Hub && _game.RailLiveLive())
                     tint = Color.Lerp(tint, new Color(0.42f, 0.92f, 0.88f), 0.4f + 0.18f * pulse);
+                else if (b.Type == BuildingType.Hub && _game.GunsBackLive())
+                    tint = Color.Lerp(tint, new Color(0.48f, 0.95f, 0.62f), 0.4f + 0.18f * pulse);
                 else if (b.Type == BuildingType.Hub && _game.WaveClearLive())
                     tint = Color.Lerp(tint, new Color(0.55f, 0.9f, 0.5f), 0.4f + 0.15f * pulse);
                 else if (b.Type == BuildingType.Hub && _game.L2ReadyWorld())
@@ -801,6 +816,8 @@ namespace ColonyHaul
                 else
                     ringColor = new Color(0.55f, 0.9f, 0.88f, locked ? 0.52f : 0.32f);
                 if (dry) ringColor = Color.Lerp(ringColor, new Color(1f, 0.28f, 0.22f, 0.5f), 0.55f);
+                else if (_game.GunsBackLive() && (b.Type == BuildingType.Kinetic || b.Type == BuildingType.Splash || b.Type == BuildingType.Hub))
+                    ringColor = Color.Lerp(ringColor, new Color(0.48f, 0.95f, 0.62f, 0.55f), 0.5f);
                 EnsureRing(b.Id, node, range, ringColor);
             }
             if (_game.SelectedTool == Tool.Kinetic || _game.SelectedTool == Tool.Splash)
@@ -861,6 +878,13 @@ namespace ColonyHaul
                 var dryPulse = 3.0f + 0.3f * Mathf.Abs(Mathf.Sin(Time.time * 10f));
                 EnsureRing("guns-dry", dryHub, dryPulse, new Color(1f, 0.45f, 0.18f, 0.38f));
             }
+            if (_game.GunsBackLive() && !_game.GunsDry() && !_game.RailLiveLive()
+                && _game.Nodes.TryGetValue("hub", out var backHub))
+            {
+                live.Add("guns-back");
+                var backPulse = 3.2f + 0.3f * Mathf.Abs(Mathf.Sin(Time.time * 7f));
+                EnsureRing("guns-back", backHub, backPulse, new Color(0.48f, 0.95f, 0.62f, 0.36f));
+            }
             if (_game.CoreThinLive() && _game.HubChewers() <= 0 && _game.HubClosers() <= 0
                 && !_game.GunsDry() && !_game.WaveClearLive()
                 && _game.Nodes.TryGetValue("hub", out var thinHub))
@@ -869,7 +893,7 @@ namespace ColonyHaul
                 var thinPulse = 3.2f + 0.35f * Mathf.Abs(Mathf.Sin(Time.time * 8f));
                 EnsureRing("core-thin", thinHub, thinPulse, new Color(1f, 0.22f, 0.16f, 0.36f));
             }
-            if (_game.WaveClearLive() && _game.Nodes.TryGetValue("hub", out var clearHub))
+            if (_game.WaveClearLive() && !_game.GunsBackLive() && _game.Nodes.TryGetValue("hub", out var clearHub))
             {
                 live.Add("wave-clear");
                 var clearPulse = 3.6f + 0.3f * Mathf.Abs(Mathf.Sin(Time.time * 5f));
@@ -1483,6 +1507,22 @@ namespace ColonyHaul
                 new Color(0.12f, 0.42f, 0.4f, 0.95f));
         }
 
+        void PingGunsBack()
+        {
+            var key = _game.GunsBackPingKey();
+            if (key == null)
+            {
+                _gunsBackPinged = null;
+                return;
+            }
+            if (_gunsBackPinged == key) return;
+            _gunsBackPinged = key;
+            if (!_game.Nodes.TryGetValue("hub", out var hub)) return;
+            _juice.GunsBack(hub.X, hub.Z);
+            _hud.Flash(_game.GunsBackFlash() ?? "GUNS BACK — keep Power rolling", 2.0f,
+                new Color(0.12f, 0.42f, 0.22f, 0.95f));
+        }
+
         void SyncGunLocks()
         {
             var live = new HashSet<string>();
@@ -1945,6 +1985,13 @@ namespace ColonyHaul
                         GUI.backgroundColor = new Color(0.12f, 0.42f, 0.4f, 0.92f);
                         GUI.Box(new Rect(hx - 46f, hy - 18f, 92f, 16f),
                             _game.RailLiveChip() ?? "LIVE");
+                        GUI.backgroundColor = Color.white;
+                    }
+                    else if (_game.GunsBackLive())
+                    {
+                        GUI.backgroundColor = new Color(0.12f, 0.42f, 0.22f, 0.92f);
+                        GUI.Box(new Rect(hx - 46f, hy - 18f, 92f, 16f),
+                            _game.GunsBackChip() ?? "BACK");
                         GUI.backgroundColor = Color.white;
                     }
                     else if (_game.WaveClearLive())

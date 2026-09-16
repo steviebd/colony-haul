@@ -97,6 +97,7 @@ namespace ColonyHaul
             else if (game.HubClosers() > 0) GUI.contentColor = new Color(1f, 0.32f, 0.18f);
             else if (game.GunsDry()) GUI.contentColor = new Color(1f, 0.48f, 0.22f);
             else if (game.RailLiveLive()) GUI.contentColor = new Color(0.42f, 0.92f, 0.88f);
+            else if (game.GunsBackLive()) GUI.contentColor = new Color(0.48f, 0.95f, 0.62f);
             else if (game.WaveClearLive()) GUI.contentColor = new Color(0.55f, 0.9f, 0.5f);
             else if (game.GunsLow()) GUI.contentColor = new Color(1f, 0.62f, 0.28f);
             else if (game.CoreThinLive()) GUI.contentColor = new Color(1f, 0.32f, 0.22f);
@@ -128,6 +129,8 @@ namespace ColonyHaul
                 subCopy = game.GunsDryTitle();
             else if (game.RailLiveLive())
                 subCopy = game.RailLiveTitle();
+            else if (game.GunsBackLive())
+                subCopy = game.GunsBackTitle();
             else if (game.WaveClearLive())
                 subCopy = game.WaveClearTitle();
             else if (game.GunsLow())
@@ -199,6 +202,8 @@ namespace ColonyHaul
                 haul = game.CutStakeCopy();
             else if (game.RailLiveCopy() != null)
                 haul = game.RailLiveCopy();
+            else if (game.GunsBackCopy() != null)
+                haul = game.GunsBackCopy();
             else if (game.OfflinePad() != null)
                 haul = game.OfflineCopy();
             else if (game.SittingStock() != null)
@@ -229,6 +234,7 @@ namespace ColonyHaul
             string guns;
             if (towers <= 0) guns = "No guns yet — kinetic on a choke";
             else if (game.PowerBrownout) guns = "GUNS DRY — haul Power now";
+            else if (game.GunsBackLive()) guns = "GUNS BACK — " + game.GunsBackCall();
             else if (game.GunsHungry()) guns = "Guns hungry — ~" + GameSim.CeilSecs(game.GunSecondsLeft()) + "s · haul Power";
             else guns = "Guns ~" + GameSim.CeilSecs(game.GunSecondsLeft()) + "s of fire · " + towers + " live";
             GUI.Label(new Rect(Screen.width - 280, 152, 256, 20), guns);
@@ -246,6 +252,7 @@ namespace ColonyHaul
             else if (bound != null) raidRead = bound;
             else if (dry != null) raidRead = dry;
             else if (game.RailLiveCopy() != null) raidRead = game.RailLiveCopy();
+            else if (game.GunsBackCopy() != null) raidRead = game.GunsBackCopy();
             else if (clear != null) raidRead = clear;
             else if (game.GunsLowCopy() != null) raidRead = game.GunsLowCopy();
             else if (game.CoreThinCopy() != null) raidRead = game.CoreThinCopy();
