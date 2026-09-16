@@ -69,6 +69,7 @@ Tick stays one loop. Seed-7 demo still wins. Mid-game is readable, and a haul du
 19. **Pass 12 HAUL CUT stakes** — a snapped rail names why splice now: **BRACE stuck** if a loaded haul is trapped during a raid, **Power rail down** if the pylon pad is cut, **farm rail down** if the larder line is cut. Midpoint chip reads BRACE / PWR / FARM / ORE. Tick and sabotage chance unchanged.
 20. **Pass 13 PAD OFFLINE** — a producer with no live rail home paints a gold ghost line to the Hub. Pad reads **OFFLINE**. Title (below CLEAR) names farm / Power / ore. Splice still outranks this. Tick unchanged.
 21. **Pass 14 SIT stock** — a staffed producer with ≥6 stock and no hauler bound for it reads **HAUL FOOD / PWR / ORE**. If an idle hauler is standing around, a colored line points them at that pad. Power piles bump the score when guns are hungry; farm piles when the larder is thin. Cut / OFFLINE / CLEAR still outrank the title. Tick unchanged.
+22. **Pass 15 GUNS LOW** — before brownout, when the fuse is under 9s, a Power haul paints amber **POWER IN Xs**. Title **GUNS LOW** (below CLEAR). BRACE inbound still wins the same hauler during a raid. GUNS DRY still takes over when the pylon clicks empty. Tick unchanged.
 
 Folder layout: `Assets/_ColonyHaul/{Scripts,Art,Prefabs,Scenes,UI,Audio}`.
 

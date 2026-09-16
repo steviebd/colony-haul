@@ -36,6 +36,7 @@ namespace ColonyHaul
         readonly HashSet<string> _threatPinged = new HashSet<string>();
         readonly HashSet<string> _cutSoonPinged = new HashSet<string>();
         readonly HashSet<string> _powerPinged = new HashSet<string>();
+        readonly HashSet<string> _lowPinged = new HashSet<string>();
         LineRenderer _braceLine;
         LineRenderer _powerLine;
         LineRenderer _offlineLine;
@@ -134,6 +135,7 @@ namespace ColonyHaul
             _threatPinged.Clear();
             _cutSoonPinged.Clear();
             _powerPinged.Clear();
+            _lowPinged.Clear();
             _chewPinged = false;
             _closePinged = false;
             _atPadPinged = false;
@@ -196,6 +198,7 @@ namespace ColonyHaul
             PingChew();
             PingRailThreat();
             PingGunsDry();
+            PingGunsLow();
             PingCoreBound();
             PingWaveClear();
             PingCutStake();
@@ -586,6 +589,12 @@ namespace ColonyHaul
             var live = new HashSet<string>();
             var inboundHaul = _game.BraceInbound();
             var powerHaul = _game.PowerInbound();
+            if (powerHaul == null)
+            {
+                powerHaul = _game.GunsLowInbound();
+                if (powerHaul != null && inboundHaul != null && powerHaul.Id == inboundHaul.Id)
+                    powerHaul = null;
+            }
             foreach (var h in _game.Haulers)
             {
                 live.Add(h.Id);
@@ -1070,6 +1079,23 @@ namespace ColonyHaul
             _juice.PowerComing(h.X, h.Z);
         }
 
+        void PingGunsLow()
+        {
+            if (!_game.GunsLow())
+            {
+                _lowPinged.Clear();
+                return;
+            }
+            var h = _game.GunsLowInbound();
+            if (h == null) return;
+            var brace = _game.BraceInbound();
+            if (brace != null && brace.Id == h.Id) return;
+            var eta = _game.HaulEtaToHub(h);
+            if (eta < 0f || eta > 2.4f) return;
+            if (!_lowPinged.Add(h.Id)) return;
+            _juice.PowerComing(h.X, h.Z);
+        }
+
         void PingCoreBound()
         {
             var n = _game.HubClosers();
@@ -1302,6 +1328,13 @@ namespace ColonyHaul
         void SyncPowerLine()
         {
             var h = _game.PowerInbound();
+            if (h == null)
+            {
+                h = _game.GunsLowInbound();
+                var brace = _game.BraceInbound();
+                if (h != null && brace != null && h.Id == brace.Id)
+                    h = null;
+            }
             if (h == null)
             {
                 if (_powerLine != null) _powerLine.enabled = false;
@@ -1584,6 +1617,12 @@ namespace ColonyHaul
             }
             var inbound = _game.BraceInbound();
             var power = _game.PowerInbound();
+            if (power == null)
+            {
+                power = _game.GunsLowInbound();
+                if (power != null && inbound != null && power.Id == inbound.Id)
+                    power = null;
+            }
             if (inbound != null && (power == null || power.Id != inbound.Id))
             {
                 var isp = _cam.WorldToScreenPoint(new Vector3(inbound.X, 1.55f, inbound.Z));

@@ -97,6 +97,7 @@ namespace ColonyHaul
             else if (game.HubClosers() > 0) GUI.contentColor = new Color(1f, 0.32f, 0.18f);
             else if (game.GunsDry()) GUI.contentColor = new Color(1f, 0.48f, 0.22f);
             else if (game.WaveClearLive()) GUI.contentColor = new Color(0.55f, 0.9f, 0.5f);
+            else if (game.GunsLow()) GUI.contentColor = new Color(1f, 0.62f, 0.28f);
             else if (game.OfflinePad() != null) GUI.contentColor = new Color(0.92f, 0.62f, 0.28f);
             else if (game.SittingStock() != null) GUI.contentColor = new Color(0.95f, 0.78f, 0.32f);
             else if (game.Surging) GUI.contentColor = new Color(0.45f, 0.9f, 1f);
@@ -117,6 +118,8 @@ namespace ColonyHaul
                 subCopy = game.GunsDryTitle();
             else if (game.WaveClearLive())
                 subCopy = game.WaveClearTitle();
+            else if (game.GunsLow())
+                subCopy = game.GunsLowTitle();
             else if (game.OfflinePad() != null)
                 subCopy = game.OfflineTitle();
             else if (game.SittingStock() != null)
@@ -199,6 +202,7 @@ namespace ColonyHaul
             else if (bound != null) raidRead = bound;
             else if (dry != null) raidRead = dry;
             else if (clear != null) raidRead = clear;
+            else if (game.GunsLowCopy() != null) raidRead = game.GunsLowCopy();
             else if (brace != null) raidRead = brace;
             else if (game.LiveTowers() > 0 || game.RaidLive) raidRead = game.GunLockCopy();
             else raidRead = "Combat haul BRACEs the Hub";

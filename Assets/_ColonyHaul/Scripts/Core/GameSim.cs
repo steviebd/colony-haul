@@ -651,6 +651,59 @@ namespace ColonyHaul
             return "GUNS DRY — haul Power now";
         }
 
+        public bool GunsLow()
+        {
+            return GunsHungry() && !GunsDry();
+        }
+
+        public Hauler GunsLowInbound()
+        {
+            if (Phase != Phase.Playing || !GunsLow()) return null;
+            Hauler best = null;
+            var bestEta = float.PositiveInfinity;
+            foreach (var h in Haulers)
+            {
+                if (h.CargoAmount <= 0 || h.CargoKind != Resource.Power) continue;
+                if (HaulerBlocked(h)) continue;
+                var eta = HaulEtaToHub(h);
+                if (eta < 0f) continue;
+                if (eta < bestEta)
+                {
+                    bestEta = eta;
+                    best = h;
+                }
+            }
+            return best;
+        }
+
+        public string GunsLowTitle()
+        {
+            if (!GunsLow()) return null;
+            var h = GunsLowInbound();
+            if (h != null)
+            {
+                var eta = HaulEtaToHub(h);
+                if (eta <= 0.35f) return "GUNS LOW · POWER NOW";
+                return "GUNS LOW · POWER IN " + CeilSecs(eta) + "s";
+            }
+            if (HoldOrder == HoldOrder.Power) return "GUNS LOW · crew rushing Power";
+            if (HoldReady) return "GUNS LOW · H for GUNS";
+            return "GUNS LOW · ~" + CeilSecs(GunSecondsLeft()) + "s of fire";
+        }
+
+        public string GunsLowCopy()
+        {
+            if (!GunsLow()) return null;
+            var h = GunsLowInbound();
+            if (h != null)
+            {
+                var eta = HaulEtaToHub(h);
+                if (eta <= 0.35f) return "POWER at Hub — fuse still live";
+                return "GUNS LOW · POWER in " + CeilSecs(eta) + "s";
+            }
+            return "GUNS LOW — ~" + CeilSecs(GunSecondsLeft()) + "s · haul Power";
+        }
+
         public bool ClosingOnHub(Enemy e)
         {
             if (e == null || ChewingHub(e)) return false;
