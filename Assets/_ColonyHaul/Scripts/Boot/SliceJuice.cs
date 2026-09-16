@@ -114,6 +114,15 @@ namespace ColonyHaul
             Punch(0.28f);
         }
 
+        public void GunsUp(float x, float z, string lane)
+        {
+            SpawnPip(x, z, string.IsNullOrEmpty(lane) ? "GUNS" : "UP " + lane, new Color(0.45f, 0.9f, 0.88f));
+            Spokes(x, z, 1.6f, new Color(0.45f, 0.9f, 0.88f));
+            SpawnBurst(x, z, new Color(0.45f, 0.9f, 0.88f, 0.42f), 3.4f);
+            Punch(0.22f);
+            _audio.PlayOneShot(_deposit, 0.4f);
+        }
+
         public void BraceComing(float x, float z)
         {
             SpawnPip(x, z, "INBOUND", new Color(0.45f, 0.9f, 1f));

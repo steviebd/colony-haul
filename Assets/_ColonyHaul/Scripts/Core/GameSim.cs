@@ -33,6 +33,8 @@ namespace ColonyHaul
         float _brownoutAt = -99f;
         float _hubGunCd;
         float _hubL2At = -99f;
+        float _lastTowerLiveAt = -99f;
+        string _lastTowerNodeId;
         float _surgeUntil;
         readonly float[] _waveGap = { 42f, 28f, 28f, 27f, 26f, 26f };
 
@@ -444,6 +446,103 @@ namespace ColonyHaul
         public string PackInFlash()
         {
             return "PACK IN " + CeilSecs(NextWaveIn) + "s — " + PackInCall();
+        }
+
+        public bool GunsUpLive()
+        {
+            if (Phase != Phase.Playing) return false;
+            if (string.IsNullOrEmpty(_lastTowerNodeId)) return false;
+            if (!Buildings.TryGetValue(_lastTowerNodeId, out var b)) return false;
+            if (b.Type != BuildingType.Kinetic && b.Type != BuildingType.Splash) return false;
+            if (b.BuildLeft > 0) return false;
+            if (T < _lastTowerLiveAt) return false;
+            return T - _lastTowerLiveAt <= 8f;
+        }
+
+        public bool GunsUpWorld()
+        {
+            return GunsUpLive()
+                && !WaveClearLive()
+                && !GunsLow()
+                && !GunsDry()
+                && !CoreThinLive()
+                && HubChewers() == 0
+                && HubClosers() == 0
+                && ActiveCut() == null;
+        }
+
+        public string GunsUpNodeId()
+        {
+            return GunsUpLive() ? _lastTowerNodeId : null;
+        }
+
+        public string GunsUpLane()
+        {
+            var id = GunsUpNodeId();
+            if (id == null) return null;
+            switch (id)
+            {
+                case "choke_e": return "EAST";
+                case "choke_n": return "NORTH";
+                case "choke_w": return "WEST";
+                case "tower_ne": return "NE";
+                case "tower_sw": return "SW";
+                default: throw new ArgumentOutOfRangeException(nameof(id), id, null);
+            }
+        }
+
+        public string GunsUpGun()
+        {
+            var id = GunsUpNodeId();
+            if (id == null) return null;
+            if (!Buildings.TryGetValue(id, out var b)) return null;
+            switch (b.Type)
+            {
+                case BuildingType.Kinetic: return "kinetic";
+                case BuildingType.Splash: return "splash";
+                case BuildingType.Mine:
+                case BuildingType.Farm:
+                case BuildingType.Power:
+                case BuildingType.Hub:
+                case BuildingType.Depot:
+                    throw new ArgumentOutOfRangeException(nameof(b.Type), b.Type, null);
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(b.Type), b.Type, null);
+            }
+        }
+
+        public string GunsUpTitle()
+        {
+            if (!GunsUpLive()) return null;
+            var lane = GunsUpLane();
+            var gun = GunsUpGun();
+            if (lane == null || gun == null) return null;
+            return "GUNS UP · " + lane + " " + gun + " · haul Power";
+        }
+
+        public string GunsUpCopy()
+        {
+            if (!GunsUpLive()) return null;
+            var lane = GunsUpLane();
+            var gun = GunsUpGun();
+            if (lane == null || gun == null) return null;
+            return "GUNS UP — " + lane + " " + gun + " live · Power hauls keep the fuse";
+        }
+
+        public string GunsUpChip()
+        {
+            if (!GunsUpLive()) return null;
+            var lane = GunsUpLane();
+            if (lane == null) return "GUNS";
+            return "UP " + lane;
+        }
+
+        public string GunsUpFlash()
+        {
+            var lane = GunsUpLane();
+            var gun = GunsUpGun();
+            if (lane == null || gun == null) return "GUNS UP — haul Power so the choke fires";
+            return "GUNS UP — " + lane + " " + gun + " · haul Power";
         }
 
         public string SpawnForecastCopy(string spawnId)
@@ -2104,7 +2203,10 @@ namespace ColonyHaul
             var pwr = type == BuildingType.Kinetic ? Balance.KineticPower : Balance.SplashPower;
             if (Ore < ore || Power < pwr) { why = "need ore/power"; return false; }
             Ore -= ore; Power -= pwr;
-            Buildings[node.Id] = new Building { Id = Nid(type.ToString()), Type = type, NodeId = node.Id, BuildLeft = 1f, Staffed = true };
+            const float raise = 1f;
+            Buildings[node.Id] = new Building { Id = Nid(type.ToString()), Type = type, NodeId = node.Id, BuildLeft = raise, Staffed = true };
+            _lastTowerNodeId = node.Id;
+            _lastTowerLiveAt = T + raise;
             Emit(SimEventKind.Build, node.Id, node.X, node.Z);
             return true;
         }

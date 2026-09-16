@@ -111,6 +111,7 @@ namespace ColonyHaul
             else if (game.StretchPad() != null) GUI.contentColor = new Color(1f, 0.62f, 0.32f);
             else if (game.HoldReadyLive()) GUI.contentColor = new Color(0.92f, 0.78f, 0.42f);
             else if (game.PackInLive()) GUI.contentColor = new Color(0.86f, 0.28f, 0.24f);
+            else if (game.GunsUpLive()) GUI.contentColor = new Color(0.45f, 0.9f, 0.88f);
             else if (game.HomeInbound() != null) GUI.contentColor = new Color(0.86f, 0.72f, 0.38f);
             else if (game.WaveIndex >= 5) GUI.contentColor = new Color(1f, 0.42f, 0.38f);
             string subCopy;
@@ -154,6 +155,8 @@ namespace ColonyHaul
                 subCopy = game.HoldReadyTitle();
             else if (game.PackInLive())
                 subCopy = game.PackInTitle();
+            else if (game.GunsUpLive())
+                subCopy = game.GunsUpTitle();
             else if (game.HomeInbound() != null)
                 subCopy = game.HomeInboundTitle();
             else if (game.WaveIndex >= 5)
@@ -203,6 +206,8 @@ namespace ColonyHaul
                 haul = game.HoldReadyCopy();
             else if (game.PackInCopy() != null)
                 haul = game.PackInCopy();
+            else if (game.GunsUpCopy() != null)
+                haul = game.GunsUpCopy();
             else if (game.HomeInboundCopy() != null)
                 haul = game.HomeInboundCopy();
             else haul = "Haul " + game.HaulersLoaded + " loaded · " + (game.Haulers.Count - game.HaulersLoaded) + " idle";
@@ -245,6 +250,7 @@ namespace ColonyHaul
             else if (game.StretchCopy() != null) raidRead = game.StretchCopy();
             else if (game.HoldReadyCopy() != null) raidRead = game.HoldReadyCopy();
             else if (game.PackInCopy() != null) raidRead = game.PackInCopy();
+            else if (game.GunsUpCopy() != null) raidRead = game.GunsUpCopy();
             else if (game.HomeInboundCopy() != null) raidRead = game.HomeInboundCopy();
             else if (game.LiveTowers() > 0 || game.RaidLive) raidRead = game.GunLockCopy();
             else raidRead = "Combat haul BRACEs the Hub";
