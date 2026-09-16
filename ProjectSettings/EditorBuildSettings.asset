@@ -1,0 +1,14 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1045 &1
+EditorBuildSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Scenes:
+  - enabled: 1
+    path: Assets/_ColonyHaul/Scenes/Boot.unity
+    guid: b5468dc4ec58abc93634a2f557694351
+  - enabled: 1
+    path: Assets/_ColonyHaul/Scenes/Game_VerticalSlice.unity
+    guid: f0a0b6b8cc33be15dd39aee5c21c4c2a
+  m_configObjects: {}
