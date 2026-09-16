@@ -2269,6 +2269,7 @@ namespace ColonyHaul
                 }
             }
             var stretchId = _game.StretchPad();
+            var sitId = sit != null ? sit.NodeId : null;
             if (_game.LarderLive())
             {
                 var larder = _game.LarderChip();
@@ -2278,7 +2279,6 @@ namespace ColonyHaul
                     if (_game.StarveTimer > 0.2f) larderColor = new Color(0.72f, 0.18f, 0.1f, 0.92f);
                     else if (_game.Food < 11f) larderColor = new Color(0.72f, 0.42f, 0.08f, 0.92f);
                     else larderColor = new Color(0.18f, 0.42f, 0.16f, 0.88f);
-                    var sitId = sit != null ? sit.NodeId : null;
                     foreach (var b in _game.Buildings.Values)
                     {
                         if (b.Type != BuildingType.Farm) continue;
@@ -2294,6 +2294,30 @@ namespace ColonyHaul
                         GUI.backgroundColor = Color.white;
                     }
                 }
+            }
+            foreach (var b in _game.Buildings.Values)
+            {
+                if (!_game.PadStockLive(b)) continue;
+                var stock = _game.PadStockChip(b);
+                if (stock == null) continue;
+                if (!_game.Nodes.TryGetValue(b.NodeId, out var stockNode)) continue;
+                var height = 2.2f;
+                if (offId == b.NodeId || sitId == b.NodeId || stretchId == b.NodeId)
+                    height = 2.65f;
+                Color stockColor;
+                if (b.Type == BuildingType.Power && _game.GunsDry())
+                    stockColor = new Color(0.72f, 0.18f, 0.1f, 0.92f);
+                else if (_game.PadStockUrgent(b))
+                    stockColor = new Color(0.72f, 0.42f, 0.08f, 0.92f);
+                else if (b.Type == BuildingType.Power)
+                    stockColor = new Color(0.16f, 0.4f, 0.52f, 0.88f);
+                else
+                    stockColor = new Color(0.62f, 0.38f, 0.12f, 0.88f);
+                var ssp = _cam.WorldToScreenPoint(new Vector3(stockNode.X, height, stockNode.Z));
+                if (ssp.z <= 0f) continue;
+                GUI.backgroundColor = stockColor;
+                GUI.Box(new Rect(ssp.x - 40f, Screen.height - ssp.y - 10f, 80f, 18f), stock);
+                GUI.backgroundColor = Color.white;
             }
             if (stretchId != null && _game.Nodes.TryGetValue(stretchId, out var stretchNode))
             {

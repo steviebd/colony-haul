@@ -1999,6 +1999,67 @@ namespace ColonyHaul
             return "LARDER " + CeilSecs(FoodSecondsLeft()) + "s";
         }
 
+        public bool PadStockLive(Building b)
+        {
+            if (Phase != Phase.Playing || b == null) return false;
+            if (!b.Staffed || b.BuildLeft > 0f) return false;
+            switch (b.Type)
+            {
+                case BuildingType.Mine:
+                case BuildingType.Power:
+                    return true;
+                case BuildingType.Farm:
+                case BuildingType.Hub:
+                case BuildingType.Depot:
+                case BuildingType.Kinetic:
+                case BuildingType.Splash:
+                    return false;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(b.Type), b.Type, null);
+            }
+        }
+
+        public string PadStockChip(Building b)
+        {
+            if (!PadStockLive(b)) return null;
+            switch (b.Type)
+            {
+                case BuildingType.Mine:
+                    return "ORE " + CeilSecs(b.Buffer[Resource.Ore]);
+                case BuildingType.Power:
+                    return "PWR " + CeilSecs(b.Buffer[Resource.Power]);
+                case BuildingType.Farm:
+                case BuildingType.Hub:
+                case BuildingType.Depot:
+                case BuildingType.Kinetic:
+                case BuildingType.Splash:
+                    return null;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(b.Type), b.Type, null);
+            }
+        }
+
+        public bool PadStockUrgent(Building b)
+        {
+            if (!PadStockLive(b)) return false;
+            if (b.Type == BuildingType.Power && (GunsHungry() || GunsDry())) return true;
+            switch (b.Type)
+            {
+                case BuildingType.Mine:
+                    return b.Buffer[Resource.Ore] >= 6f;
+                case BuildingType.Power:
+                    return b.Buffer[Resource.Power] >= 6f;
+                case BuildingType.Farm:
+                case BuildingType.Hub:
+                case BuildingType.Depot:
+                case BuildingType.Kinetic:
+                case BuildingType.Splash:
+                    return false;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(b.Type), b.Type, null);
+            }
+        }
+
         public float ProducerFill(Building b)
         {
             if (b.Type == BuildingType.Mine) return b.Buffer[Resource.Ore] / 22f;
