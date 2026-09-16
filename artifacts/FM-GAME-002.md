@@ -5,25 +5,26 @@ GitHub (cold-open / Hub / Cursor): **https://github.com/steviebd/colony-haul**
 | Field | Value |
 | --- | --- |
 | Hub-ready | **Yes** |
-| Origin SHA | `517d1146a1b92f68c4729af97a11bdbc2a959f05` |
-| GitHub SHA | `e928b96c2dd50fa998598abc8e66686d898368d6` |
+| Origin SHA | `9fe7db47f8aa0ecfbe9fd5c68e7d99bc459ec7e3` |
+| GitHub SHA | `51528b9512167c13efcee3b292afd14ff88628c7` |
 | Kernel | seed-7 playtest **win** (`phase=won`, t≈184.45, Hub L2, minHp≈50.4) |
 | Product | Unity 2022.3.50f1 URP under `Assets/_ColonyHaul` — not Vite |
 
-Pass-3b trees match on the ten edited paths (byte-identical). Cold clone still has `Assets/`, `Packages/`, `ProjectSettings/`, USB, `playable/`, artifacts tape. Workflows self-delete after import.
+Pass 4 trees match on the six edited paths (byte-identical). Cold clone still has `Assets/`, `Packages/`, `ProjectSettings/`, USB, `playable/`, artifacts tape. Import workflows self-delete.
 
 ## Unity feature list
 
-One Game tick. Balance numbers unchanged. Rail Surge is the only new rule: a deposit while raiders are live cuts Hub hit damage for 0.55s (haul + colony stock + core defense). DemoPilot still wins seed 7 (easier Hub).
+One Game tick. Balance numbers unchanged. Rail Surge is the combat-haul rule: a deposit while raiders are live cuts Hub hit damage (0.55s, or 0.85s when Hub HP < 72). DemoPilot still wins seed 7.
 
 1. **Opening coach** — Farm → mag-rail to Hub → first hauls.
 2. **Mid-watch coach** — splice, offline pad, east kinetic, brownout, Hub L2, thin larder, hottest choke, barrier, splash west.
-3. **Hub L2 raising** — gold grow + coach countdown; then Splash pulses WEST for 16s.
-4. **Logistics** — E/N/W pressure (`*`), inbound, gun fuse, larder clock. Guns hungry calls Power haul without locking tools. Power pads label FEED.
-5. **Rail Surge** — combat deposit braces Hub (0.72× hits). Cyan burst + SURGE pip.
-6. **Combat reads** — grunt cube, brute capsule, runner cylinder, ground blobs, thicker tracers, splash burst, lane wave banner.
-7. **Juice** — deposit spokes, sabotage CUT, brownout DRY, barrier SLOW, kill punch, cargo trails, choke heat, world Hub HP.
-8. USB vendored at `41e8bca`. TS kernel carries Surge for lockstep. Vite is spare.
+3. **Hub L2 raising** — gold grow + countdown; Splash pulses WEST for 16s.
+4. **Late watch** — CORE THIN, crew stretch / idle pad, second Farm, open north choke, HOLD THE MESA. Hold-copy in logistics. Staff chip warns when producers outnumber crew.
+5. **Logistics** — E/N/W pressure (`*`), inbound, gun fuse, larder clock, guns-hungry Power teach (no tool lock).
+6. **Rail Surge** — combat deposit braces Hub (0.72× hits). Longer brace when the core is cracked.
+7. **Combat reads** — grunt cube, brute capsule, runner cylinder, ground blobs, thicker tracers, splash burst, LAST RAIDS wave banner (5–6).
+8. **Juice** — deposit spokes, CUT / DRY / SLOW / SURGE, kill punch, cargo trails, choke heat, world Hub HP, hub crack tint, waiting haulers throb.
+9. USB vendored at `41e8bca`. TS kernel carries Surge for lockstep. Vite is spare.
 
 ## How to play
 
@@ -41,12 +42,12 @@ Keys `1–7` Farm/Mine/Power/Route/Kinetic/Splash/Barrier. `U` Hub L2. `D` demo.
 
 ## Fun call
 
-You can read a mid-wave at a glance: which lane is hot, how long the larder and guns have, and whether the next call is splice, Power, or Splash. Hauling through a raid visibly braces the Hub. Hub L2 feels earned — the core grows, then the west choke asks for Splash.
+Early game teaches Farm-rail-Hub. Mid-game names the next call. Late game is a hold: core cracks red, crew stretch warns against overbuilding, second farm and north gun show up as readable choices, and hauling through a raid braces a thin Hub.
 
 ## Gaps
 
 - This VM has no Unity Editor — Play Mode is documented, not screenshot-verified.
 - Runtime art is procedural low-poly, not authored FBX.
 - Origin remote stays `tmp-*`. GitHub is the Hub/Cursor clone.
-- GitHub SHA ≠ Origin SHA (parallel history); pass-3b file bytes match.
+- GitHub SHA ≠ Origin SHA (parallel history); pass-4 file bytes match.
 - Out of scope: multiplayer, cloud meta, deep tech tree, campaign.
