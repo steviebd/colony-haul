@@ -34,8 +34,9 @@ Scenes are thin on purpose. `VerticalSliceBootstrap` builds the dusk mesa, pads,
 - Place a **Farm** on the south mesa pad (it pulses), then click the **Hub** to lay mag-rail. Haulers only move on live rails.
 - Keys `1–7`: Farm, Mine, Power, Route, Kinetic, Splash, Barrier. `U` Hub L2. `D` demo. `R` restart.
 - Left tray is clickable. Splash stays locked until Hub L2.
-- Top-right logistics strip: loaded vs idle haulers, live/inbound raiders, next-wave lane copy. HAUL CUT shows splice countdown.
-- Guns draw range rings. Route mode shows a ghost rail. Enemies show HP. Deposits float scrap/ore pips.
+- Top-right logistics strip: loaded vs idle haulers, live/inbound raiders, next-wave lane copy, and a gun-fire fuse. HAUL CUT shows splice countdown.
+- Opening coach: 1 Farm (south pad) → 2 rail to Hub → 3 first hauls. Farm/Route tray buttons pulse until that beat is done.
+- Guns draw range rings. Route mode shows a ghost rail. Enemies show HP. Deposits float scrap/ore pips. Pads stack a buffer pillar as ore/food/power sits uncollected.
 - Win: survive 6 waves **and** Hub Level 2. Lose: Hub HP 0, or food stays at 0 for 14s.
 - Runners cut rails. Route is auto-armed — click the glowing pad to splice.
 - Brownout: guns try to fire with a dry pylon. Keep Power on live rails.
@@ -99,5 +100,5 @@ Do not treat the Vite client as the ship target. Keep it only when kernel parity
 - This cloud VM has no Unity Editor, so Editor Play is documented, not screenshot-verified here. Headless C# is what the menu item runs.
 - Runtime art is procedural low-poly, not authored FBX.
 - Origin `tmp-*` remote cannot be renamed with the current CLI; GitHub is the repo to open in Cursor.
-- GitHub clone is Hub/Cursor complete (`Assets/`, `Packages/manifest.json`, `ProjectSettings/`, USB C# package, `playable/`). Pass-3 tape stills/webm and USB `uv.lock` stay on Origin until a GitHub PAT can `git push` binaries (~21 files). Clone steps above are unchanged.
+- GitHub clone is Hub/Cursor complete: `Assets/`, `Packages/manifest.json`, `ProjectSettings/`, USB C# package, `playable/`, artifacts tape including `colony-haul-run.webm`.
 - Out of scope: multiplayer, cloud meta, deep tech tree, campaign.

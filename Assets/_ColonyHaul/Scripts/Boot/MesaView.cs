@@ -87,6 +87,12 @@ namespace ColonyHaul
             return t;
         }
 
+        public static void SetLabel(Transform marker, string text)
+        {
+            var tm = marker.GetComponentInChildren<TextMesh>();
+            if (tm != null) tm.text = text;
+        }
+
         public static Transform Prim(Transform parent, PrimitiveType type, string name, Vector3 pos, Vector3 scale, Color color)
         {
             var go = GameObject.CreatePrimitive(type);

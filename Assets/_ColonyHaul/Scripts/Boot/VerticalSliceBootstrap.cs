@@ -22,6 +22,7 @@ namespace ColonyHaul
         readonly Dictionary<string, Transform> _barriers = new Dictionary<string, Transform>();
         readonly Dictionary<string, Transform> _rings = new Dictionary<string, Transform>();
         readonly Dictionary<string, Transform> _ghosts = new Dictionary<string, Transform>();
+        readonly Dictionary<string, Transform> _buffers = new Dictionary<string, Transform>();
         Transform _root;
         Camera _cam;
         float _acc;
@@ -73,7 +74,7 @@ namespace ColonyHaul
             {
                 if (child.name == "Sun" || child.name == "Fill" || child.name == "Mesa" || child.name == "Cliff" || child.name == "HubRing")
                     continue;
-                if (child.name == "tracer" || child.name == "pip" || child.name == "ring" || child.name == "ghost") continue;
+                if (child.name == "tracer" || child.name == "pip" || child.name == "ring" || child.name == "ghost" || child.name == "buffer") continue;
             }
             ClearMap(_buildings);
             ClearMap(_haulers);
@@ -82,6 +83,7 @@ namespace ColonyHaul
             ClearMap(_barriers);
             ClearMap(_rings);
             ClearMap(_ghosts);
+            ClearMap(_buffers);
             ClearMap(_nodes);
             _hubFlash = 0f;
             _buildingScale.Clear();
@@ -224,6 +226,12 @@ namespace ColonyHaul
                 else if (n.Kind == NodeKind.Hub) c = new Color(0.9f, 0.78f, 0.58f);
                 else c = MesaView.PadIdle;
                 MesaView.Tint(mark.gameObject, c);
+                if (n.Id == "pad_s")
+                    MesaView.SetLabel(mark, farmGlow ? "1 FARM" : "PAD");
+                else if (n.Id == "hub")
+                    MesaView.SetLabel(mark, hubGlow ? "2 HUB" : "HUB");
+                else if (n.Kind == NodeKind.Spawn)
+                    MesaView.SetLabel(mark, inbound ? "IN " + _game.IncomingAt(n.Id) : "RAID");
             }
 
             foreach (var b in _game.Buildings.Values)
@@ -258,6 +266,7 @@ namespace ColonyHaul
 
             SyncRings();
             SyncGhostRails();
+            SyncBuffers();
 
             foreach (var e in _game.Edges.Values)
             {
@@ -438,6 +447,33 @@ namespace ColonyHaul
                 }
             }
             Prune(_ghosts, live);
+        }
+
+        void SyncBuffers()
+        {
+            var live = new HashSet<string>();
+            foreach (var b in _game.Buildings.Values)
+            {
+                if (b.Type != BuildingType.Mine && b.Type != BuildingType.Farm && b.Type != BuildingType.Power)
+                    continue;
+                live.Add(b.Id);
+                if (!_buffers.TryGetValue(b.Id, out var pillar))
+                {
+                    var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                    go.name = "buffer";
+                    go.transform.SetParent(_root, false);
+                    var col = go.GetComponent<Collider>();
+                    if (col != null) UnityEngine.Object.Destroy(col);
+                    pillar = go.transform;
+                    _buffers[b.Id] = pillar;
+                }
+                var node = _game.Nodes[b.NodeId];
+                var fill = Mathf.Clamp01(_game.ProducerFill(b));
+                pillar.localScale = new Vector3(0.28f, 0.12f + fill * 1.35f, 0.28f);
+                pillar.position = new Vector3(node.X + 0.55f, 0.5f + fill * 0.7f, node.Z);
+                MesaView.Tint(pillar.gameObject, MesaView.BuildingColor(b.Type));
+            }
+            Prune(_buffers, live);
         }
 
         void DrawEnemyHp()

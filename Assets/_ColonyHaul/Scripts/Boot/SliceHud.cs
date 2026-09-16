@@ -49,13 +49,14 @@ namespace ColonyHaul
 
             DrawTop(game);
             DrawLogistics(game);
+            DrawCoach(game);
             DrawTray(game);
             DrawHint(game);
             DrawBanner();
             if (game.StarveTimer > 0.2f && game.Phase == Phase.Playing)
             {
                 GUI.color = new Color(1f, 0.45f, 0.35f);
-                GUI.Box(new Rect(Screen.width / 2 - 180, 92, 360, 28), "FOOD STORES EMPTY · colony starving");
+                GUI.Box(new Rect(Screen.width / 2 - 180, 152, 360, 28), "FOOD STORES EMPTY · colony starving");
                 GUI.color = Color.white;
             }
             if (ShowBoot && _boot && game.Phase == Phase.Playing)
@@ -88,7 +89,7 @@ namespace ColonyHaul
         static void DrawLogistics(GameSim game)
         {
             GUI.backgroundColor = new Color(0.05f, 0.09f, 0.11f, 0.88f);
-            GUI.Box(new Rect(Screen.width - 292, 88, 280, 70), "");
+            GUI.Box(new Rect(Screen.width - 292, 88, 280, 90), "");
             GUI.backgroundColor = Color.white;
             var cut = game.ActiveCut();
             var haul = cut != null
@@ -97,7 +98,28 @@ namespace ColonyHaul
             GUI.Label(new Rect(Screen.width - 280, 92, 256, 20), haul);
             GUI.Label(new Rect(Screen.width - 280, 112, 256, 20),
                 "Raid " + game.Enemies.Count + " live · " + game.IncomingRaiders + " inbound");
-            GUI.Label(new Rect(Screen.width - 280, 132, 256, 22), game.NextWaveCopy());
+            GUI.Label(new Rect(Screen.width - 280, 132, 256, 20), game.NextWaveCopy());
+            var towers = game.LiveTowers();
+            string guns;
+            if (towers <= 0) guns = "No guns yet — kinetic on a choke";
+            else if (game.PowerBrownout) guns = "GUNS DRY — haul Power now";
+            else guns = "Guns ~" + GameSim.CeilSecs(game.GunSecondsLeft()) + "s of fire · " + towers + " live";
+            GUI.Label(new Rect(Screen.width - 280, 152, 256, 20), guns);
+        }
+
+        static void DrawCoach(GameSim game)
+        {
+            var copy = game.OpeningCoach();
+            if (string.IsNullOrEmpty(copy) || game.Phase != Phase.Playing) return;
+            var step = game.OpeningStep();
+            GUI.backgroundColor = new Color(0.07f, 0.16f, 0.12f, 0.92f);
+            GUI.Box(new Rect(Screen.width / 2 - 230, 88, 460, 58), "");
+            GUI.backgroundColor = Color.white;
+            GUI.Label(new Rect(Screen.width / 2 - 214, 92, 428, 22), copy);
+            GUI.Label(new Rect(Screen.width / 2 - 214, 114, 428, 22),
+                (step >= 1 ? "✓" : "·") + " Farm   " +
+                (step >= 2 ? "✓" : "·") + " Rail to Hub   " +
+                (step >= 3 ? "✓" : "·") + " First hauls");
         }
 
         static void Chip(float x, float y, string label, string value, Color color)
@@ -120,13 +142,20 @@ namespace ColonyHaul
             GUI.backgroundColor = Color.white;
             var y = 100f;
             var gate = game.OpeningGate();
+            var pulse = 0.55f + 0.45f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * 4f));
             foreach (var tool in Tools)
             {
                 var locked = tool.Tool == Tool.Splash && game.HubLevel < 2;
                 var selected = game.SelectedTool == tool.Tool;
+                var coachFarm = gate == "farm" && tool.Tool == Tool.Farm;
+                var coachRoute = gate == "route" && tool.Tool == Tool.Route;
                 GUI.backgroundColor = selected ? new Color(0.25f, 0.85f, 0.8f) : new Color(0.12f, 0.18f, 0.2f);
+                if (coachFarm) GUI.backgroundColor = new Color(0.2f * pulse, 0.85f * pulse, 0.38f);
+                if (coachRoute) GUI.backgroundColor = new Color(0.95f * pulse, 0.82f * pulse, 0.28f);
                 if (locked) GUI.backgroundColor = new Color(0.12f, 0.12f, 0.12f);
                 var label = (selected ? "▶ " : "") + tool.Label;
+                if (coachFarm) label = "▶ 1 Farm — south pad";
+                if (coachRoute) label = "▶ 2 Route — click Hub";
                 if (locked) label = "Splash  · locked Hub L2";
                 if (GUI.Button(new Rect(20, y, 204, 40), label + "\n" + tool.Hint))
                 {
@@ -137,7 +166,6 @@ namespace ColonyHaul
                 y += 44;
             }
             GUI.Label(new Rect(20, y + 8, 200, 40), "1–7 tools · U Hub L2\nD demo · R restart");
-            _ = gate;
         }
 
         void DrawHint(GameSim game)
