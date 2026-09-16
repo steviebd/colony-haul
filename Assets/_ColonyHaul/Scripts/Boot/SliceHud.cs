@@ -81,7 +81,13 @@ namespace ColonyHaul
             GUI.Box(new Rect(12, 10, Screen.width - 24, 72), "");
             GUI.backgroundColor = Color.white;
             GUI.Label(new Rect(24, 16, 280, 22), "COLONY HAUL");
-            GUI.Label(new Rect(24, 36, 280, 18), "Mesa 7 · dusk cycle · Unity slice");
+            var sub = GUI.contentColor;
+            if (game.Surging) GUI.contentColor = new Color(0.45f, 0.9f, 1f);
+            GUI.Label(new Rect(24, 36, 300, 18),
+                game.Surging
+                    ? "BRACE · Hub shrugs hits · " + GameSim.CeilSecs(game.SurgeLeft) + "s"
+                    : "Mesa 7 · dusk cycle · Unity slice");
+            GUI.contentColor = sub;
             Chip(320, 18, "ORE", Mathf.FloorToInt(game.Ore).ToString(), new Color(0.94f, 0.64f, 0.23f));
             Chip(430, 18, "FOOD", Mathf.FloorToInt(game.Food).ToString(), new Color(0.5f, 0.85f, 0.48f));
             var pwrColor = game.PowerBrownout ? new Color(1f, 0.35f, 0.32f) : new Color(0.4f, 0.75f, 1f);
@@ -327,12 +333,17 @@ namespace ColonyHaul
                 default:
                     throw new ArgumentOutOfRangeException(nameof(game.Phase), game.Phase, null);
             }
-            GUI.backgroundColor = new Color(0.04f, 0.06f, 0.07f, 0.94f);
-            GUI.Box(new Rect(Screen.width / 2 - 220, Screen.height / 2 - 90, 440, 180), "");
+            GUI.backgroundColor = game.Phase == Phase.Won
+                ? new Color(0.06f, 0.16f, 0.1f, 0.95f)
+                : new Color(0.14f, 0.05f, 0.05f, 0.95f);
+            GUI.Box(new Rect(Screen.width / 2 - 240, Screen.height / 2 - 110, 480, 220), "");
             GUI.backgroundColor = Color.white;
-            GUI.Label(new Rect(Screen.width / 2 - 200, Screen.height / 2 - 70, 400, 28), title);
-            GUI.Label(new Rect(Screen.width / 2 - 200, Screen.height / 2 - 36, 400, 50), copy);
-            if (GUI.Button(new Rect(Screen.width / 2 - 90, Screen.height / 2 + 30, 180, 36), "Run it back"))
+            GUI.Label(new Rect(Screen.width / 2 - 220, Screen.height / 2 - 92, 440, 28), title);
+            GUI.Label(new Rect(Screen.width / 2 - 220, Screen.height / 2 - 56, 440, 50), copy);
+            GUI.Label(new Rect(Screen.width / 2 - 220, Screen.height / 2 + 4, 440, 40),
+                GameSim.CeilSecs(game.T) + "s  ·  Hub " + Mathf.CeilToInt(game.HubHp) + " HP  ·  L" + game.HubLevel +
+                "  ·  wave " + game.WaveIndex + "/" + Balance.WavesToWin);
+            if (GUI.Button(new Rect(Screen.width / 2 - 90, Screen.height / 2 + 52, 180, 36), "Run it back"))
                 ConsumeRestart = true;
         }
     }

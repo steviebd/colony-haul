@@ -231,16 +231,19 @@ function juice(events: JuiceEvent[]): void {
         recorder?.stop();
         break;
       case 'build':
-      case 'route':
       case 'upgrade':
         audio.build();
+        break;
+      case 'route':
+        audio.build();
+        if (ev.reason === 'splice') hud.flashBanner('RAIL LIVE — haulers rolling', 2000);
         break;
       case 'barrier':
         audio.build();
         hud.flashBanner('Barrier up — spawn approach slowed', 1600);
         break;
       case 'surge':
-        hud.flashBanner('RAIL SURGE — haul braces the Hub', 1100);
+        hud.flashBanner('BRACE — haul bought the Hub a breath', 1400);
         break;
       case 'death':
         break;

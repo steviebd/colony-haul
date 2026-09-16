@@ -107,6 +107,10 @@ namespace ColonyHaul
 
         public bool HubRaising => HubUpgradeLeft > 0;
 
+        public bool Surging => _surgeUntil > T;
+
+        public float SurgeLeft => Math.Max(0f, _surgeUntil - T);
+
         public bool GunsHungry()
         {
             return LiveTowers() > 0 && (PowerBrownout || GunSecondsLeft() < 9f);
@@ -675,6 +679,7 @@ namespace ColonyHaul
             if (edge == null) { why = "no corridor"; Hint = "No mag-rail corridor between those nodes."; return false; }
             if (edge.Routed && edge.SabotagedUntil <= T) { why = "already routed"; return false; }
             if (Ore < Balance.RouteCost) { why = "need ore"; return false; }
+            var splice = edge.Routed && edge.SabotagedUntil > T;
             Ore -= Balance.RouteCost;
             edge.Routed = true;
             edge.SabotagedUntil = 0;
@@ -682,8 +687,9 @@ namespace ColonyHaul
             var b = Nodes[edge.B];
             RouteFrom = null;
             SelectedTool = Tool.Route;
+            if (splice) Hint = "Rail live. Haulers are rolling again.";
             Emit(SimEventKind.Route, edgeId: edge.Id, x: (a.X + b.X) * 0.5f, z: (a.Z + b.Z) * 0.5f,
-                fromX: a.X, fromZ: a.Z, toX: b.X, toZ: b.Z);
+                fromX: a.X, fromZ: a.Z, toX: b.X, toZ: b.Z, reason: splice ? "splice" : null);
             return true;
         }
 

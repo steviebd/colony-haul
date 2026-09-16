@@ -314,13 +314,25 @@ export class Game {
       return { ok: false, why: 'already routed' };
     }
     if (this.stock.ore < BALANCE.routeCost) return { ok: false, why: `need ${BALANCE.routeCost} ore` };
+    const splice = edge.routed && edge.sabotagedUntil > this.t;
     this.stock.ore -= BALANCE.routeCost;
     edge.routed = true;
     edge.sabotagedUntil = 0;
     this.routeFrom = null;
     const a = this.nodes.get(edge.a)!;
     const b = this.nodes.get(edge.b)!;
-    this.emit({ kind: 'route', edgeId: edge.id, fromX: a.x, fromZ: a.z, toX: b.x, toZ: b.z, x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 });
+    this.emit({
+      kind: 'route',
+      edgeId: edge.id,
+      fromX: a.x,
+      fromZ: a.z,
+      toX: b.x,
+      toZ: b.z,
+      x: (a.x + b.x) / 2,
+      z: (a.z + b.z) / 2,
+      reason: splice ? 'splice' : undefined,
+    });
+    if (splice) this.hint = 'Rail live. Haulers are rolling again.';
     const next = this.unroutedProducer();
     if (next) {
       this.selectedTool = 'route';

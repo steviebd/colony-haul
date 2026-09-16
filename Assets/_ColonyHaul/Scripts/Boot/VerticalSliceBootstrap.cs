@@ -30,6 +30,7 @@ namespace ColonyHaul
         float _acc;
         float _hubFlash;
         bool _coreAlarm;
+        bool _surgeBannered;
         bool _pendingRestart;
         bool _pendingDemo;
         bool _pendingManual;
@@ -92,6 +93,7 @@ namespace ColonyHaul
             ClearTrails();
             _hubFlash = 0f;
             _coreAlarm = false;
+            _surgeBannered = false;
             _buildingScale.Clear();
             _acc = 0f;
             BootMatch();
@@ -140,6 +142,7 @@ namespace ColonyHaul
                 _hud.Flash("CORE THIN — haul braces the Hub", 2.4f);
                 _juice.Punch(0.7f);
             }
+            if (!_game.Surging) _surgeBannered = false;
             _juice.Tick(_cam, events);
             _hubFlash = Mathf.Max(0f, _hubFlash - Time.deltaTime);
             SyncView(false);
@@ -175,12 +178,22 @@ namespace ColonyHaul
                 case SimEventKind.Death:
                 case SimEventKind.WarnFood:
                 case SimEventKind.Build:
+                    break;
                 case SimEventKind.Win:
+                    _hud.Flash("MESA HOLDS", 3.2f);
+                    break;
                 case SimEventKind.Lose:
+                    _hud.Flash(_game.Phase == Phase.LostStarve ? "STARVED OUT" : "HUB DOWN", 3.2f);
+                    break;
                 case SimEventKind.Route:
+                    if (ev.Reason == "splice") _hud.Flash("RAIL LIVE — haulers rolling", 2f);
                     break;
                 case SimEventKind.Surge:
-                    _hud.Flash("RAIL SURGE — haul braces the Hub", 1.1f);
+                    if (!_surgeBannered)
+                    {
+                        _surgeBannered = true;
+                        _hud.Flash("BRACE — haul bought the Hub a breath", 1.4f);
+                    }
                     break;
                 default:
                     throw new System.ArgumentOutOfRangeException(nameof(ev.Kind), ev.Kind, null);
@@ -485,6 +498,18 @@ namespace ColonyHaul
                     live.Add(id);
                     EnsureRing(id, n, range, color);
                 }
+            }
+            if (_game.SplashFresh() && _game.Nodes.TryGetValue("choke_w", out var west))
+            {
+                live.Add("teach-splash-w");
+                var glow = 0.18f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 5f));
+                EnsureRing("teach-splash-w", west, Balance.SplashRange, new Color(0.94f, 0.63f, 0.38f, glow));
+            }
+            if (_game.Surging && _game.Nodes.TryGetValue("hub", out var hubNode))
+            {
+                live.Add("surge-shield");
+                var pulse = 3.6f + 0.35f * Mathf.Abs(Mathf.Sin(Time.time * 8f));
+                EnsureRing("surge-shield", hubNode, pulse, new Color(0.4f, 0.9f, 1f, 0.42f));
             }
             Prune(_rings, live);
         }

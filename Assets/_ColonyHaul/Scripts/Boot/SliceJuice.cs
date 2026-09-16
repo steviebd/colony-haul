@@ -45,6 +45,7 @@ namespace ColonyHaul
         readonly AudioClip _lose;
         readonly AudioClip _surge;
         readonly AudioClip _dry;
+        readonly AudioClip _splice;
         float _shake;
         Vector3 _camHome;
 
@@ -59,10 +60,11 @@ namespace ColonyHaul
             _shot = Beep(420f, 0.05f);
             _cut = Beep(180f, 0.16f);
             _wave = Beep(240f, 0.22f);
-            _win = Beep(660f, 0.35f);
-            _lose = Beep(110f, 0.4f);
+            _win = Beep(660f, 0.45f);
+            _lose = Beep(95f, 0.55f);
             _surge = Beep(990f, 0.12f);
             _dry = Beep(140f, 0.2f);
+            _splice = Beep(620f, 0.16f);
         }
 
         public void Punch(float amount) => _shake = Mathf.Max(_shake, amount);
@@ -183,20 +185,32 @@ namespace ColonyHaul
                     SpawnBurst(0f, 0f, new Color(0.9f, 0.78f, 0.5f, 0.55f), 4.2f);
                     break;
                 case SimEventKind.Win:
-                    _audio.PlayOneShot(_win, 0.8f);
-                    SpawnBurst(0f, 0f, new Color(0.5f, 0.85f, 0.48f, 0.5f), 7f);
+                    _audio.PlayOneShot(_win, 0.9f);
+                    Punch(0.85f);
+                    SpawnBurst(0f, 0f, new Color(0.5f, 0.85f, 0.48f, 0.55f), 7f);
+                    SpawnBurst(0f, 0f, new Color(0.9f, 0.86f, 0.5f, 0.4f), 10f);
+                    SpawnPip(0f, 0f, "HOLD", new Color(0.55f, 0.9f, 0.5f));
                     break;
                 case SimEventKind.Lose:
-                    _audio.PlayOneShot(_lose, 0.8f);
-                    Punch(1.1f);
+                    _audio.PlayOneShot(_lose, 0.9f);
+                    Punch(1.35f);
+                    SpawnBurst(0f, 0f, new Color(0.85f, 0.16f, 0.14f, 0.55f), 8f);
+                    SpawnPip(0f, 0f, ev.Reason == "starve" ? "STARVED" : "DOWN", new Color(1f, 0.35f, 0.3f));
                     break;
                 case SimEventKind.Route:
-                    _audio.PlayOneShot(_deposit, 0.25f);
+                    if (ev.Reason == "splice")
+                    {
+                        _audio.PlayOneShot(_splice, 0.7f);
+                        Punch(0.5f);
+                        SpawnPip(ev.X, ev.Z, "SPLICED", new Color(0.42f, 0.92f, 0.88f));
+                        SpawnBurst(ev.X, ev.Z, new Color(0.42f, 0.92f, 0.88f, 0.55f), 3.2f);
+                    }
+                    else _audio.PlayOneShot(_deposit, 0.25f);
                     break;
                 case SimEventKind.Surge:
                     _audio.PlayOneShot(_surge, 0.45f);
                     Punch(0.22f);
-                    SpawnPip(0f, 0f, "SURGE", new Color(0.45f, 0.9f, 1f));
+                    SpawnPip(0f, 0f, "BRACE", new Color(0.45f, 0.9f, 1f));
                     Spokes(0f, 0f, 1.5f, new Color(0.45f, 0.9f, 1f));
                     SpawnBurst(0f, 0f, new Color(0.45f, 0.9f, 1f, 0.45f), 3.6f);
                     break;

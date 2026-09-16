@@ -37,7 +37,8 @@ Scenes are thin on purpose. `VerticalSliceBootstrap` builds the dusk mesa, pads,
 - Top-right logistics strip: loaded vs idle haulers, E/N/W lane counts (hottest marked `*`), next-wave copy, gun-fire fuse, and a larder clock (`~Ns of food`). HAUL CUT shows splice countdown.
 - Opening coach: 1 Farm (south pad) → 2 rail to Hub → 3 first hauls. After that, a mid-watch coach names the next readable call (splice, Power, Hub L2, Splash west, CORE THIN, second farm, HOLD).
 - Tray: opening Farm/Route still pulse. Mid-watch pulses the called tool. Short-stock tools dim with `· short`. Splash stays locked until Hub L2.
-- Guns draw range rings. Route mode shows a ghost rail. Loaded haulers paint a cargo-colored trail along the remaining rail. Slowed raiders tint cyan. Hottest choke glows and labels EAST/NORTH/WEST pressure. Hub HP sits as a world bar over the core. Grunts are cubes, brutes capsules, runners thin cylinders with ground blobs. Wave banner names the lane mix. Deposits during a raid fire **Rail Surge** (Hub takes less hit damage for a beat). Kills punch the camera and float scrap. Pads stack a buffer pillar as ore/food/power sits uncollected.
+- Deposits during a raid fire **Rail Surge** (Hub takes less hit damage). Title line reads BRACE while the shield is up; a cyan ring sits on the Hub. Splicing a runner cut flashes RAIL LIVE / SPLICED. After Hub L2, a ghost Splash ring teaches the west choke.
+- Guns draw range rings. Loaded haulers paint cargo trails. Slowed raiders tint cyan. Hottest choke labels EAST/NORTH/WEST. Hub HP is a world bar. Grunts are cubes, brutes capsules, runners thin cylinders. Win/lose cards show time, Hub HP, and wave.
 - Win: survive 6 waves **and** Hub Level 2. Lose: Hub HP 0, or food stays at 0 for 14s.
 - Runners cut rails. Route is auto-armed — click the glowing pad to splice.
 - Brownout: guns try to fire with a dry pylon. Keep Power on live rails.
@@ -54,6 +55,7 @@ Tick stays one loop. Seed-7 demo still wins. Mid-game is readable, and a haul du
 6. Hub L2 raising coach, gold grow, then Splash unlock on the west choke.
 7. Late watch: CORE THIN, crew stretch / idle pad, second Farm, open north choke, HOLD THE MESA. Staff chip warns when producers outnumber crew. Hold-copy in logistics.
 8. Juice on deposit spokes, sabotage CUT, brownout DRY, barrier SLOW, kill punch. Hub cracks red when thin; waiting haulers throb.
+9. **Pass 4 punch-up** — BRACE title + hub shield ring (no Surge banner spam), west Splash ghost ring after L2, SPLICED / RAIL LIVE on cut recovery, win/lose cards with stats and bigger VFX.
 
 Folder layout: `Assets/_ColonyHaul/{Scripts,Art,Prefabs,Scenes,UI,Audio}`.
 
