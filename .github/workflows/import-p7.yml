@@ -1,0 +1,31 @@
+name: import-p7
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/import-p7.yml'
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import Pass 7 Unity bytes
+        run: |
+          set -euo pipefail
+          curl -fsSL -o p7.tgz "https://n.uguu.se/JVPXtFDR.tgz"
+          tar xzf p7.tgz
+          rm p7.tgz
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Assets/_ColonyHaul/Scripts/Core/GameSim.cs \
+            Assets/_ColonyHaul/Scripts/Boot/SliceHud.cs \
+            Assets/_ColonyHaul/Scripts/Boot/SliceJuice.cs \
+            Assets/_ColonyHaul/Scripts/Boot/VerticalSliceBootstrap.cs \
+            README.md
+          git commit -m "Unity slice: UNDER FIRE chew telegraph on the Hub." || true
+          rm -f .github/workflows/import-p7.yml
+          git add -A
+          git commit -m "chore: drop one-shot import Pass 7" || true
+          git push
