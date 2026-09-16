@@ -464,6 +464,49 @@ namespace ColonyHaul
             return "BRACE IN " + CeilSecs(eta) + "s · " + kind + " on the rail";
         }
 
+        public bool ChewingHub(Enemy e)
+        {
+            if (e == null || e.Path.Count > 0) return false;
+            var hub = Nodes["hub"];
+            var dx = e.X - hub.X;
+            var dz = e.Z - hub.Z;
+            return Math.Sqrt(dx * dx + dz * dz) <= 0.9;
+        }
+
+        public int HubChewers()
+        {
+            var n = 0;
+            foreach (var e in Enemies)
+                if (ChewingHub(e)) n++;
+            return n;
+        }
+
+        public string HubChewCopy()
+        {
+            var n = HubChewers();
+            if (n <= 0) return null;
+            var who = n == 1 ? "1 raider on the Hub" : n + " raiders on the Hub";
+            if (Surging) return "UNDER FIRE · BRACE shrugs · " + who;
+            var brace = BraceInboundCopy();
+            if (brace != null) return "UNDER FIRE · " + brace;
+            return "UNDER FIRE · " + who;
+        }
+
+        public string HubChewTitle()
+        {
+            var n = HubChewers();
+            if (n <= 0) return null;
+            if (Surging) return "UNDER FIRE · BRACE shrugs";
+            var h = BraceInbound();
+            if (h != null)
+            {
+                var eta = HaulEtaToHub(h);
+                if (eta <= 0.35f) return "UNDER FIRE · BRACE NOW";
+                return "UNDER FIRE · BRACE IN " + CeilSecs(eta) + "s";
+            }
+            return "UNDER FIRE · " + n + (n == 1 ? " on Hub" : " on Hub");
+        }
+
         public static float RangeOf(BuildingType type)
         {
             switch (type)

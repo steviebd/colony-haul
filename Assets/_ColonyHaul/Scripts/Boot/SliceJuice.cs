@@ -113,6 +113,14 @@ namespace ColonyHaul
             SpawnBurst(x, z, new Color(0.45f, 0.9f, 1f, 0.4f), 2.6f);
         }
 
+        public void Chew(float x, float z)
+        {
+            SpawnPip(x, z, "CHEW", new Color(1f, 0.32f, 0.22f));
+            Spokes(x, z, 1.6f, new Color(1f, 0.32f, 0.22f));
+            SpawnBurst(x, z, new Color(1f, 0.28f, 0.18f, 0.5f), 3.4f);
+            Punch(0.55f);
+        }
+
         public void HubHit(bool braced)
         {
             if (braced)

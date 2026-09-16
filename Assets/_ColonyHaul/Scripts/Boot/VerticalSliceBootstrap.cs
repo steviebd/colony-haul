@@ -27,11 +27,13 @@ namespace ColonyHaul
         readonly Dictionary<string, LineRenderer> _intents = new Dictionary<string, LineRenderer>();
         readonly Dictionary<string, Transform> _shadows = new Dictionary<string, Transform>();
         readonly Dictionary<string, LineRenderer> _locks = new Dictionary<string, LineRenderer>();
+        readonly Dictionary<string, LineRenderer> _chews = new Dictionary<string, LineRenderer>();
         readonly Dictionary<string, Transform> _forecasts = new Dictionary<string, Transform>();
         readonly Dictionary<string, Transform> _cargoTags = new Dictionary<string, Transform>();
         readonly HashSet<string> _stuckShown = new HashSet<string>();
         readonly HashSet<string> _bracePinged = new HashSet<string>();
         LineRenderer _braceLine;
+        bool _chewPinged;
         Transform _root;
         Camera _cam;
         float _acc;
@@ -102,6 +104,7 @@ namespace ColonyHaul
             ClearTrails();
             ClearIntents();
             ClearLocks();
+            ClearChews();
             ClearForecasts();
             ClearCargoTags();
             ClearBraceLine();
@@ -111,6 +114,7 @@ namespace ColonyHaul
             _surgeBannered = false;
             _stuckShown.Clear();
             _bracePinged.Clear();
+            _chewPinged = false;
             _juice.CutAlarm(false);
             _buildingScale.Clear();
             _acc = 0f;
@@ -163,6 +167,7 @@ namespace ColonyHaul
             if (!_game.Surging) _surgeBannered = false;
             _juice.CutAlarm(_game.ActiveCut() != null && _game.Phase == Phase.Playing);
             PingBraceInbound();
+            PingChew();
             _juice.Tick(_cam, events);
             _hubFlash = Mathf.Max(0f, _hubFlash - Time.deltaTime);
             SyncAtmosphere();
@@ -283,6 +288,7 @@ namespace ColonyHaul
             if (_game.Phase == Phase.Playing)
             {
                 if (_game.WaveIndex >= 5) heat = 0.5f + 0.18f * Mathf.Abs(Mathf.Sin(Time.time * 1.7f));
+                else if (_game.HubChewers() > 0) heat = 0.42f + 0.12f * Mathf.Abs(Mathf.Sin(Time.time * 5f));
                 else if (_game.Enemies.Count > 0) heat = 0.16f;
             }
             RenderSettings.fogColor = Color.Lerp(dusk, raid, heat);
@@ -327,7 +333,9 @@ namespace ColonyHaul
                     c = Color.Lerp(new Color(0.62f, 0.52f, 0.4f), MesaView.Spawn * pulse,
                         Mathf.Clamp01(near / 4f + (chokeHot ? 0.35f : 0f)));
                 else if (n.Kind == NodeKind.Hub)
-                    c = _game.HoldOrder == HoldOrder.Power
+                    c = _game.HubChewers() > 0
+                        ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(1f, 0.28f, 0.18f), pulse)
+                        : _game.HoldOrder == HoldOrder.Power
                         ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(0.4f, 0.75f, 1f), pulse)
                         : _game.HoldOrder == HoldOrder.Food
                             ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(0.5f, 0.85f, 0.48f), pulse)
@@ -339,6 +347,7 @@ namespace ColonyHaul
                 if (n.Id == "hub")
                     MesaView.SetLabel(mark, cut != null && (cut.A == n.Id || cut.B == n.Id)
                         ? "SPLICE"
+                        : _game.HubChewers() > 0 ? "CHEW"
                         : _game.HubRaising ? "L2"
                         : _game.HoldOrder == HoldOrder.Power ? "GUNS"
                         : _game.HoldOrder == HoldOrder.Food ? "CREW"
@@ -399,15 +408,19 @@ namespace ColonyHaul
                     tint = Color.Lerp(tint, new Color(1f, 0.86f, 0.42f), 0.55f * pulse);
                 if (b.Type == BuildingType.Hub && _game.CoreThin)
                     tint = Color.Lerp(tint, new Color(0.95f, 0.22f, 0.18f), 0.4f + 0.2f * pulse);
+                if (b.Type == BuildingType.Hub && _game.HubChewers() > 0)
+                    tint = Color.Lerp(tint, new Color(1f, 0.18f, 0.12f), 0.45f + 0.2f * pulse);
                 if (b.Type == BuildingType.Hub && _hubFlash > 0f)
                     tint = Color.Lerp(tint,
                         _hubBraceFlash ? new Color(0.4f, 0.9f, 1f) : new Color(1f, 0.22f, 0.18f),
                         Mathf.Clamp01(_hubFlash * 2.4f));
                 MesaView.Tint(tr.gameObject, tint);
                 if (b.Type == BuildingType.Hub && _game.HubLevel >= 2)
-                    tr.localScale = _buildingScale[b.Id] * 1.18f;
+                    tr.localScale = _buildingScale[b.Id] * (1.18f + (_game.HubChewers() > 0 ? 0.05f * pulse : 0f));
                 else if (b.Type == BuildingType.Hub && _game.HubRaising)
                     tr.localScale = _buildingScale[b.Id] * (1f + 0.18f * (1f - Mathf.Clamp01(_game.HubUpgradeLeft / Balance.HubL2Time)));
+                else if (b.Type == BuildingType.Hub && _game.HubChewers() > 0)
+                    tr.localScale = _buildingScale[b.Id] * (1f + 0.08f * pulse);
             }
 
             SyncRings();
@@ -465,6 +478,7 @@ namespace ColonyHaul
             SyncTrails();
             SyncRunnerIntents();
             SyncGunLocks();
+            SyncChews();
             SyncBraceLine();
             SyncForecasts();
             SyncEnemies();
@@ -550,10 +564,14 @@ namespace ColonyHaul
                     c = Color.Lerp(c, new Color(0.35f, 0.88f, 1f), 0.62f);
                 if (_game.LockedOn(e))
                     c = Color.Lerp(c, Color.white, 0.28f + 0.12f * Mathf.Abs(Mathf.Sin(Time.time * 11f)));
+                if (_game.ChewingHub(e))
+                    c = Color.Lerp(c, new Color(1f, 0.55f, 0.2f), 0.4f + 0.2f * Mathf.Abs(Mathf.Sin(Time.time * 10f)));
                 if (e.Flash > 0f) c = Color.white;
                 MesaView.Tint(tr.gameObject, c);
                 if (e.Type == EnemyType.Runner)
                     tr.localScale = MesaView.EnemyScale(e.Type) * (1f + 0.08f * Mathf.Abs(Mathf.Sin(Time.time * 14f)));
+                else if (_game.ChewingHub(e))
+                    tr.localScale = MesaView.EnemyScale(e.Type) * (1f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 10f)));
             }
             Prune(_enemies, live);
         }
@@ -623,6 +641,12 @@ namespace ColonyHaul
                 live.Add("teach-splash-w");
                 var glow = 0.18f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 5f));
                 EnsureRing("teach-splash-w", west, Balance.SplashRange, new Color(0.94f, 0.63f, 0.38f, glow));
+            }
+            if (_game.HubChewers() > 0 && !_game.Surging && _game.Nodes.TryGetValue("hub", out var chewHub))
+            {
+                live.Add("chew-ring");
+                var chewPulse = 2.4f + 0.35f * Mathf.Abs(Mathf.Sin(Time.time * 9f));
+                EnsureRing("chew-ring", chewHub, chewPulse, new Color(1f, 0.28f, 0.16f, 0.4f));
             }
             if (_game.Surging && _game.Nodes.TryGetValue("hub", out var hubNode))
             {
@@ -864,6 +888,19 @@ namespace ColonyHaul
             _juice.BraceComing(h.X, h.Z);
         }
 
+        void PingChew()
+        {
+            var n = _game.HubChewers();
+            if (n <= 0)
+            {
+                _chewPinged = false;
+                return;
+            }
+            if (_chewPinged) return;
+            _chewPinged = true;
+            _juice.Chew(0f, 0f);
+        }
+
         void SyncGunLocks()
         {
             var live = new HashSet<string>();
@@ -901,6 +938,39 @@ namespace ColonyHaul
             {
                 if (_locks[id] != null) Destroy(_locks[id].gameObject);
                 _locks.Remove(id);
+            }
+        }
+
+        void SyncChews()
+        {
+            var live = new HashSet<string>();
+            foreach (var e in _game.Enemies)
+            {
+                if (!_game.ChewingHub(e)) continue;
+                live.Add(e.Id);
+                if (!_chews.TryGetValue(e.Id, out var lr))
+                {
+                    lr = MesaView.MakeLine(_root, "chew", 0.11f, 0.03f);
+                    _chews[e.Id] = lr;
+                }
+                lr.positionCount = 2;
+                lr.SetPosition(0, new Vector3(e.X, 0.95f, e.Z));
+                lr.SetPosition(1, new Vector3(0f, 1.2f, 0f));
+                var a = 0.55f + 0.35f * Mathf.Abs(Mathf.Sin(Time.time * 11f));
+                var color = _game.Surging
+                    ? new Color(0.45f, 0.9f, 1f, a)
+                    : new Color(1f, 0.28f, 0.16f, a);
+                lr.startColor = color;
+                lr.endColor = color;
+                lr.enabled = true;
+            }
+            var dead = new List<string>();
+            foreach (var kv in _chews)
+                if (!live.Contains(kv.Key)) dead.Add(kv.Key);
+            foreach (var id in dead)
+            {
+                if (_chews[id] != null) Destroy(_chews[id].gameObject);
+                _chews.Remove(id);
             }
         }
 
@@ -1017,6 +1087,13 @@ namespace ColonyHaul
             _locks.Clear();
         }
 
+        void ClearChews()
+        {
+            foreach (var lr in _chews.Values)
+                if (lr != null) Destroy(lr.gameObject);
+            _chews.Clear();
+        }
+
         void ClearForecasts()
         {
             ClearMap(_forecasts);
@@ -1070,6 +1147,16 @@ namespace ColonyHaul
                         : Color.Lerp(new Color(0.85f, 0.18f, 0.16f), new Color(0.9f, 0.78f, 0.5f), hp);
                     GUI.Box(new Rect(hx - 42f, hy, 84f * hp, 9f), "");
                     GUI.backgroundColor = Color.white;
+                    var chewers = _game.HubChewers();
+                    if (chewers > 0)
+                    {
+                        GUI.backgroundColor = _game.Surging
+                            ? new Color(0.12f, 0.42f, 0.55f, 0.9f)
+                            : new Color(0.72f, 0.12f, 0.1f, 0.92f);
+                        GUI.Box(new Rect(hx - 46f, hy - 18f, 92f, 16f),
+                            _game.Surging ? "SHRUG " + chewers : "CHEW " + chewers);
+                        GUI.backgroundColor = Color.white;
+                    }
                 }
             }
             var inbound = _game.BraceInbound();
