@@ -418,6 +418,16 @@ namespace ColonyHaul
             return Time.time < _railDropUntil;
         }
 
+        bool GateLive()
+        {
+            return Time.time < _gateUntil;
+        }
+
+        bool CrewLive()
+        {
+            return Time.time < _crewUntil;
+        }
+
         float RaidClose()
         {
             if (_game.Phase != Phase.Playing) return 0f;
@@ -520,6 +530,10 @@ namespace ColonyHaul
                 fog = Color.Lerp(dusk, new Color(0.42f, 0.3f, 0.1f), 0.54f + 0.12f * Mathf.Abs(Mathf.Sin(Time.time * 7f)));
             else if (_game.SplashFresh())
                 fog = Color.Lerp(dusk, new Color(0.42f, 0.2f, 0.08f), 0.5f + 0.12f * Mathf.Abs(Mathf.Sin(Time.time * 7f)));
+            else if (GateLive())
+                fog = Color.Lerp(dusk, new Color(0.42f, 0.08f, 0.08f), 0.46f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 9f)));
+            else if (CrewLive())
+                fog = Color.Lerp(dusk, new Color(0.12f, 0.38f, 0.16f), 0.46f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 8f)));
             else if (RailDropLive())
                 fog = Color.Lerp(dusk, new Color(0.1f, 0.38f, 0.36f), 0.5f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 9f)));
             else if (PlantLive())
@@ -581,6 +595,10 @@ namespace ColonyHaul
                     bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.38f, 0.26f, 0.08f), 0.52f);
                 else if (_game.SplashFresh())
                     bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.38f, 0.18f, 0.06f), 0.5f);
+                else if (GateLive())
+                    bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.38f, 0.08f, 0.06f), 0.48f);
+                else if (CrewLive())
+                    bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.1f, 0.34f, 0.14f), 0.48f);
                 else if (RailDropLive())
                     bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.08f, 0.34f, 0.32f), 0.5f);
                 else if (PlantLive())

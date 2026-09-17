@@ -121,6 +121,7 @@ Tick stays one loop. Seed-7 demo still wins. Mid-game is readable, and a haul du
 71. **Pass 64 SPLASH SLAM** — west Splash now *slams*. Each shot pops **SLAM**, a fat amber shockwave, and a low boom — not a kinetic tick. The barrel ring fattens; slowed raiders crunch. WEST LIFT's payoff. Juice only — Tick, Splash radius/slow, and cooldown unchanged. Seed-7 still plants west Splash. No new Hub counters.
 72. **Pass 65 SLOW GATE** — planting a Barrier now *drops a gate*. GATE bloom + spawn-line tracers + fattened beam, not a rail-cut beep. SLOW EAST/NORTH/WEST still names the spend before the plant. Juice only — Tick, Barrier cost, and slow factor unchanged. Seed-7 still plants east then north. No new Hub counters.
 73. **Pass 66 CREW OUT** — Hub L2's extra cart now *rolls out*. Yard pops **OUT**, traces onto the first hop, the new cube fattens, and a 580 Hz roll replaces the deposit tick. CREW UP still names the 12s. WEST LIFT still owns L2 land / WEST. Juice only — Tick, extra hauler count, and L2 time unchanged. Seed-7 still juices at L2 (t≈79). No new Hub counters.
+74. **Pass 67 ONE LINE** — RAIL / WEST / GATE / OUT / HOLD YANK tracers now share one stroke. FIRST LINE HAUL beeps; HOME dual-bursts. GATE and OUT wash the mesa like FARM / RAIL. WEST LIFT still outranks CREW fog. Juice only — Tick unchanged. No new Hub counters. Kill punch skipped.
 
 Folder layout: `Assets/_ColonyHaul/{Scripts,Art,Prefabs,Scenes,UI,Audio}`.
 
@@ -180,7 +181,7 @@ Do not treat the Vite client as the ship target. Keep it only when kernel parity
 
 - This cloud VM has no Unity Editor, so Editor Play is documented, not screenshot-verified here. Headless C# is what the menu item runs.
 - Runtime art is procedural low-poly, not authored FBX.
-- Pass 56–66 course-correct: stop growing Hub counter chips; BRACE SHRUG, SPLICE RELEASE, HOLD YANK, DRY→BACK, FIRST LINE, WEST LIFT, HOLD / FALL, DUSK CLOSE, SPLASH SLAM, SLOW GATE, and CREW OUT shipped.
+- Pass 56–67 course-correct: stop growing Hub counter chips; BRACE SHRUG, SPLICE RELEASE, HOLD YANK, DRY→BACK, FIRST LINE, WEST LIFT, HOLD / FALL, DUSK CLOSE, SPLASH SLAM, SLOW GATE, CREW OUT, and ONE LINE shipped.
 - Origin `tmp-*` remote cannot be renamed with the current CLI; GitHub is the repo to open in Cursor.
 - GitHub clone is Hub/Cursor complete: `Assets/`, `Packages/manifest.json`, `ProjectSettings/`, USB C# package, `playable/`, artifacts tape including `colony-haul-run.webm`.
 - Out of scope: multiplayer, cloud meta, deep tech tree, campaign.

@@ -99,6 +99,11 @@ namespace ColonyHaul
 
         public void Punch(float amount) => _shake = Mathf.Max(_shake, amount);
 
+        public void JuiceLine(float fromX, float fromZ, float toX, float toZ, Color color)
+        {
+            AddTracer(fromX, fromZ, 0.9f, toX, toZ, 0.7f, color, 0.66f);
+        }
+
         public void SetClose(float amount) => _closeTarget = Mathf.Clamp01(amount);
 
         public void ResetClose()
@@ -216,7 +221,7 @@ namespace ColonyHaul
             Spokes(mx, mz, 2.2f, new Color(0.42f, 0.92f, 0.88f));
             SpawnBurst(mx, mz, new Color(0.42f, 0.92f, 0.88f, 0.55f), 5.6f, 0.55f);
             SpawnBurst(mx, mz, new Color(0.75f, 0.98f, 0.95f, 0.32f), 3.2f, 0.36f);
-            AddTracer(fromX, fromZ, 0.7f, toX, toZ, 0.7f, new Color(0.42f, 0.92f, 0.88f), 0.62f);
+            JuiceLine(fromX, fromZ, toX, toZ, new Color(0.42f, 0.92f, 0.88f));
             Punch(0.42f);
             _audio.PlayOneShot(_rail, 0.7f);
         }
@@ -227,6 +232,7 @@ namespace ColonyHaul
             SpawnBurst(x, z, new Color(0.5f, 0.85f, 0.48f, 0.5f), 3.4f, 0.45f);
             Spokes(x, z, 1.5f, new Color(0.5f, 0.85f, 0.48f));
             Punch(0.28f);
+            _audio.PlayOneShot(_rail, 0.5f);
         }
 
         public void FirstDrop()
@@ -234,6 +240,7 @@ namespace ColonyHaul
             SpawnPip(0f, 0f, "HOME", new Color(0.5f, 0.85f, 0.48f), 1.25f);
             Spokes(0f, 0f, 2.0f, new Color(0.5f, 0.85f, 0.48f));
             SpawnBurst(0f, 0f, new Color(0.5f, 0.85f, 0.48f, 0.5f), 5.2f, 0.5f);
+            SpawnBurst(0f, 0f, new Color(0.82f, 0.95f, 0.55f, 0.3f), 3.0f, 0.34f);
             Punch(0.32f);
             _audio.PlayOneShot(_deposit, 0.55f);
         }
@@ -264,7 +271,7 @@ namespace ColonyHaul
             Spokes(x, z, 2.4f, new Color(0.94f, 0.63f, 0.38f));
             SpawnBurst(x, z, new Color(0.94f, 0.63f, 0.38f, 0.55f), 6.4f, 0.58f);
             SpawnBurst(x, z, new Color(1f, 0.82f, 0.5f, 0.32f), 3.8f, 0.4f);
-            AddTracer(0f, 0f, 0.9f, x, z, 0.85f, new Color(0.94f, 0.63f, 0.38f), 0.7f);
+            JuiceLine(0f, 0f, x, z, new Color(0.94f, 0.63f, 0.38f));
             Punch(0.42f);
             _audio.PlayOneShot(_west, 0.7f);
         }
@@ -291,7 +298,7 @@ namespace ColonyHaul
 
         public void GateLine(float fromX, float fromZ, float toX, float toZ)
         {
-            AddTracer(fromX, fromZ, 0.9f, toX, toZ, 0.7f, MesaView.Barrier, 0.62f);
+            JuiceLine(fromX, fromZ, toX, toZ, MesaView.Barrier);
         }
 
         public void MesaHold()
@@ -454,7 +461,7 @@ namespace ColonyHaul
             Spokes(fromX, fromZ, 2.0f, new Color(0.58f, 0.9f, 0.48f));
             SpawnBurst(fromX, fromZ, new Color(0.58f, 0.9f, 0.48f, 0.55f), 5.2f, 0.5f);
             SpawnBurst(fromX, fromZ, new Color(0.82f, 0.95f, 0.7f, 0.32f), 3.0f, 0.34f);
-            AddTracer(fromX, fromZ, 0.9f, toX, toZ, 0.7f, new Color(0.58f, 0.9f, 0.48f), 0.7f);
+            JuiceLine(fromX, fromZ, toX, toZ, new Color(0.58f, 0.9f, 0.48f));
             Punch(0.42f);
             _audio.PlayOneShot(_crew, 0.72f);
         }
@@ -475,7 +482,7 @@ namespace ColonyHaul
             SpawnPip(x, z, guns ? "GUNS" : "CREW", color, 1.15f);
             SpawnBurst(x, z, new Color(color.r, color.g, color.b, 0.5f), 3.2f, 0.42f);
             Spokes(x, z, 1.4f, color);
-            AddTracer(x, z, 0.85f, hopX, hopZ, 0.7f, color, 0.58f);
+            JuiceLine(x, z, hopX, hopZ, color);
         }
 
         public void CoreThin()
