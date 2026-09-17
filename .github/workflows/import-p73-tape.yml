@@ -1,0 +1,26 @@
+name: import-p73-tape
+on:
+  push:
+    paths: ['.github/workflows/import-p73-tape.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import Pass 73 tape
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://n.uguu.se/PvkaoPMC.tar.gz" | tar -xzf - -C .
+          git add artifacts/FM-GAME-002.md
+          git config user.name "colony-haul-import"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Refresh Firstmate package for Pass 73 PAD DROP SHAs."
+          git push
+          git pull --rebase origin main
+          rm .github/workflows/import-p73-tape.yml
+          git add .github/workflows/import-p73-tape.yml
+          git commit -m "Drop Pass 73 tape import workflow"
+          git push
