@@ -1,0 +1,28 @@
+name: import-p79-stay
+on:
+  push:
+    paths: ['.github/workflows/import-p79-stay.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import Pass 79 STAY
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://h.uguu.se/KJWzYswa.tgz" | tar -xzf - -C .
+          git add \
+            Assets/_ColonyHaul/Scripts/Boot/SliceJuice.cs \
+            Assets/_ColonyHaul/Scripts/Boot/VerticalSliceBootstrap.cs \
+            README.md
+          git config user.name "colony-haul-import"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Unity slice: STAY -- opening-gate tool snaps hold the Farm/Hub."
+          git push
+          git pull --rebase origin main
+          git rm .github/workflows/import-p79-stay.yml
+          git commit -m "Drop Pass 79 import workflow"
+          git push
