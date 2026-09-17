@@ -56,12 +56,16 @@ namespace ColonyHaul
         readonly AudioSource _alarmSrc;
         bool _alarmOn;
         float _shake;
+        float _close;
+        float _closeTarget;
+        float _homeSize;
         Vector3 _camHome;
 
         public SliceJuice(Transform root, Camera cam)
         {
             _root = root;
             _camHome = cam.transform.position;
+            _homeSize = cam.orthographic ? cam.orthographicSize : 13.5f;
             _audio = cam.gameObject.AddComponent<AudioSource>();
             _audio.playOnAwake = false;
             _audio.spatialBlend = 0f;
@@ -88,6 +92,25 @@ namespace ColonyHaul
         }
 
         public void Punch(float amount) => _shake = Mathf.Max(_shake, amount);
+
+        public void SetClose(float amount) => _closeTarget = Mathf.Clamp01(amount);
+
+        public void ResetClose()
+        {
+            _close = 0f;
+            _closeTarget = 0f;
+            _shake = 0f;
+        }
+
+        public void LastHeat()
+        {
+            SpawnPip(0f, 0f, "LAST", new Color(1f, 0.38f, 0.22f), 1.4f);
+            Spokes(0f, 0f, 2.6f, new Color(0.86f, 0.24f, 0.24f));
+            SpawnBurst(0f, 0f, new Color(0.86f, 0.24f, 0.24f, 0.55f), 8.2f, 0.62f);
+            SpawnBurst(0f, 0f, new Color(1f, 0.48f, 0.22f, 0.32f), 4.8f, 0.4f);
+            Punch(0.62f);
+            _audio.PlayOneShot(_wave, 0.78f);
+        }
 
         public void CutAlarm(bool on)
         {
@@ -446,13 +469,18 @@ namespace ColonyHaul
         {
             foreach (var ev in events) Handle(ev);
             _shake = Mathf.Max(0f, _shake - Time.deltaTime * 8f);
+            _close = Mathf.MoveTowards(_close, _closeTarget, Time.deltaTime * 1.35f);
             if (cam != null)
             {
-                var j = _shake * 0.18f;
-                cam.transform.position = _camHome + new Vector3(
+                var j = _shake * 0.18f + _close * 0.055f;
+                var pulled = Vector3.Lerp(_camHome, new Vector3(15.1f, 17.4f, 15.1f), _close);
+                cam.transform.position = pulled + new Vector3(
                     Mathf.Sin(Time.time * 70f) * j,
-                    0f,
+                    _close * 0.12f * Mathf.Sin(Time.time * 9f),
                     Mathf.Cos(Time.time * 63f) * j);
+                cam.transform.LookAt(new Vector3(0f, 0.4f, 0f));
+                if (cam.orthographic)
+                    cam.orthographicSize = Mathf.Lerp(_homeSize, _homeSize * 0.84f, _close);
             }
             TickPips();
             TickBursts();

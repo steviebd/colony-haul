@@ -192,6 +192,7 @@ namespace ColonyHaul
             _crewUpJuiced = null;
             _crewUpPinged = null;
             _juice.CutAlarm(false);
+            _juice.ResetClose();
             _buildingScale.Clear();
             _acc = 0f;
             BootMatch();
@@ -265,6 +266,7 @@ namespace ColonyHaul
             PingGunsBack();
             PingCrewUp();
             PingFirstHaul();
+            SyncLastRaid();
             _juice.Tick(_cam, events);
             _hubFlash = Mathf.Max(0f, _hubFlash - Time.deltaTime);
             SyncAtmosphere();
@@ -293,6 +295,7 @@ namespace ColonyHaul
                         if (incoming <= 0) continue;
                         _juice.Inbound(n.X, n.Z, incoming);
                     }
+                    if (_game.WaveIndex >= 5) _juice.LastHeat();
                     break;
                 case SimEventKind.Upgrade:
                     if (_game.HubLevel >= 2)
@@ -391,6 +394,20 @@ namespace ColonyHaul
             return Time.time < _railDropUntil;
         }
 
+        float RaidClose()
+        {
+            if (_game.Phase != Phase.Playing) return 0f;
+            if (_game.WaveIndex >= 6) return _game.Enemies.Count > 0 ? 0.92f : 0.68f;
+            if (_game.WaveIndex >= 5) return _game.Enemies.Count > 0 ? 0.74f : 0.5f;
+            if (_game.PackInLive() && _game.WaveIndex >= 4) return 0.28f;
+            return 0f;
+        }
+
+        void SyncLastRaid()
+        {
+            _juice.SetClose(RaidClose());
+        }
+
         void YankHold(string reason)
         {
             if (reason != "power" && reason != "food") return;
@@ -445,7 +462,14 @@ namespace ColonyHaul
             if (_game.Phase == Phase.Playing)
             {
                 if (_game.Surging) heat = 0f;
-                else if (_game.WaveIndex >= 5) heat = 0.5f + 0.18f * Mathf.Abs(Mathf.Sin(Time.time * 1.7f));
+                else if (_game.WaveIndex >= 6 && _game.Enemies.Count > 0)
+                    heat = 0.72f + 0.22f * Mathf.Abs(Mathf.Sin(Time.time * 1.9f));
+                else if (_game.WaveIndex >= 6)
+                    heat = 0.55f + 0.14f * Mathf.Abs(Mathf.Sin(Time.time * 1.6f));
+                else if (_game.WaveIndex >= 5 && _game.Enemies.Count > 0)
+                    heat = 0.62f + 0.2f * Mathf.Abs(Mathf.Sin(Time.time * 1.8f));
+                else if (_game.WaveIndex >= 5)
+                    heat = 0.48f + 0.14f * Mathf.Abs(Mathf.Sin(Time.time * 1.6f));
                 else if (_game.HubChewers() > 0) heat = 0.42f + 0.12f * Mathf.Abs(Mathf.Sin(Time.time * 5f));
                 else if (_game.Enemies.Count > 0) heat = 0.16f;
             }
@@ -476,7 +500,38 @@ namespace ColonyHaul
                 fog = Color.Lerp(dusk, new Color(0.1f, 0.38f, 0.36f), 0.5f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 9f)));
             else if (PlantLive())
                 fog = Color.Lerp(dusk, new Color(0.12f, 0.36f, 0.16f), 0.46f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 8f)));
+            if (_game.Phase == Phase.Playing && _game.WaveIndex >= 5 && !_game.Surging)
+            {
+                var ember = new Color(0.34f, 0.08f, 0.04f);
+                fog = Color.Lerp(fog, ember, _game.Enemies.Count > 0 ? 0.24f : 0.12f);
+            }
             RenderSettings.fogColor = fog;
+            var close = RaidClose();
+            RenderSettings.fogStartDistance = Mathf.Lerp(16f, 9f, close);
+            RenderSettings.fogEndDistance = Mathf.Lerp(52f, 34f, close);
+            RenderSettings.ambientLight = close > 0.01f
+                ? Color.Lerp(new Color(0.28f, 0.38f, 0.42f), new Color(0.42f, 0.22f, 0.16f), 0.4f + 0.35f * close)
+                : new Color(0.28f, 0.38f, 0.42f);
+            var sun = _root != null ? _root.Find("Sun") : null;
+            if (sun != null)
+            {
+                var light = sun.GetComponent<Light>();
+                if (light != null)
+                {
+                    if (close > 0.01f)
+                    {
+                        light.color = Color.Lerp(new Color(1f, 0.72f, 0.48f), new Color(1f, 0.38f, 0.22f), 0.35f + 0.5f * close);
+                        light.intensity = 1.15f + 0.32f * close + 0.08f * Mathf.Abs(Mathf.Sin(Time.time * 1.8f));
+                        sun.rotation = Quaternion.Euler(38f - 10f * close, -48f, 0f);
+                    }
+                    else
+                    {
+                        light.color = new Color(1f, 0.72f, 0.48f);
+                        light.intensity = 1.15f;
+                        sun.rotation = Quaternion.Euler(38f, -48f, 0f);
+                    }
+                }
+            }
             if (_cam != null)
             {
                 var bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), raid, heat * 0.7f);
@@ -506,6 +561,8 @@ namespace ColonyHaul
                     bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.08f, 0.34f, 0.32f), 0.5f);
                 else if (PlantLive())
                     bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.1f, 0.32f, 0.14f), 0.48f);
+                if (_game.Phase == Phase.Playing && _game.WaveIndex >= 5 && !_game.Surging)
+                    bg = Color.Lerp(bg, new Color(0.32f, 0.06f, 0.04f), _game.Enemies.Count > 0 ? 0.22f : 0.1f);
                 _cam.backgroundColor = bg;
             }
         }

@@ -58,7 +58,7 @@ Tick stays one loop. Seed-7 demo still wins. Mid-game is readable, and a haul du
 8. Juice on deposit spokes, sabotage CUT, brownout DRY, barrier SLOW, kill punch. Hub cracks red when thin; waiting haulers throb.
 9. **Pass 4 punch-up** — BRACE title + hub shield ring (no Surge banner spam), west Splash ghost ring after L2, SPLICED / RAIL LIVE on cut recovery, win/lose cards with stats and bigger VFX.
 10. **Pass 4 runner-cut recovery** — orange rail pulse + SPLICE pads and world timer, STUCK/ROLLING hauler pips, cut alarm drone, magenta runner intent lines, BRACE hits shrug cyan. Banners sit above the hint so they no longer cover the coach.
-11. **Pass 4 late-wave telegraph** — inbound IN bursts on spawns, LAST RAIDS title, dusk fog heats on waves 5–6.
+11. **Pass 4 late-wave telegraph** — inbound IN bursts on spawns, LAST RAIDS title. **Pass 63 DUSK CLOSE** pulls the camera in and drops ember sun on waves 5–6.
 12. **Pass 5 Hold order** — late-match decision. Wave 4 + Hub L2 unlocks H: Auto → GUNS (peel to Power, even loaded carts) → CREW (peel to Food). Visible hub ring, pad labels, same-tick replan. No soft-lock; demo stays Auto.
 13. **Pass 6 raid reads** — gun LOCK beams to the tracked raider (dry guns go red). Loaded haulers paint FOOD/PWR/ORE. A combat haul telegraphs BRACE IN Xs on the rail before the shield pops. Next-wave spawn ghosts + `4G · 8s` labels in the last 14s.
 14. **Pass 7 UNDER FIRE** — raiders in Hub melee paint CHEW beams. Title reads UNDER FIRE (BRACE IN Xs if a haul is inbound, BRACE shrugs if the shield is up). Hub pad says CHEW. Splice still outranks this.
@@ -117,6 +117,7 @@ Tick stays one loop. Seed-7 demo still wins. Mid-game is readable, and a haul du
 67. **Pass 60 FIRST LINE** — the opening now *lands*. Planting the south Farm blooms **FARM**. Clicking Hub snaps **RAIL** down the corridor and fattens the line. The first cart pops **HAUL**; the first drop blooms **HOME**. Juice only — Tick, opening gate, and haul math unchanged. Seed-7 still farms south then rails Hub. No new Hub counters.
 68. **Pass 61 WEST LIFT** — pressing U now *lifts* the Hub, then Splash *unlocks* west. RAISE bloom + gold fog + growing gold rings while the pad spends. L2 land pops **L2**, traces **WEST** to the choke, fattens the ghost Splash ring, and washes the mesa amber for 16s. CREW UP still names the extra haul. Juice only — Tick, Hub L2 time, and Splash unlock window unchanged. Seed-7 still raises during the raid (t≈79) then SplashFresh 16s. No new Hub counters.
 69. **Pass 62 HOLD / FALL** — the watch now *ends*. A win blooms **HOLD**, washes the mesa gold-green, and the rails sing. Hub HP 0 cracks **DOWN** in blood fog; a dead larder goes olive **STARVED**. Juice only — Tick, win rule (6 waves + Hub L2), and lose timers unchanged. Seed-7 still wins at t≈184.45. No new Hub counters.
+70. **Pass 63 DUSK CLOSE** — last raids now *close in*. Wave 5/6 punch **LAST**, the camera pulls onto the Hub, fog shortens, and the sun drops ember-red. Dusk heat stays under the fight (BRACE cyan still wins the shield). Juice only — Tick and last-raid wave math unchanged. Seed-7 still titles LAST RAIDS on waves 5–6. No new Hub counters.
 
 Folder layout: `Assets/_ColonyHaul/{Scripts,Art,Prefabs,Scenes,UI,Audio}`.
 
@@ -176,7 +177,7 @@ Do not treat the Vite client as the ship target. Keep it only when kernel parity
 
 - This cloud VM has no Unity Editor, so Editor Play is documented, not screenshot-verified here. Headless C# is what the menu item runs.
 - Runtime art is procedural low-poly, not authored FBX.
-- Pass 56–62 course-correct: stop growing Hub counter chips; BRACE SHRUG, SPLICE RELEASE, HOLD YANK, DRY→BACK, FIRST LINE, WEST LIFT, and HOLD / FALL shipped.
+- Pass 56–63 course-correct: stop growing Hub counter chips; BRACE SHRUG, SPLICE RELEASE, HOLD YANK, DRY→BACK, FIRST LINE, WEST LIFT, HOLD / FALL, and DUSK CLOSE shipped.
 - Origin `tmp-*` remote cannot be renamed with the current CLI; GitHub is the repo to open in Cursor.
 - GitHub clone is Hub/Cursor complete: `Assets/`, `Packages/manifest.json`, `ProjectSettings/`, USB C# package, `playable/`, artifacts tape including `colony-haul-run.webm`.
 - Out of scope: multiplayer, cloud meta, deep tech tree, campaign.

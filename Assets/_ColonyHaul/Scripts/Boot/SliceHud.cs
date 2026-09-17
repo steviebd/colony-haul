@@ -178,7 +178,7 @@ namespace ColonyHaul
             else if (game.HomeInbound() != null)
                 subCopy = game.HomeInboundTitle();
             else if (game.WaveIndex >= 5)
-                subCopy = "LAST RAIDS · hold the mesa";
+                subCopy = "LAST RAIDS · dusk closing · hold the mesa";
             else
                 subCopy = "Mesa 7 · dusk cycle · Unity slice";
             GUI.Label(new Rect(24, 36, 340, 18), subCopy);
