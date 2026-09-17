@@ -81,6 +81,7 @@ namespace ColonyHaul
         float _nopeUntil;
         float _stayUntil;
         float _freeUntil;
+        float _stowUntil;
         float _railDropUntil;
         string _railDropEdgeId;
         bool _farmPlanted;
@@ -182,6 +183,7 @@ namespace ColonyHaul
             _nopeUntil = 0f;
             _stayUntil = 0f;
             _freeUntil = 0f;
+            _stowUntil = 0f;
             _railDropUntil = 0f;
             _railDropEdgeId = null;
             _farmPlanted = false;
@@ -508,8 +510,14 @@ namespace ColonyHaul
         void ArmTool(Tool tool)
         {
             var gate = _game.OpeningGate();
+            var was = _game.SelectedTool;
             _game.SetTool(tool);
             if (Time.time < _stayUntil) return;
+            if (was == tool && tool != Tool.None && _game.SelectedTool == Tool.None)
+            {
+                StowAt();
+                return;
+            }
             if (tool == Tool.None) return;
             string nodeId;
             bool farmFirst;
@@ -527,6 +535,14 @@ namespace ColonyHaul
             if (!_game.Nodes.TryGetValue(nodeId, out var mark)) return;
             _stayUntil = Time.time + 0.45f;
             _juice.Stay(mark.X, mark.Z, farmFirst);
+        }
+
+        void StowAt()
+        {
+            if (Time.time < _stowUntil) return;
+            _stowUntil = Time.time + 0.45f;
+            if (_game.Nodes.TryGetValue("hub", out var hub)) _juice.Stow(hub.X, hub.Z);
+            else _juice.Stow(0f, 0f);
         }
 
         void DenyHub(string why)
