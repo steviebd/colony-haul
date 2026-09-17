@@ -57,6 +57,14 @@ namespace ColonyHaul
             _waveUntil = Time.unscaledTime + seconds;
         }
 
+        public void Clear()
+        {
+            _banner = null;
+            _bannerUntil = 0f;
+            _wave = null;
+            _waveUntil = 0f;
+        }
+
         public void Draw(GameSim game)
         {
             ConsumeBootPlay = ConsumeBootDemo = ConsumeRestart = ConsumeHold = false;

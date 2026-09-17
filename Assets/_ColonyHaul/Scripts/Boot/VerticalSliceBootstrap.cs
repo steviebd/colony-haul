@@ -203,8 +203,8 @@ namespace ColonyHaul
             _gunsClickJuiced = false;
             _crewUpJuiced = null;
             _crewUpPinged = null;
-            _juice.CutAlarm(false);
-            _juice.ResetClose();
+            _juice.Reset();
+            _hud.Clear();
             _buildingScale.Clear();
             _acc = 0f;
             BootMatch();

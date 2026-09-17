@@ -113,6 +113,21 @@ namespace ColonyHaul
             _shake = 0f;
         }
 
+        public void Reset()
+        {
+            CutAlarm(false);
+            ResetClose();
+            for (var i = 0; i < _pips.Count; i++)
+                if (_pips[i].T != null) UnityEngine.Object.Destroy(_pips[i].T.gameObject);
+            _pips.Clear();
+            for (var i = 0; i < _bursts.Count; i++)
+                if (_bursts[i].T != null) UnityEngine.Object.Destroy(_bursts[i].T.gameObject);
+            _bursts.Clear();
+            _tracers.Clear();
+            for (var i = 0; i < _pool.Count; i++)
+                if (_pool[i] != null) _pool[i].enabled = false;
+        }
+
         public void LastHeat()
         {
             SpawnPip(0f, 0f, "LAST", new Color(1f, 0.38f, 0.22f), 1.4f);

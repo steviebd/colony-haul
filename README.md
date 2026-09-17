@@ -32,7 +32,7 @@ Scenes are thin on purpose. `VerticalSliceBootstrap` builds the dusk mesa, pads,
 ### Play in the Editor
 
 - Place a **Farm** on the south mesa pad (it blooms **FARM**), then click the **Hub** to lay mag-rail (**RAIL** drop, line fattens). The first cart pops **HAUL** and the first drop blooms **HOME**. Haulers only move on live rails.
-- Keys `1–7`: Farm, Mine, Power, Route, Kinetic, Splash, Barrier. `U` Hub L2. `H` Hold order (wave 4 + Hub L2). `D` demo. `R` restart.
+- Keys `1–7`: Farm, Mine, Power, Route, Kinetic, Splash, Barrier. `U` Hub L2. `H` Hold order (wave 4 + Hub L2). `D` demo. `R` restart (clears leftover juice so FIRST LINE can land again).
 - Left tray is clickable. Splash stays locked until Hub L2.
 - Top-right logistics strip: loaded vs idle haulers, E/N/W lane counts (hottest marked `*`), next-wave copy, gun-fire fuse, and a larder clock (`~Ns of food`). HAUL CUT names the stake (BRACE / Power / farm / ore) plus splice countdown.
 - Opening coach: 1 Farm (south pad) → 2 rail to Hub → 3 first hauls. After that, a mid-watch coach names the next readable call (splice, Power, Hub L2, Splash west, CORE THIN, second farm, HOLD). An unrouted producer pad reads **OFFLINE** with a gold ghost rail home.
@@ -122,6 +122,7 @@ Tick stays one loop. Seed-7 demo still wins. Mid-game is readable, and a haul du
 72. **Pass 65 SLOW GATE** — planting a Barrier now *drops a gate*. GATE bloom + spawn-line tracers + fattened beam, not a rail-cut beep. SLOW EAST/NORTH/WEST still names the spend before the plant. Juice only — Tick, Barrier cost, and slow factor unchanged. Seed-7 still plants east then north. No new Hub counters.
 73. **Pass 66 CREW OUT** — Hub L2's extra cart now *rolls out*. Yard pops **OUT**, traces onto the first hop, the new cube fattens, and a 580 Hz roll replaces the deposit tick. CREW UP still names the 12s. WEST LIFT still owns L2 land / WEST. Juice only — Tick, extra hauler count, and L2 time unchanged. Seed-7 still juices at L2 (t≈79). No new Hub counters.
 74. **Pass 67 ONE LINE** — RAIL / WEST / GATE / OUT / HOLD YANK tracers now share one stroke. FIRST LINE HAUL beeps; HOME dual-bursts. GATE and OUT wash the mesa like FARM / RAIL. WEST LIFT still outranks CREW fog. Juice only — Tick unchanged. No new Hub counters. Kill punch skipped.
+75. **Pass 68 FRESH R** — pressing R now *forgets* the last watch. GATE / OUT / SLAM pips, tracers, bursts, the cut alarm, dusk close, and banners clear so the opening is FIRST LINE again, not leftover juice. Juice only — Tick unchanged. No new Hub counters. Kill punch skipped.
 
 Folder layout: `Assets/_ColonyHaul/{Scripts,Art,Prefabs,Scenes,UI,Audio}`.
 
@@ -181,7 +182,7 @@ Do not treat the Vite client as the ship target. Keep it only when kernel parity
 
 - This cloud VM has no Unity Editor, so Editor Play is documented, not screenshot-verified here. Headless C# is what the menu item runs.
 - Runtime art is procedural low-poly, not authored FBX.
-- Pass 56–67 course-correct: stop growing Hub counter chips; BRACE SHRUG, SPLICE RELEASE, HOLD YANK, DRY→BACK, FIRST LINE, WEST LIFT, HOLD / FALL, DUSK CLOSE, SPLASH SLAM, SLOW GATE, CREW OUT, and ONE LINE shipped.
+- Pass 56–68 course-correct: stop growing Hub counter chips; BRACE SHRUG, SPLICE RELEASE, HOLD YANK, DRY→BACK, FIRST LINE, WEST LIFT, HOLD / FALL, DUSK CLOSE, SPLASH SLAM, SLOW GATE, CREW OUT, ONE LINE, and FRESH R shipped.
 - Origin `tmp-*` remote cannot be renamed with the current CLI; GitHub is the repo to open in Cursor.
 - GitHub clone is Hub/Cursor complete: `Assets/`, `Packages/manifest.json`, `ProjectSettings/`, USB C# package, `playable/`, artifacts tape including `colony-haul-run.webm`.
 - Out of scope: multiplayer, cloud meta, deep tech tree, campaign.
