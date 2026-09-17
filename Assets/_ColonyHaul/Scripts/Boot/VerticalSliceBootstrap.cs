@@ -73,6 +73,9 @@ namespace ColonyHaul
         float _padUntil;
         string _padNodeId;
         BuildingType _padType;
+        float _gunUntil;
+        string _gunNodeId;
+        bool _gunSplash;
         float _railDropUntil;
         string _railDropEdgeId;
         bool _farmPlanted;
@@ -166,6 +169,9 @@ namespace ColonyHaul
             _plantUntil = 0f;
             _padUntil = 0f;
             _padNodeId = null;
+            _gunUntil = 0f;
+            _gunNodeId = null;
+            _gunSplash = false;
             _railDropUntil = 0f;
             _railDropEdgeId = null;
             _farmPlanted = false;
@@ -390,6 +396,14 @@ namespace ColonyHaul
                         _juice.PadDrop(ev.X, ev.Z, "PWR", new Color(0.4f, 0.75f, 1f));
                         break;
                     }
+                    if (planted.Type == BuildingType.Kinetic || planted.Type == BuildingType.Splash)
+                    {
+                        _gunUntil = Time.time + 0.85f;
+                        _gunNodeId = planted.NodeId;
+                        _gunSplash = planted.Type == BuildingType.Splash;
+                        _juice.GunSet(ev.X, ev.Z, _gunSplash);
+                        break;
+                    }
                     break;
                 }
                 case SimEventKind.Win:
@@ -446,6 +460,16 @@ namespace ColonyHaul
         bool PadLive()
         {
             return Time.time < _padUntil && !string.IsNullOrEmpty(_padNodeId);
+        }
+
+        bool GunLive()
+        {
+            return Time.time < _gunUntil && !string.IsNullOrEmpty(_gunNodeId);
+        }
+
+        Color GunTint()
+        {
+            return _gunSplash ? new Color(0.94f, 0.63f, 0.38f) : new Color(0.45f, 0.9f, 0.88f);
         }
 
         Color PadTint()
@@ -594,6 +618,10 @@ namespace ColonyHaul
                 fog = Color.Lerp(dusk, _padType == BuildingType.Power
                     ? new Color(0.1f, 0.28f, 0.48f)
                     : new Color(0.42f, 0.22f, 0.08f), 0.4f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 8f)));
+            else if (GunLive())
+                fog = Color.Lerp(dusk, _gunSplash
+                    ? new Color(0.42f, 0.18f, 0.08f)
+                    : new Color(0.1f, 0.36f, 0.38f), 0.4f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 9f)));
             if (_game.Phase == Phase.Playing && _game.WaveIndex >= 5 && !_game.Surging)
             {
                 var ember = new Color(0.34f, 0.08f, 0.04f);
@@ -663,6 +691,10 @@ namespace ColonyHaul
                     bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), _padType == BuildingType.Power
                         ? new Color(0.08f, 0.24f, 0.42f)
                         : new Color(0.36f, 0.18f, 0.06f), 0.42f);
+                else if (GunLive())
+                    bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), _gunSplash
+                        ? new Color(0.36f, 0.16f, 0.06f)
+                        : new Color(0.08f, 0.32f, 0.34f), 0.42f);
                 if (_game.Phase == Phase.Playing && _game.WaveIndex >= 5 && !_game.Surging)
                     bg = Color.Lerp(bg, new Color(0.32f, 0.06f, 0.04f), _game.Enemies.Count > 0 ? 0.22f : 0.1f);
                 _cam.backgroundColor = bg;
@@ -719,6 +751,8 @@ namespace ColonyHaul
                     var westPulse = 1.08f + 0.16f * Mathf.Abs(Mathf.Sin(Time.time * 8f));
                     c = new Color(0.94f * westPulse, 0.63f * westPulse, 0.38f);
                 }
+                else if (GunLive() && n.Id == _gunNodeId)
+                    c = GunTint() * (1.08f + 0.14f * Mathf.Abs(Mathf.Sin(Time.time * 11f)));
                 else if (_game.OpenChokeId() == n.Id)
                     c = Color.Lerp(new Color(0.62f, 0.52f, 0.4f), new Color(1f * pulse, 0.38f * pulse, 0.22f), 0.7f);
                 else if (_game.SlowChokeId() == n.Id)
@@ -871,6 +905,8 @@ namespace ColonyHaul
                 else if ((b.Type == BuildingType.Kinetic || b.Type == BuildingType.Splash)
                          && _game.GunsUpNodeId() == b.NodeId)
                     tint = Color.Lerp(tint, new Color(0.45f, 0.9f, 0.88f), 0.45f * pulse);
+                else if (GunLive() && b.NodeId == _gunNodeId)
+                    tint = Color.Lerp(tint, GunTint(), 0.55f * pulse);
                 if (b.Type == BuildingType.Power && (_game.GunsHungry() || _game.GunsUpLive() || _game.GunsBackLive() || _game.RailLiveTouches(b.NodeId)))
                     tint = Color.Lerp(tint, new Color(0.45f, 0.9f, 1f), 0.45f * pulse);
                 if (HoldYankLive() && b.Type == BuildingType.Power && _game.HoldOrder == HoldOrder.Power)
@@ -947,6 +983,8 @@ namespace ColonyHaul
                     tr.localScale = _buildingScale[b.Id] * (0.92f + 0.05f * Mathf.Abs(Mathf.Sin(Time.time * 12f)));
                 else if (b.Type == BuildingType.Splash && Time.time < _slamUntil && b.NodeId == _slamNodeId)
                     tr.localScale = _buildingScale[b.Id] * (1f + 0.16f * Mathf.Abs(Mathf.Sin(Time.time * 14f)));
+                else if (GunLive() && b.NodeId == _gunNodeId)
+                    tr.localScale = _buildingScale[b.Id] * (1f + 0.16f * Mathf.Abs(Mathf.Sin(Time.time * 11f)));
                 else if ((b.Type == BuildingType.Kinetic || b.Type == BuildingType.Splash) && _game.GunsBackLive())
                     tr.localScale = _buildingScale[b.Id] * (1f + 0.14f * Mathf.Abs(Mathf.Sin(Time.time * 10f)));
                 else if (PlantLive() && b.Type == BuildingType.Farm)

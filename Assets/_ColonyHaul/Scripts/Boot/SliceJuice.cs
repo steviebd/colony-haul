@@ -196,6 +196,17 @@ namespace ColonyHaul
             _audio.PlayOneShot(_deposit, 0.4f);
         }
 
+        public void GunSet(float x, float z, bool splash)
+        {
+            var color = splash ? new Color(0.94f, 0.63f, 0.38f) : new Color(0.45f, 0.9f, 0.88f);
+            SpawnPip(x, z, "SET", color, 1.05f);
+            Spokes(x, z, 1.7f, color);
+            SpawnBurst(x, z, new Color(color.r, color.g, color.b, 0.5f), 4.0f, 0.46f);
+            SpawnBurst(x, z, new Color(Mathf.Min(1f, color.r + 0.18f), Mathf.Min(1f, color.g + 0.12f), Mathf.Min(1f, color.b + 0.1f), 0.3f), 2.4f, 0.3f);
+            Punch(0.32f);
+            _audio.PlayOneShot(_rail, splash ? 0.48f : 0.55f);
+        }
+
         public void GunsClick(float x, float z)
         {
             SpawnPip(x, z, "DRY", new Color(1f, 0.45f, 0.22f), 1.1f);

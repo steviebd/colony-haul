@@ -31,7 +31,7 @@ Scenes are thin on purpose. `VerticalSliceBootstrap` builds the dusk mesa, pads,
 
 ### Play in the Editor
 
-- Place a **Farm** on the south mesa pad (it blooms **FARM**), then click the **Hub** to lay mag-rail (**RAIL** drop, a fat teach stroke). Later pads stroke the same way when you click Hub — splice still owns RAIL LIVE. The first cart pops **HAUL** and the first drop blooms **HOME**. Planting a Mine or Power blooms **MINE** / **PWR** on that pad (FARM UP / LINE DOWN stay the opening). Haulers only move on live rails. Gun shots stay thin bolts.
+- Place a **Farm** on the south mesa pad (it blooms **FARM**), then click the **Hub** to lay mag-rail (**RAIL** drop, a fat teach stroke). Later pads stroke the same way when you click Hub — splice still owns RAIL LIVE. The first cart pops **HAUL** and the first drop blooms **HOME**. Planting a Mine or Power blooms **MINE** / **PWR** on that pad (FARM UP / LINE DOWN stay the opening). Kinetic / Splash click **SET**s the barrel — **GUNS UP** still names going live. Haulers only move on live rails. Gun shots stay thin bolts.
 - Keys `1–7`: Farm, Mine, Power, Route, Kinetic, Splash, Barrier. `U` Hub L2. `H` Hold order (wave 4 + Hub L2). `D` demo (fresh seed-7 watch). `R` restart (clears leftover juice so FIRST LINE can land again).
 - Left tray is clickable. Splash stays locked until Hub L2.
 - Top-right logistics strip: loaded vs idle haulers, E/N/W lane counts (hottest marked `*`), next-wave copy, gun-fire fuse, and a larder clock (`~Ns of food`). HAUL CUT names the stake (BRACE / Power / farm / ore) plus splice countdown.
@@ -128,6 +128,7 @@ Tick stays one loop. Seed-7 demo still wins. Mid-game is readable, and a haul du
 78. **Pass 71 END PAIR** — after HOLD / FALL the card offers **Run it back** (R, you take the watch) and **Watch a run** (D, fresh seed-7 demo). FRESH R / FRESH D already clear leftover juice. Tick unchanged. No new Hub counters. Kill punch skipped.
 79. **Pass 72 LINE OUT** — every new mag-rail now *strokes* like the first. Mine / Power / second Farm click-Hub drops **RAIL**, fattens the corridor, and beeps the rail — not a quiet deposit tick. FIRST LINE still owns the opening **LINE DOWN** banner, HAUL, and HOME. Splice still owns RAIL LIVE. Juice only — Tick unchanged. No new Hub counters. Kill punch skipped.
 80. **Pass 73 PAD DROP** — planting a Mine or Power now *drops* on the pad. **MINE** / **PWR** bloom, the pad pulses, the cube fattens. FIRST LINE still owns FARM / LINE DOWN / HAUL / HOME. LINE OUT still owns the click-Hub stroke. No banner steal. Juice only — Tick unchanged. No new Hub counters. Kill punch skipped.
+81. **Pass 74 GUN SET** — clicking Kinetic or Splash now *sets* the barrel. **SET** bloom on the choke for 0.85s, then **GUNS UP** still names going live. WEST LIFT still owns WEST. SLAM still owns shots. GATE still owns Barrier. No banner steal. Juice only — Tick unchanged. No new Hub counters. Kill punch skipped.
 
 Folder layout: `Assets/_ColonyHaul/{Scripts,Art,Prefabs,Scenes,UI,Audio}`.
 
@@ -187,7 +188,7 @@ Do not treat the Vite client as the ship target. Keep it only when kernel parity
 
 - This cloud VM has no Unity Editor, so Editor Play is documented, not screenshot-verified here. Headless C# is what the menu item runs.
 - Runtime art is procedural low-poly, not authored FBX.
-- Pass 56–73 course-correct: stop growing Hub counter chips; BRACE SHRUG, SPLICE RELEASE, HOLD YANK, DRY→BACK, FIRST LINE, WEST LIFT, HOLD / FALL, DUSK CLOSE, SPLASH SLAM, SLOW GATE, CREW OUT, ONE LINE, FRESH R, FRESH D, STROKE, END PAIR, LINE OUT, and PAD DROP shipped.
+- Pass 56–74 course-correct: stop growing Hub counter chips; BRACE SHRUG, SPLICE RELEASE, HOLD YANK, DRY→BACK, FIRST LINE, WEST LIFT, HOLD / FALL, DUSK CLOSE, SPLASH SLAM, SLOW GATE, CREW OUT, ONE LINE, FRESH R, FRESH D, STROKE, END PAIR, LINE OUT, PAD DROP, and GUN SET shipped.
 - Origin `tmp-*` remote cannot be renamed with the current CLI; GitHub is the repo to open in Cursor.
 - GitHub clone is Hub/Cursor complete: `Assets/`, `Packages/manifest.json`, `ProjectSettings/`, USB C# package, `playable/`, artifacts tape including `colony-haul-run.webm`.
 - Out of scope: multiplayer, cloud meta, deep tech tree, campaign.
