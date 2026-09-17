@@ -187,6 +187,25 @@ namespace ColonyHaul
             return "LAST";
         }
 
+        public int LiveRunners()
+        {
+            var n = 0;
+            foreach (var e in Enemies)
+                if (e.Type == EnemyType.Runner) n++;
+            return n;
+        }
+
+        public bool RunnerCountLive()
+        {
+            return Phase == Phase.Playing && LiveRunners() > 0;
+        }
+
+        public string RunnerCountChip()
+        {
+            if (!RunnerCountLive()) return null;
+            return "RUN " + LiveRunners();
+        }
+
         public bool CrewStretched()
         {
             return ProducerCount() > WorkersTotal;
