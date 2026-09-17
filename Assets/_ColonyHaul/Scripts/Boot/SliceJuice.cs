@@ -52,6 +52,7 @@ namespace ColonyHaul
         readonly AudioClip _rail;
         readonly AudioClip _raise;
         readonly AudioClip _west;
+        readonly AudioClip _slam;
         readonly AudioClip _alarm;
         readonly AudioSource _alarmSrc;
         bool _alarmOn;
@@ -82,6 +83,7 @@ namespace ColonyHaul
             _rail = Beep(540f, 0.22f);
             _raise = Beep(470f, 0.26f);
             _west = Beep(390f, 0.3f);
+            _slam = Beep(310f, 0.24f);
             _alarm = Drone(92f, 0.42f);
             _alarmSrc = cam.gameObject.AddComponent<AudioSource>();
             _alarmSrc.playOnAwake = false;
@@ -261,6 +263,16 @@ namespace ColonyHaul
             AddTracer(0f, 0f, 0.9f, x, z, 0.85f, new Color(0.94f, 0.63f, 0.38f), 0.7f);
             Punch(0.42f);
             _audio.PlayOneShot(_west, 0.7f);
+        }
+
+        public void SplashSlam(float x, float z)
+        {
+            SpawnPip(x, z, "SLAM", new Color(0.94f, 0.63f, 0.38f), 0.85f);
+            Spokes(x, z, 2.2f, new Color(0.94f, 0.63f, 0.38f));
+            SpawnBurst(x, z, new Color(0.94f, 0.63f, 0.38f, 0.55f), 5.4f, 0.5f);
+            SpawnBurst(x, z, new Color(1f, 0.82f, 0.5f, 0.32f), 3.0f, 0.34f);
+            Punch(0.48f);
+            _audio.PlayOneShot(_slam, 0.7f);
         }
 
         public void MesaHold()
@@ -528,11 +540,8 @@ namespace ColonyHaul
                     _audio.PlayOneShot(_shot, 0.35f);
                     break;
                 case SimEventKind.Splash:
-                    AddTracer(ev, new Color(0.95f, 0.7f, 0.35f), 0.18f);
-                    Spokes(ev.ToX, ev.ToZ, 1.6f, new Color(0.95f, 0.7f, 0.35f));
-                    SpawnBurst(ev.ToX, ev.ToZ, new Color(0.94f, 0.63f, 0.38f, 0.55f), 3.2f);
-                    _audio.PlayOneShot(_shot, 0.45f);
-                    Punch(0.4f);
+                    AddTracer(ev, new Color(0.95f, 0.7f, 0.35f), 0.28f);
+                    SplashSlam(ev.ToX, ev.ToZ);
                     break;
                 case SimEventKind.Deposit:
                     _audio.PlayOneShot(_deposit, 0.4f);

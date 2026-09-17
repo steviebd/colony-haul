@@ -37,7 +37,7 @@ Scenes are thin on purpose. `VerticalSliceBootstrap` builds the dusk mesa, pads,
 - Top-right logistics strip: loaded vs idle haulers, E/N/W lane counts (hottest marked `*`), next-wave copy, gun-fire fuse, and a larder clock (`~Ns of food`). HAUL CUT names the stake (BRACE / Power / farm / ore) plus splice countdown.
 - Opening coach: 1 Farm (south pad) → 2 rail to Hub → 3 first hauls. After that, a mid-watch coach names the next readable call (splice, Power, Hub L2, Splash west, CORE THIN, second farm, HOLD). An unrouted producer pad reads **OFFLINE** with a gold ghost rail home.
 - Tray: opening Farm/Route still pulse. Mid-watch pulses the called tool. Short-stock tools dim with `· short`. Splash stays locked until Hub L2.
-- Deposits during a raid fire **Rail Surge** (Hub takes less hit damage). Title line reads BRACE while the shield is up; a cyan ring sits on the Hub. Hits during BRACE flash SHRUG (cyan) instead of HIT. Splicing a runner cut flashes RAIL LIVE / SPLICED / ROLLING. Press **U** and **WEST LIFT** raises the Hub gold, then L2 traces **WEST** and the Splash ghost ring blooms on the west choke.
+- Deposits during a raid fire **Rail Surge** (Hub takes less hit damage). Title line reads BRACE while the shield is up; a cyan ring sits on the Hub. Hits during BRACE flash SHRUG (cyan) instead of HIT. Splicing a runner cut flashes RAIL LIVE / SPLICED / ROLLING. Press **U** and **WEST LIFT** raises the Hub gold, then L2 traces **WEST** and the Splash ghost ring blooms on the west choke. West Splash shots **SLAM** — amber shockwave, slowed raiders crunch.
 - Guns draw range rings. Loaded haulers paint cargo trails. Runners telegraph a magenta intent line to the next pad. Slowed raiders tint cyan. Hottest choke labels EAST/NORTH/WEST. Hub HP is a world bar. Grunts are cubes, brutes capsules, runners thin cylinders. **HOLD / FALL**: a win washes the mesa gold-green (**MESA HOLDS**); Hub HP 0 cracks the pad (**HUB DOWN**); a dead larder goes olive (**STARVED OUT**). Pressing **H** (wave 4 + Hub L2) yanks live carts toward Power or Food — tracers, GUNS/CREW pips, pad pulse.
 - Win: survive 6 waves **and** Hub Level 2. Lose: Hub HP 0, or food stays at 0 for 14s.
 - Runners cut rails. The orange rail pulses, pads read SPLICE, stuck haulers throb amber, and a world chip names the stake (**BRACE** / **PWR** / **FARM** / **ORE**) plus countdown. Route is auto-armed — click the glowing pad.
@@ -118,6 +118,7 @@ Tick stays one loop. Seed-7 demo still wins. Mid-game is readable, and a haul du
 68. **Pass 61 WEST LIFT** — pressing U now *lifts* the Hub, then Splash *unlocks* west. RAISE bloom + gold fog + growing gold rings while the pad spends. L2 land pops **L2**, traces **WEST** to the choke, fattens the ghost Splash ring, and washes the mesa amber for 16s. CREW UP still names the extra haul. Juice only — Tick, Hub L2 time, and Splash unlock window unchanged. Seed-7 still raises during the raid (t≈79) then SplashFresh 16s. No new Hub counters.
 69. **Pass 62 HOLD / FALL** — the watch now *ends*. A win blooms **HOLD**, washes the mesa gold-green, and the rails sing. Hub HP 0 cracks **DOWN** in blood fog; a dead larder goes olive **STARVED**. Juice only — Tick, win rule (6 waves + Hub L2), and lose timers unchanged. Seed-7 still wins at t≈184.45. No new Hub counters.
 70. **Pass 63 DUSK CLOSE** — last raids now *close in*. Wave 5/6 punch **LAST**, the camera pulls onto the Hub, fog shortens, and the sun drops ember-red. Dusk heat stays under the fight (BRACE cyan still wins the shield). Juice only — Tick and last-raid wave math unchanged. Seed-7 still titles LAST RAIDS on waves 5–6. No new Hub counters.
+71. **Pass 64 SPLASH SLAM** — west Splash now *slams*. Each shot pops **SLAM**, a fat amber shockwave, and a low boom — not a kinetic tick. The barrel ring fattens; slowed raiders crunch. WEST LIFT's payoff. Juice only — Tick, Splash radius/slow, and cooldown unchanged. Seed-7 still plants west Splash. No new Hub counters.
 
 Folder layout: `Assets/_ColonyHaul/{Scripts,Art,Prefabs,Scenes,UI,Audio}`.
 
@@ -177,7 +178,7 @@ Do not treat the Vite client as the ship target. Keep it only when kernel parity
 
 - This cloud VM has no Unity Editor, so Editor Play is documented, not screenshot-verified here. Headless C# is what the menu item runs.
 - Runtime art is procedural low-poly, not authored FBX.
-- Pass 56–63 course-correct: stop growing Hub counter chips; BRACE SHRUG, SPLICE RELEASE, HOLD YANK, DRY→BACK, FIRST LINE, WEST LIFT, HOLD / FALL, and DUSK CLOSE shipped.
+- Pass 56–64 course-correct: stop growing Hub counter chips; BRACE SHRUG, SPLICE RELEASE, HOLD YANK, DRY→BACK, FIRST LINE, WEST LIFT, HOLD / FALL, DUSK CLOSE, and SPLASH SLAM shipped.
 - Origin `tmp-*` remote cannot be renamed with the current CLI; GitHub is the repo to open in Cursor.
 - GitHub clone is Hub/Cursor complete: `Assets/`, `Packages/manifest.json`, `ProjectSettings/`, USB C# package, `playable/`, artifacts tape including `colony-haul-run.webm`.
 - Out of scope: multiplayer, cloud meta, deep tech tree, campaign.

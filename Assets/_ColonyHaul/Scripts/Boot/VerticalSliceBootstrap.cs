@@ -76,6 +76,8 @@ namespace ColonyHaul
         bool _railDropped;
         bool _firstHaulJuiced;
         bool _firstDropJuiced;
+        float _slamUntil;
+        string _slamNodeId;
         bool _hubBraceFlash;
         bool _coreAlarm;
         bool _surgeBannered;
@@ -161,6 +163,8 @@ namespace ColonyHaul
             _railDropped = false;
             _firstHaulJuiced = false;
             _firstDropJuiced = false;
+            _slamUntil = 0f;
+            _slamNodeId = null;
             _hubBraceFlash = false;
             _coreAlarm = false;
             _surgeBannered = false;
@@ -313,7 +317,10 @@ namespace ColonyHaul
                     }
                     break;
                 case SimEventKind.Shot:
+                    break;
                 case SimEventKind.Splash:
+                    _slamUntil = Time.time + 0.42f;
+                    _slamNodeId = ev.NodeId;
                     break;
                 case SimEventKind.Deposit:
                     if (!_firstDropJuiced && _game.OpeningStep() == 3)
@@ -839,6 +846,8 @@ namespace ColonyHaul
                     tr.localScale = _buildingScale[b.Id] * (1f + 0.16f * Mathf.Abs(Mathf.Sin(Time.time * 11f)));
                 else if ((b.Type == BuildingType.Kinetic || b.Type == BuildingType.Splash) && _game.PowerBrownout)
                     tr.localScale = _buildingScale[b.Id] * (0.92f + 0.05f * Mathf.Abs(Mathf.Sin(Time.time * 12f)));
+                else if (b.Type == BuildingType.Splash && Time.time < _slamUntil && b.NodeId == _slamNodeId)
+                    tr.localScale = _buildingScale[b.Id] * (1f + 0.16f * Mathf.Abs(Mathf.Sin(Time.time * 14f)));
                 else if ((b.Type == BuildingType.Kinetic || b.Type == BuildingType.Splash) && _game.GunsBackLive())
                     tr.localScale = _buildingScale[b.Id] * (1f + 0.14f * Mathf.Abs(Mathf.Sin(Time.time * 10f)));
                 else if (PlantLive() && b.Type == BuildingType.Farm)
@@ -1052,6 +1061,8 @@ namespace ColonyHaul
                 MesaView.Tint(tr.gameObject, c);
                 if (e.Type == EnemyType.Runner)
                     tr.localScale = MesaView.EnemyScale(e.Type) * (1f + 0.08f * Mathf.Abs(Mathf.Sin(Time.time * 14f)));
+                else if (_game.RaiderSlowed(e))
+                    tr.localScale = MesaView.EnemyScale(e.Type) * (0.86f + 0.06f * Mathf.Abs(Mathf.Sin(Time.time * 9f)));
                 else if (_game.ChewingHub(e))
                     tr.localScale = MesaView.EnemyScale(e.Type) * (1f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 10f)));
                 else if (_game.ClosingOnHub(e))
@@ -1106,10 +1117,16 @@ namespace ColonyHaul
                 else if (_game.GunsBackLive() && (b.Type == BuildingType.Kinetic || b.Type == BuildingType.Splash || b.Type == BuildingType.Hub))
                     ringColor = Color.Lerp(ringColor, new Color(0.48f, 0.95f, 0.62f, 0.55f), 0.5f);
                 var ringRange = range;
+                var slamming = Time.time < _slamUntil && b.Type == BuildingType.Splash
+                    && b.NodeId == _slamNodeId;
                 if (dry)
                     ringRange *= 0.88f + 0.04f * Mathf.Abs(Mathf.Sin(Time.time * 10f));
+                else if (slamming)
+                    ringRange *= 1.18f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 14f));
                 else if (_game.GunsBackLive() && (b.Type == BuildingType.Kinetic || b.Type == BuildingType.Splash || b.Type == BuildingType.Hub))
                     ringRange *= 1.12f + 0.08f * Mathf.Abs(Mathf.Sin(Time.time * 9f));
+                if (slamming)
+                    ringColor = Color.Lerp(ringColor, new Color(1f, 0.82f, 0.5f, 0.62f), 0.55f);
                 EnsureRing(b.Id, node, ringRange, ringColor);
             }
             if (_game.SelectedTool == Tool.Kinetic || _game.SelectedTool == Tool.Splash)
