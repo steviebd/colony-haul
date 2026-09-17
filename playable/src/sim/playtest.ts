@@ -186,6 +186,86 @@ function holdOrderRushesPower(): void {
   assert(chasing, 'GUNS order should send a hauler at Power within 8s');
 }
 
+function holdCore(): Game {
+  const game = new Game(7);
+  game.setTool('farm');
+  assert(game.clickNode('pad_s').ok, 'farm should place');
+  assert(game.clickNode('hub').ok, 'farm rail');
+  game.setTool('power');
+  assert(game.clickNode('pad_se').ok, 'power should place');
+  assert(game.clickNode('hub').ok, 'power rail');
+  const step = 1 / 20;
+  for (let i = 0; i < 20 * 4; i += 1) game.tick(step);
+  game.hubLevel = 2;
+  game.waveIndex = 4;
+  return game;
+}
+
+function holdOrderPeelsLoadedFood(): void {
+  const game = holdCore();
+  const farm = game.buildings.get('pad_s');
+  assert(farm?.type === 'farm', 'farm pad');
+  const hauler = game.haulers[0];
+  assert(hauler, 'need a hauler');
+  const amount = 6;
+  hauler.cargo = { kind: 'food', amount };
+  hauler.wait = 0;
+  hauler.path = ['hub'];
+  const bufBefore = farm.buffer.food;
+  const armed = game.cycleHold();
+  assert(armed.ok, armed.why ?? 'GUNS should unlock');
+  assert(game.holdOrder === 'power', 'first cycle is GUNS');
+  assert(!hauler.cargo, 'GUNS should stash unmatched food cargo');
+  assert(
+    farm.buffer.food >= bufBefore + amount - 0.001,
+    `food must return to the pad (${farm.buffer.food} vs ${bufBefore}+${amount})`,
+  );
+  const step = 1 / 20;
+  for (let i = 0; i < 20 * 8; i += 1) game.tick(step);
+  const chasing = game.haulers.some((h) => h.cargo?.kind === 'power' || h.path.includes('pad_se'));
+  assert(chasing, 'after peel, a hauler should chase Power within 8s');
+}
+
+function holdOrderKeepsMatchingPower(): void {
+  const game = holdCore();
+  const hauler = game.haulers[0];
+  assert(hauler, 'need a hauler');
+  hauler.cargo = { kind: 'power', amount: 5 };
+  hauler.wait = 0;
+  hauler.path = ['hub'];
+  const armed = game.cycleHold();
+  assert(armed.ok, armed.why ?? 'GUNS should unlock');
+  assert(hauler.cargo?.kind === 'power', 'GUNS must keep matching Power cargo');
+  assert(hauler.cargo.amount === 5, 'Power cargo must not vanish');
+  assert(
+    hauler.nodeId === 'hub' || hauler.path.includes('hub'),
+    `matching Power haul should still rush Hub, path=${hauler.path.join(',')}`,
+  );
+}
+
+function holdOrderCrewPeelsPower(): void {
+  const game = holdCore();
+  const pylon = game.buildings.get('pad_se');
+  assert(pylon?.type === 'power', 'power pad');
+  const hauler = game.haulers[0];
+  assert(hauler, 'need a hauler');
+  const amount = 5;
+  hauler.cargo = { kind: 'power', amount };
+  hauler.wait = 0;
+  hauler.path = ['hub'];
+  const guns = game.cycleHold();
+  assert(guns.ok && game.holdOrder === 'power', 'first cycle is GUNS');
+  assert(hauler.cargo?.kind === 'power', 'GUNS keeps Power cargo');
+  const bufBefore = pylon.buffer.power;
+  const crew = game.cycleHold();
+  assert(crew.ok && game.holdOrder === 'food', `second cycle is CREW, got ${game.holdOrder}`);
+  assert(!hauler.cargo, 'CREW should stash unmatched Power cargo');
+  assert(
+    pylon.buffer.power >= bufBefore + amount - 0.001,
+    `power must return to the pylon (${pylon.buffer.power} vs ${bufBefore}+${amount})`,
+  );
+}
+
 nestedFarmRouteHub();
 openingGateBlocksDeadClicks();
 kineticAffordableAfterCore();
@@ -195,6 +275,9 @@ hubDiesWithoutDefense();
 starveWithoutFarm();
 onlyFarmRailCutMidWave();
 holdOrderRushesPower();
+holdOrderPeelsLoadedFood();
+holdOrderKeepsMatchingPower();
+holdOrderCrewPeelsPower();
 const headless = runHeadless({ seed: 7, seconds: 480, demo: true });
 assert(headless.win, `demo must win, got ${headless.phase} t=${headless.t}`);
 assert(headless.deposits >= 8, `too few deposits ${headless.deposits}`);
@@ -206,7 +289,10 @@ const stress = [
   { case: 'food starve (no farm)', result: 'pass', notes: 'farm rail held cut; guns keep Hub up until food 0 for 14s' },
   { case: 'soft-lock early costs', result: 'pass', notes: 'farm+mine+power+routes still afford kinetic (ore>=16)' },
   { case: 'only farm rail cut mid-wave', result: 'pass', notes: 'haulCut, pad_s offline, Route ghosts Hub' },
-  { case: 'hold order GUNS', result: 'pass', notes: 'locked before wave 4/L2; then haulers chase Power' },
+      { case: 'hold order GUNS', result: 'pass', notes: 'locked before wave 4/L2; then haulers chase Power' },
+      { case: 'hold order peels loaded food', result: 'pass', notes: 'GUNS stashes food cargo back to the farm, then peels to Power' },
+      { case: 'hold order keeps matching Power', result: 'pass', notes: 'GUNS keeps a Power haul rolling to Hub' },
+      { case: 'hold order CREW peels Power', result: 'pass', notes: 'CREW stashes Power cargo back to the pylon' },
 ];
 console.log(
   JSON.stringify(

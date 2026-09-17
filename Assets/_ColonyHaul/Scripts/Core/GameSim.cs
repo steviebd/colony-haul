@@ -268,8 +268,8 @@ namespace ColonyHaul
             switch (HoldOrder)
             {
                 case HoldOrder.Auto: return "HOLD auto · H guns / crew";
-                case HoldOrder.Power: return "GUNS ORDER · haulers rush Power · H flips";
-                case HoldOrder.Food: return "CREW ORDER · haulers rush Food · H flips";
+                case HoldOrder.Power: return "GUNS ORDER · loaded haulers peel to Power · H flips";
+                case HoldOrder.Food: return "CREW ORDER · loaded haulers peel to Food · H flips";
                 default: throw new ArgumentOutOfRangeException(nameof(HoldOrder), HoldOrder, null);
             }
         }
@@ -295,17 +295,17 @@ namespace ColonyHaul
                 case HoldOrder.Food: HoldOrder = HoldOrder.Auto; break;
                 default: throw new ArgumentOutOfRangeException(nameof(HoldOrder), HoldOrder, null);
             }
-            ReplanIdleHaulers();
+            ReplanForHold();
             string reason;
             switch (HoldOrder)
             {
                 case HoldOrder.Power:
                     reason = "power";
-                    Hint = "GUNS ORDER. Haulers rush Power. Deposits still BRACE the Hub.";
+                    Hint = "GUNS ORDER. Loaded haulers stash other cargo and peel to Power. Deposits still BRACE the Hub.";
                     break;
                 case HoldOrder.Food:
                     reason = "food";
-                    Hint = "CREW ORDER. Haulers rush Food. Splice still beats this.";
+                    Hint = "CREW ORDER. Loaded haulers stash other cargo and peel to Food. Splice still beats this.";
                     break;
                 case HoldOrder.Auto:
                     reason = "auto";
@@ -317,14 +317,63 @@ namespace ColonyHaul
             return true;
         }
 
-        void ReplanIdleHaulers()
+        void ReplanForHold()
         {
+            var peel = HoldOrder == HoldOrder.Power || HoldOrder == HoldOrder.Food;
+            Resource want;
+            switch (HoldOrder)
+            {
+                case HoldOrder.Power:
+                    want = Resource.Power;
+                    break;
+                case HoldOrder.Food:
+                    want = Resource.Food;
+                    break;
+                case HoldOrder.Auto:
+                    want = Resource.Ore;
+                    break;
+                default: throw new ArgumentOutOfRangeException(nameof(HoldOrder), HoldOrder, null);
+            }
             foreach (var h in Haulers)
             {
-                if (h.Wait > 0 || h.CargoAmount > 0) continue;
+                if (!peel)
+                {
+                    if (h.Wait > 0 || h.CargoAmount > 0) continue;
+                    h.Path.Clear();
+                    PlanHauler(h);
+                    continue;
+                }
+                if (h.CargoAmount > 0 && h.CargoKind != null && h.CargoKind.Value != want)
+                    StashCargo(h);
+                h.Wait = 0f;
+                h.BusyAt = null;
                 h.Path.Clear();
                 PlanHauler(h);
             }
+        }
+
+        void StashCargo(Hauler h)
+        {
+            if (h.CargoAmount <= 0 || h.CargoKind == null) return;
+            var kind = h.CargoKind.Value;
+            Building best = null;
+            var bestLen = int.MaxValue;
+            foreach (var b in Buildings.Values)
+            {
+                if (b.Type != BuildingType.Mine && b.Type != BuildingType.Farm && b.Type != BuildingType.Power) continue;
+                if (ResourceOf(b.Type) != kind) continue;
+                if (b.BuildLeft > 0) continue;
+                if (b.Buffer[kind] + h.CargoAmount > 22f) continue;
+                var path = Pathfind(h.NodeId, b.NodeId, true, false, false);
+                if (path == null) continue;
+                if (path.Count >= bestLen) continue;
+                bestLen = path.Count;
+                best = b;
+            }
+            if (best == null) return;
+            best.Buffer[kind] += h.CargoAmount;
+            h.CargoAmount = 0;
+            h.CargoKind = null;
         }
 
         public int IncomingRaiders => _pending.Count;
@@ -2758,12 +2807,12 @@ namespace ColonyHaul
             }
             if (HoldOrder == HoldOrder.Power)
             {
-                Hint = (PowerBrownout ? "GUNS DRY. " : "") + "GUNS ORDER — haulers rush Power. H to flip.";
+                Hint = (PowerBrownout ? "GUNS DRY. " : "") + "GUNS ORDER — loaded haulers peel to Power. H to flip.";
                 return;
             }
             if (HoldOrder == HoldOrder.Food)
             {
-                Hint = (Food < 8f ? "LARDER THIN. " : "") + "CREW ORDER — haulers rush Food. H to flip.";
+                Hint = (Food < 8f ? "LARDER THIN. " : "") + "CREW ORDER — loaded haulers peel to Food. H to flip.";
                 return;
             }
             var towers = 0;

@@ -445,14 +445,14 @@ namespace ColonyHaul
                     if (ev.Reason == "power")
                     {
                         _audio.PlayOneShot(_surge, 0.55f);
-                        SpawnPip(0f, 0f, "GUNS", new Color(0.4f, 0.75f, 1f));
+                        SpawnPip(0f, 0f, "PEEL", new Color(0.4f, 0.75f, 1f));
                         Spokes(0f, 0f, 1.8f, new Color(0.4f, 0.75f, 1f));
                         SpawnBurst(0f, 0f, new Color(0.4f, 0.75f, 1f, 0.5f), 4.2f);
                     }
                     else if (ev.Reason == "food")
                     {
                         _audio.PlayOneShot(_deposit, 0.55f);
-                        SpawnPip(0f, 0f, "CREW", new Color(0.5f, 0.85f, 0.48f));
+                        SpawnPip(0f, 0f, "PEEL", new Color(0.5f, 0.85f, 0.48f));
                         Spokes(0f, 0f, 1.8f, new Color(0.5f, 0.85f, 0.48f));
                         SpawnBurst(0f, 0f, new Color(0.5f, 0.85f, 0.48f, 0.5f), 4.2f);
                     }

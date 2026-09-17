@@ -155,9 +155,9 @@ namespace ColonyHaul
             else if (game.SlowChokeId() != null)
                 subCopy = game.SlowChokeTitle();
             else if (game.HoldOrder == HoldOrder.Power)
-                subCopy = "GUNS ORDER · haulers rush Power · H flips";
+                subCopy = "GUNS ORDER · loaded haulers peel to Power · H flips";
             else if (game.HoldOrder == HoldOrder.Food)
-                subCopy = "CREW ORDER · haulers rush Food · H flips";
+                subCopy = "CREW ORDER · loaded haulers peel to Food · H flips";
             else if (game.StretchPad() != null)
                 subCopy = game.StretchTitle();
             else if (game.HoldReadyLive())
@@ -441,7 +441,7 @@ namespace ColonyHaul
                         throw new ArgumentOutOfRangeException(nameof(game.HoldOrder), game.HoldOrder, null);
                 }
                 GUI.backgroundColor = holdColor;
-                if (GUI.Button(new Rect(20, holdY, 204, 40), holdLabel + "\nlocks idle haulers · H cycles"))
+                if (GUI.Button(new Rect(20, holdY, 204, 40), holdLabel + "\nloaded carts peel · H cycles"))
                     ConsumeHold = true;
                 GUI.backgroundColor = Color.white;
             }

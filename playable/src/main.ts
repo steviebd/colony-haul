@@ -247,8 +247,8 @@ function juice(events: JuiceEvent[]): void {
         hud.flashBanner('BRACE — haul bought the Hub a breath', 1400);
         break;
       case 'hold':
-        if (ev.reason === 'power') hud.flashBanner('GUNS ORDER — haulers rush Power', 1800);
-        else if (ev.reason === 'food') hud.flashBanner('CREW ORDER — haulers rush Food', 1800);
+        if (ev.reason === 'power') hud.flashBanner('GUNS ORDER — loaded haulers peel to Power', 1800);
+        else if (ev.reason === 'food') hud.flashBanner('CREW ORDER — loaded haulers peel to Food', 1800);
         else hud.flashBanner('Hold auto — hungriest stock', 1400);
         break;
       case 'death':

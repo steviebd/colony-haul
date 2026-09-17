@@ -198,17 +198,39 @@ export class Game {
       }
     }
     for (const h of this.haulers) {
-      if (h.wait > 0 || h.cargo) continue;
+      if (this.holdOrder === 'auto') {
+        if (h.wait > 0 || h.cargo) continue;
+        h.path = [];
+        this.planHauler(h);
+        continue;
+      }
+      let want: Resource;
+      switch (this.holdOrder) {
+        case 'power':
+          want = 'power';
+          break;
+        case 'food':
+          want = 'food';
+          break;
+        default: {
+          const _exhaustive: never = this.holdOrder;
+          void _exhaustive;
+          continue;
+        }
+      }
+      if (h.cargo && h.cargo.kind !== want) this.stashCargo(h);
+      h.wait = 0;
+      h.busyAt = null;
       h.path = [];
       this.planHauler(h);
     }
     switch (this.holdOrder) {
       case 'power':
-        this.hint = 'GUNS ORDER. Haulers rush Power. Deposits still BRACE the Hub.';
+        this.hint = 'GUNS ORDER. Loaded haulers stash other cargo and peel to Power. Deposits still BRACE the Hub.';
         this.emit({ kind: 'hold', nodeId: 'hub', reason: 'power' });
         break;
       case 'food':
-        this.hint = 'CREW ORDER. Haulers rush Food. Splice still beats this.';
+        this.hint = 'CREW ORDER. Loaded haulers stash other cargo and peel to Food. Splice still beats this.';
         this.emit({ kind: 'hold', nodeId: 'hub', reason: 'food' });
         break;
       case 'auto':
@@ -576,6 +598,28 @@ export class Game {
       this.advanceAlongPath(h, dt, BALANCE.haulerSpeed, true);
       if (h.path.length === 0) this.onHaulerArrive(h);
     }
+  }
+
+  private stashCargo(h: Hauler): void {
+    if (!h.cargo) return;
+    const kind = h.cargo.kind;
+    let best: { nodeId: string; len: number } | null = null;
+    for (const b of this.buildings.values()) {
+      if (b.type !== 'mine' && b.type !== 'farm' && b.type !== 'power') continue;
+      if (resourceOf(b.type) !== kind) continue;
+      if (b.buildLeft > 0) continue;
+      const cap = BALANCE.buildings[b.type].bufferCap;
+      if (b.buffer[kind] + h.cargo.amount > cap) continue;
+      const path = this.path(h.nodeId, b.nodeId, { routedOnly: true });
+      if (!path) continue;
+      if (best && path.length >= best.len) continue;
+      best = { nodeId: b.nodeId, len: path.length };
+    }
+    if (!best) return;
+    const pad = this.buildings.get(best.nodeId);
+    if (!pad) return;
+    pad.buffer[kind] += h.cargo.amount;
+    h.cargo = null;
   }
 
   private planHauler(h: Hauler): void {
@@ -1013,8 +1057,8 @@ export class Game {
     if (!hasFarm) this.hint = 'Food is already draining. Place a Farm on a mesa pad, then click the Hub.';
     else if (!farmRouted) this.hint = 'Mag-rail next. Click the Hub to connect this Farm — haulers will not leave the pad until you do.';
     else if (cut) this.hint = 'HAUL CUT. Route is armed — click the glowing pad to splice the rail.';
-    else if (this.holdOrder === 'power') this.hint = 'GUNS ORDER — haulers rush Power. H to flip.';
-    else if (this.holdOrder === 'food') this.hint = 'CREW ORDER — haulers rush Food. H to flip.';
+    else if (this.holdOrder === 'power') this.hint = 'GUNS ORDER — loaded haulers peel to Power. H to flip.';
+    else if (this.holdOrder === 'food') this.hint = 'CREW ORDER — loaded haulers peel to Food. H to flip.';
     else if (this.stock.power < 4 && towers > 0) this.hint = 'Brownout. Towers are dry. Keep the Power pylon on live rails.';
     else if (!hasMine) this.hint = 'Drop a Mine. Haulers only move ore that reaches the Hub.';
     else if (!hasPower) this.hint = 'Plant a Power pylon. Mines, farms, and towers stall without hauled power.';
