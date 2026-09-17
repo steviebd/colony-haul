@@ -2083,6 +2083,15 @@ namespace ColonyHaul
                             _game.SitCountChip() ?? "SIT");
                         GUI.backgroundColor = Color.white;
                     }
+                    if (_game.YardCountLive())
+                    {
+                        GUI.backgroundColor = _game.SitCountLive()
+                            ? new Color(0.72f, 0.42f, 0.08f, 0.92f)
+                            : new Color(0.28f, 0.32f, 0.28f, 0.88f);
+                        GUI.Box(new Rect(hx - 40f, hy + 44f, 80f, 16f),
+                            _game.YardCountChip() ?? "YARD");
+                        GUI.backgroundColor = Color.white;
+                    }
                     if (_game.OpenCountLive())
                     {
                         GUI.backgroundColor = new Color(0.62f, 0.18f, 0.1f, 0.92f);

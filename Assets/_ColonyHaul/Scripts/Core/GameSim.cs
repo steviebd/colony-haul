@@ -2095,6 +2095,29 @@ namespace ColonyHaul
             return null;
         }
 
+        public int HaulersYard()
+        {
+            var n = 0;
+            foreach (var h in Haulers)
+            {
+                if (HaulerBlocked(h)) continue;
+                if (h.CargoAmount > 0 || h.Wait > 0 || h.Path.Count > 0) continue;
+                n++;
+            }
+            return n;
+        }
+
+        public bool YardCountLive()
+        {
+            return Phase == Phase.Playing && HaulersYard() > 0;
+        }
+
+        public string YardCountChip()
+        {
+            if (!YardCountLive()) return null;
+            return "YARD " + HaulersYard();
+        }
+
         public Building SittingStock()
         {
             if (Phase != Phase.Playing) return null;
