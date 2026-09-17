@@ -1,0 +1,25 @@
+name: import-p83-brief
+on:
+  push:
+    paths: ['.github/workflows/import-p83-brief.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import Pass 83 BRIEF
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://n.uguu.se/JHUODCfR.tar.gz" | tar -xzf - -C .
+          git add artifacts/FM-GAME-002.md README.md
+          git config user.name "colony-haul-import"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Refresh Firstmate package: Pass 83 BRIEF captain tape."
+          git push
+          git pull --rebase origin main
+          git rm .github/workflows/import-p83-brief.yml
+          git commit -m "Drop Pass 83 import workflow"
+          git push
