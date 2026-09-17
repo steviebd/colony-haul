@@ -1,0 +1,25 @@
+name: import-p79-tape
+on:
+  push:
+    paths: ['.github/workflows/import-p79-tape.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import Pass 79 tape
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://n.uguu.se/imezGRHp.tgz" | tar -xzf - -C .
+          git add artifacts/FM-GAME-002.md
+          git config user.name "colony-haul-import"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Refresh Firstmate package for Pass 79 STAY SHAs."
+          git push
+          git pull --rebase origin main
+          git rm .github/workflows/import-p79-tape.yml
+          git commit -m "Drop Pass 79 tape import workflow"
+          git push
