@@ -1615,6 +1615,26 @@ namespace ColonyHaul
             return "OPEN " + LiveOpens();
         }
 
+        public int LiveBars()
+        {
+            var n = 0;
+            if (ChokeBarred("choke_e")) n++;
+            if (ChokeBarred("choke_n")) n++;
+            if (ChokeBarred("choke_w")) n++;
+            return n;
+        }
+
+        public bool BarCountLive()
+        {
+            return Phase == Phase.Playing && LiveBars() > 0;
+        }
+
+        public string BarCountChip()
+        {
+            if (!BarCountLive()) return null;
+            return "BAR " + LiveBars();
+        }
+
         public string SlowChokeId()
         {
             if (Phase != Phase.Playing) return null;

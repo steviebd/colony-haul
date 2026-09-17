@@ -2090,6 +2090,13 @@ namespace ColonyHaul
                             _game.OpenCountChip() ?? "OPEN");
                         GUI.backgroundColor = Color.white;
                     }
+                    if (_game.BarCountLive())
+                    {
+                        GUI.backgroundColor = new Color(0.62f, 0.14f, 0.16f, 0.92f);
+                        GUI.Box(new Rect(hx - 102f, hy + 28f, 56f, 16f),
+                            _game.BarCountChip() ?? "BAR");
+                        GUI.backgroundColor = Color.white;
+                    }
                     if (_game.OffCountLive())
                     {
                         GUI.backgroundColor = new Color(0.72f, 0.48f, 0.08f, 0.92f);
