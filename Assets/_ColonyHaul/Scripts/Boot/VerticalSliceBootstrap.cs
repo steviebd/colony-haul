@@ -2110,6 +2110,13 @@ namespace ColonyHaul
                             _game.CutCountChip() ?? "CUT");
                         GUI.backgroundColor = Color.white;
                     }
+                    if (_game.StuckCountLive())
+                    {
+                        GUI.backgroundColor = new Color(0.72f, 0.42f, 0.08f, 0.92f);
+                        GUI.Box(new Rect(hx - 102f, hy - 68f, 56f, 16f),
+                            _game.StuckCountChip() ?? "STUCK");
+                        GUI.backgroundColor = Color.white;
+                    }
                     var chewers = _game.HubChewers();
                     if (chewers > 0)
                     {

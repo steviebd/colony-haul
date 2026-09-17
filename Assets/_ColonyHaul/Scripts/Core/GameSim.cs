@@ -225,6 +225,17 @@ namespace ColonyHaul
             return "CUT " + LiveCuts();
         }
 
+        public bool StuckCountLive()
+        {
+            return Phase == Phase.Playing && HaulersBlocked() > 0;
+        }
+
+        public string StuckCountChip()
+        {
+            if (!StuckCountLive()) return null;
+            return "STUCK " + HaulersBlocked();
+        }
+
         public bool CrewStretched()
         {
             return ProducerCount() > WorkersTotal;
