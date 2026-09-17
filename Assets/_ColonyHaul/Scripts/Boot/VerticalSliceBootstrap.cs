@@ -2139,6 +2139,15 @@ namespace ColonyHaul
                             _game.HubOreChip() ?? "ORE");
                         GUI.backgroundColor = Color.white;
                     }
+                    if (_game.HomeCountLive())
+                    {
+                        GUI.backgroundColor = _game.RaidLive
+                            ? new Color(0.12f, 0.42f, 0.55f, 0.92f)
+                            : new Color(0.55f, 0.42f, 0.12f, 0.88f);
+                        GUI.Box(new Rect(hx - 40f, hy + 60f, 80f, 16f),
+                            _game.HomeCountChip() ?? "HOME");
+                        GUI.backgroundColor = Color.white;
+                    }
                     if (_game.OpenCountLive())
                     {
                         GUI.backgroundColor = new Color(0.62f, 0.18f, 0.1f, 0.92f);
