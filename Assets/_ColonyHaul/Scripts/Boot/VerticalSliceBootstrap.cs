@@ -2125,6 +2125,20 @@ namespace ColonyHaul
                             _game.HubPowerChip() ?? "PWR");
                         GUI.backgroundColor = Color.white;
                     }
+                    if (_game.HubOreLive())
+                    {
+                        Color hubOre;
+                        if (_game.Ore < Balance.BarrierCost)
+                            hubOre = new Color(0.72f, 0.18f, 0.1f, 0.92f);
+                        else if (_game.Ore < Balance.KineticOre)
+                            hubOre = new Color(0.72f, 0.42f, 0.08f, 0.92f);
+                        else
+                            hubOre = new Color(0.48f, 0.36f, 0.08f, 0.88f);
+                        GUI.backgroundColor = hubOre;
+                        GUI.Box(new Rect(hx - 102f, hy + 60f, 56f, 16f),
+                            _game.HubOreChip() ?? "ORE");
+                        GUI.backgroundColor = Color.white;
+                    }
                     if (_game.OpenCountLive())
                     {
                         GUI.backgroundColor = new Color(0.62f, 0.18f, 0.1f, 0.92f);

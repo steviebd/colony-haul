@@ -2353,6 +2353,17 @@ namespace ColonyHaul
             return "PWR " + CeilSecs(Power);
         }
 
+        public bool HubOreLive()
+        {
+            return Phase == Phase.Playing;
+        }
+
+        public string HubOreChip()
+        {
+            if (!HubOreLive()) return null;
+            return "ORE " + CeilSecs(Ore);
+        }
+
         public int StaffedFarms()
         {
             var n = 0;
