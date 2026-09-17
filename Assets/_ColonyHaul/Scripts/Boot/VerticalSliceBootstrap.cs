@@ -2045,6 +2045,20 @@ namespace ColonyHaul
                             _game.StaffChip() ?? "STAFF");
                         GUI.backgroundColor = Color.white;
                     }
+                    if (_game.RaidCountLive())
+                    {
+                        Color raidColor;
+                        if (_game.HubChewers() > 0)
+                            raidColor = new Color(0.72f, 0.12f, 0.1f, 0.92f);
+                        else if (_game.CoreThin)
+                            raidColor = new Color(0.72f, 0.42f, 0.08f, 0.92f);
+                        else
+                            raidColor = new Color(0.48f, 0.18f, 0.14f, 0.88f);
+                        GUI.backgroundColor = raidColor;
+                        GUI.Box(new Rect(hx - 40f, hy - 36f, 80f, 16f),
+                            _game.RaidCountChip() ?? "RAID");
+                        GUI.backgroundColor = Color.white;
+                    }
                     var chewers = _game.HubChewers();
                     if (chewers > 0)
                     {
