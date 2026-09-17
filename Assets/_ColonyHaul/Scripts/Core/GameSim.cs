@@ -2202,6 +2202,17 @@ namespace ColonyHaul
             return "FUSE " + CeilSecs(GunSecondsLeft()) + "s";
         }
 
+        public bool GunCountLive()
+        {
+            return Phase == Phase.Playing && LiveTowers() > 0;
+        }
+
+        public string GunCountChip()
+        {
+            if (!GunCountLive()) return null;
+            return "GUN " + LiveTowers();
+        }
+
         public int StaffedFarms()
         {
             var n = 0;
