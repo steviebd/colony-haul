@@ -49,6 +49,7 @@ namespace ColonyHaul
         readonly AudioClip _dry;
         readonly AudioClip _splice;
         readonly AudioClip _back;
+        readonly AudioClip _rail;
         readonly AudioClip _alarm;
         readonly AudioSource _alarmSrc;
         bool _alarmOn;
@@ -72,6 +73,7 @@ namespace ColonyHaul
             _dry = Beep(140f, 0.2f);
             _splice = Beep(620f, 0.28f);
             _back = Beep(760f, 0.28f);
+            _rail = Beep(540f, 0.22f);
             _alarm = Drone(92f, 0.42f);
             _alarmSrc = cam.gameObject.AddComponent<AudioSource>();
             _alarmSrc.playOnAwake = false;
@@ -161,6 +163,46 @@ namespace ColonyHaul
             SpawnPip(x, z, "FIRE", new Color(0.48f, 0.95f, 0.62f), 1.15f);
             SpawnBurst(x, z, new Color(0.48f, 0.95f, 0.62f, 0.5f), 3.4f, 0.48f);
             Spokes(x, z, 1.5f, new Color(0.48f, 0.95f, 0.62f));
+        }
+
+        public void Planted(float x, float z)
+        {
+            SpawnPip(x, z, "FARM", new Color(0.5f, 0.85f, 0.48f), 1.25f);
+            Spokes(x, z, 1.8f, new Color(0.5f, 0.85f, 0.48f));
+            SpawnBurst(x, z, new Color(0.5f, 0.85f, 0.48f, 0.52f), 4.4f, 0.5f);
+            SpawnBurst(x, z, new Color(0.82f, 0.95f, 0.55f, 0.3f), 2.8f, 0.34f);
+            Punch(0.36f);
+            _audio.PlayOneShot(_deposit, 0.62f);
+        }
+
+        public void RailDrop(float fromX, float fromZ, float toX, float toZ)
+        {
+            var mx = (fromX + toX) * 0.5f;
+            var mz = (fromZ + toZ) * 0.5f;
+            SpawnPip(mx, mz, "RAIL", new Color(0.42f, 0.92f, 0.88f), 1.3f);
+            Spokes(mx, mz, 2.2f, new Color(0.42f, 0.92f, 0.88f));
+            SpawnBurst(mx, mz, new Color(0.42f, 0.92f, 0.88f, 0.55f), 5.6f, 0.55f);
+            SpawnBurst(mx, mz, new Color(0.75f, 0.98f, 0.95f, 0.32f), 3.2f, 0.36f);
+            AddTracer(fromX, fromZ, 0.7f, toX, toZ, 0.7f, new Color(0.42f, 0.92f, 0.88f), 0.62f);
+            Punch(0.42f);
+            _audio.PlayOneShot(_rail, 0.7f);
+        }
+
+        public void FirstHaul(float x, float z)
+        {
+            SpawnPip(x, z, "HAUL", new Color(0.5f, 0.85f, 0.48f), 1.2f);
+            SpawnBurst(x, z, new Color(0.5f, 0.85f, 0.48f, 0.5f), 3.4f, 0.45f);
+            Spokes(x, z, 1.5f, new Color(0.5f, 0.85f, 0.48f));
+            Punch(0.28f);
+        }
+
+        public void FirstDrop()
+        {
+            SpawnPip(0f, 0f, "HOME", new Color(0.5f, 0.85f, 0.48f), 1.25f);
+            Spokes(0f, 0f, 2.0f, new Color(0.5f, 0.85f, 0.48f));
+            SpawnBurst(0f, 0f, new Color(0.5f, 0.85f, 0.48f, 0.5f), 5.2f, 0.5f);
+            Punch(0.32f);
+            _audio.PlayOneShot(_deposit, 0.55f);
         }
 
         public void BraceComing(float x, float z)

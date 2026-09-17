@@ -31,7 +31,7 @@ Scenes are thin on purpose. `VerticalSliceBootstrap` builds the dusk mesa, pads,
 
 ### Play in the Editor
 
-- Place a **Farm** on the south mesa pad (it pulses), then click the **Hub** to lay mag-rail. Haulers only move on live rails.
+- Place a **Farm** on the south mesa pad (it blooms **FARM**), then click the **Hub** to lay mag-rail (**RAIL** drop, line fattens). The first cart pops **HAUL** and the first drop blooms **HOME**. Haulers only move on live rails.
 - Keys `1–7`: Farm, Mine, Power, Route, Kinetic, Splash, Barrier. `U` Hub L2. `H` Hold order (wave 4 + Hub L2). `D` demo. `R` restart.
 - Left tray is clickable. Splash stays locked until Hub L2.
 - Top-right logistics strip: loaded vs idle haulers, E/N/W lane counts (hottest marked `*`), next-wave copy, gun-fire fuse, and a larder clock (`~Ns of food`). HAUL CUT names the stake (BRACE / Power / farm / ore) plus splice countdown.
@@ -114,6 +114,7 @@ Tick stays one loop. Seed-7 demo still wins. Mid-game is readable, and a haul du
 64. **Pass 57 SPLICE RELEASE** — clicking the orange rail now *releases* the haul. SPLICED shockwave on the snap, stuck carts pop **ROLLING**, the recovered line fattens teal, and **RAIL LIVE** blooms with a mesa wash. Juice only — Tick, sabotage chance, and splice timing unchanged. Seed-7 still fires four cuts. No new Hub counters.
 65. **Pass 58 HOLD YANK** — pressing H now *yanks* the carts. Each hauler traces to its first hop, pops **GUNS** or **CREW**, the destination pad pulses, and the mesa washes. Auto skips the yank so demo/seed-7 stays bit-stable. Juice only — Tick and Hold replan unchanged. No new Hub counters.
 66. **Pass 59 DRY→BACK** — guns clicking empty now *dies*, then *comes back*. Every live barrel pops **DRY**, the mesa goes amber-dark, and range rings shrink. When Power returns, barrels bloom **FIRE**, LOCK beams go lime, rings fatten, and **GUNS BACK** washes the mesa. Juice only — Tick, brownout chance, and BACK window unchanged. Seed-7 still browns out once (t≈101.75). No new Hub counters.
+67. **Pass 60 FIRST LINE** — the opening now *lands*. Planting the south Farm blooms **FARM**. Clicking Hub snaps **RAIL** down the corridor and fattens the line. The first cart pops **HAUL**; the first drop blooms **HOME**. Juice only — Tick, opening gate, and haul math unchanged. Seed-7 still farms south then rails Hub. No new Hub counters.
 
 Folder layout: `Assets/_ColonyHaul/{Scripts,Art,Prefabs,Scenes,UI,Audio}`.
 
@@ -173,7 +174,7 @@ Do not treat the Vite client as the ship target. Keep it only when kernel parity
 
 - This cloud VM has no Unity Editor, so Editor Play is documented, not screenshot-verified here. Headless C# is what the menu item runs.
 - Runtime art is procedural low-poly, not authored FBX.
-- Pass 56–59 course-correct: stop growing Hub counter chips; BRACE SHRUG, SPLICE RELEASE, HOLD YANK, and DRY→BACK shipped.
+- Pass 56–60 course-correct: stop growing Hub counter chips; BRACE SHRUG, SPLICE RELEASE, HOLD YANK, DRY→BACK, and FIRST LINE shipped.
 - Origin `tmp-*` remote cannot be renamed with the current CLI; GitHub is the repo to open in Cursor.
 - GitHub clone is Hub/Cursor complete: `Assets/`, `Packages/manifest.json`, `ProjectSettings/`, USB C# package, `playable/`, artifacts tape including `colony-haul-run.webm`.
 - Out of scope: multiplayer, cloud meta, deep tech tree, campaign.
