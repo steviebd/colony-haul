@@ -2080,6 +2080,35 @@ namespace ColonyHaul
             return best;
         }
 
+        public int LiveSits()
+        {
+            if (Phase != Phase.Playing) return 0;
+            if (ActiveCut() != null) return 0;
+            if (OfflinePad() != null) return 0;
+            var n = 0;
+            foreach (var b in Buildings.Values)
+            {
+                if (b.Type != BuildingType.Mine && b.Type != BuildingType.Farm && b.Type != BuildingType.Power) continue;
+                if (b.BuildLeft > 0 || !b.Staffed) continue;
+                if (HaulerBoundFor(b.NodeId)) continue;
+                if (Pathfind(b.NodeId, "hub", true, false, false) == null) continue;
+                if (b.Buffer[ResourceOf(b.Type)] < 6f) continue;
+                n++;
+            }
+            return n;
+        }
+
+        public bool SitCountLive()
+        {
+            return LiveSits() > 0;
+        }
+
+        public string SitCountChip()
+        {
+            if (!SitCountLive()) return null;
+            return "SIT " + LiveSits();
+        }
+
         public string SittingTitle()
         {
             var b = SittingStock();
