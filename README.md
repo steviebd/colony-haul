@@ -199,7 +199,7 @@ Do not treat the Vite client as the ship target. Keep it only when kernel parity
 
 - This cloud VM has no Unity Editor, so Editor Play is documented, not screenshot-verified here. Headless C# is what the menu item runs.
 - Runtime art is procedural low-poly, not authored FBX.
-- Pass 56–83 course-correct: stop growing Hub counter chips; juice through PUT DOWN shipped; Pass 83 is the captain BRIEF (how-to-play, juice list, fun call, SHAs, gaps).
+- Pass 56–83 course-correct: stop growing Hub counter chips; juice through PUT DOWN shipped; Pass 83 BRIEF then **FEATURE FREEZE = Yes**.
 - Origin `tmp-*` remote cannot be renamed with the current CLI; GitHub is the repo to open in Cursor.
 - GitHub clone is Hub/Cursor complete: `Assets/`, `Packages/manifest.json`, `ProjectSettings/`, USB C# package, `playable/`, artifacts tape including `colony-haul-run.webm`.
 - Out of scope: multiplayer, cloud meta, deep tech tree, campaign.
