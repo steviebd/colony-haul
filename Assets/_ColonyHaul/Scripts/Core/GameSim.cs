@@ -1592,6 +1592,29 @@ namespace ColonyHaul
             return "OPEN " + lane + " — plant a gun";
         }
 
+        public int LiveOpens()
+        {
+            if (Phase != Phase.Playing) return 0;
+            if (OpeningStep() != 0) return 0;
+            var lanes = Lanes();
+            var n = 0;
+            if (!NodeArmed("choke_e") && lanes.East > 0) n++;
+            if (!NodeArmed("choke_n") && lanes.North > 0) n++;
+            if (!NodeArmed("choke_w") && lanes.West > 0 && !SplashFresh()) n++;
+            return n;
+        }
+
+        public bool OpenCountLive()
+        {
+            return LiveOpens() > 0;
+        }
+
+        public string OpenCountChip()
+        {
+            if (!OpenCountLive()) return null;
+            return "OPEN " + LiveOpens();
+        }
+
         public string SlowChokeId()
         {
             if (Phase != Phase.Playing) return null;
