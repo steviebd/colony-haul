@@ -139,6 +139,7 @@ Tick stays one loop. Seed-7 demo still wins. Mid-game is readable, and a haul du
 87. **Pass 80 FREE** — clicking the armed Route pad again now *frees* the stake. Pad pops **FREE** (desaturated rail), Hint still says Route cancelled. LINE OUT still owns click-Hub **RAIL**. First-click RouteFrom stays silent so demo rails do not spam. Demo Auto never cancels. Juice only — Tick unchanged. No new Hub counters. Kill punch skipped.
 88. **Pass 81 STOW** — pressing the same tool key again now *stows* it. Hub pops **STOW** (muted steel). Route still does not toggle off — FREE owns the armed-pad cancel. STAY still owns 2–7 before Farm/Hub. Demo Auto never fires it. Juice only — Tick unchanged. No new Hub counters. Kill punch skipped.
 89. **Pass 82 PUT DOWN** — right-click now *puts it down*. Opening still **STAY**s. An armed Route still **FREE**s. A plant/gun/barrier still **STOW**s. Demo Auto ignores RMB so the seed-7 watch cannot be cancelled by a stray click. Tray RMB is ignored. No new pip. Juice only — Tick unchanged. No new Hub counters. Kill punch skipped.
+90. **Pass 83 BRIEF** — Firstmate tape: how-to-play, juice-beat list, fun call, SHAs, gaps. Unity Tick unchanged. No new Hub counters. Kill punch skipped.
 
 Folder layout: `Assets/_ColonyHaul/{Scripts,Art,Prefabs,Scenes,UI,Audio}`.
 
@@ -198,7 +199,7 @@ Do not treat the Vite client as the ship target. Keep it only when kernel parity
 
 - This cloud VM has no Unity Editor, so Editor Play is documented, not screenshot-verified here. Headless C# is what the menu item runs.
 - Runtime art is procedural low-poly, not authored FBX.
-- Pass 56–82 course-correct: stop growing Hub counter chips; BRACE SHRUG, SPLICE RELEASE, HOLD YANK, DRY→BACK, FIRST LINE, WEST LIFT, HOLD / FALL, DUSK CLOSE, SPLASH SLAM, SLOW GATE, CREW OUT, ONE LINE, FRESH R, FRESH D, STROKE, END PAIR, LINE OUT, PAD DROP, GUN SET, TAKE WATCH, SOW, HOLD LET, NOPE, STAY, FREE, STOW, and PUT DOWN shipped.
+- Pass 56–83 course-correct: stop growing Hub counter chips; juice through PUT DOWN shipped; Pass 83 is the captain BRIEF (how-to-play, juice list, fun call, SHAs, gaps).
 - Origin `tmp-*` remote cannot be renamed with the current CLI; GitHub is the repo to open in Cursor.
 - GitHub clone is Hub/Cursor complete: `Assets/`, `Packages/manifest.json`, `ProjectSettings/`, USB C# package, `playable/`, artifacts tape including `colony-haul-run.webm`.
 - Out of scope: multiplayer, cloud meta, deep tech tree, campaign.
