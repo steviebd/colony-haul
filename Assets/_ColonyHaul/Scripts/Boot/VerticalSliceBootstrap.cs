@@ -2092,6 +2092,17 @@ namespace ColonyHaul
                             _game.YardCountChip() ?? "YARD");
                         GUI.backgroundColor = Color.white;
                     }
+                    if (_game.GunFuseLive())
+                    {
+                        Color hubFuse;
+                        if (_game.GunsDry()) hubFuse = new Color(0.72f, 0.18f, 0.1f, 0.92f);
+                        else if (_game.GunsHungry()) hubFuse = new Color(0.72f, 0.42f, 0.08f, 0.92f);
+                        else hubFuse = new Color(0.12f, 0.38f, 0.4f, 0.88f);
+                        GUI.backgroundColor = hubFuse;
+                        GUI.Box(new Rect(hx + 44f, hy + 44f, 56f, 16f),
+                            _game.GunFuseChip() ?? "FUSE");
+                        GUI.backgroundColor = Color.white;
+                    }
                     if (_game.OpenCountLive())
                     {
                         GUI.backgroundColor = new Color(0.62f, 0.18f, 0.1f, 0.92f);
