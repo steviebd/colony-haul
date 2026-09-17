@@ -1,0 +1,30 @@
+name: import-p62-hold-fall
+on:
+  push:
+    paths: ['.github/workflows/import-p62-hold-fall.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import HOLD / FALL slice
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://n.uguu.se/ondQGliO.tar.gz" | tar -xzf - -C .
+          git add \
+            Assets/_ColonyHaul/Scripts/Boot/SliceJuice.cs \
+            Assets/_ColonyHaul/Scripts/Boot/VerticalSliceBootstrap.cs \
+            Assets/_ColonyHaul/Scripts/Boot/SliceHud.cs \
+            README.md
+          git config user.name "colony-haul-import"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Unity slice: HOLD / FALL -- win holds the mesa, lose cracks or starves."
+          git push
+          git pull --rebase origin main
+          rm .github/workflows/import-p62-hold-fall.yml
+          git add .github/workflows/import-p62-hold-fall.yml
+          git commit -m "Drop Pass 62 import workflow"
+          git push
