@@ -1930,6 +1930,29 @@ namespace ColonyHaul
             return UnroutedProducer();
         }
 
+        public int LiveOfflines()
+        {
+            var n = 0;
+            foreach (var b in Buildings.Values)
+            {
+                if (b.Type != BuildingType.Mine && b.Type != BuildingType.Farm && b.Type != BuildingType.Power) continue;
+                if (Pathfind(b.NodeId, "hub", true, false, false) != null) continue;
+                n++;
+            }
+            return n;
+        }
+
+        public bool OffCountLive()
+        {
+            return Phase == Phase.Playing && ActiveCut() == null && LiveOfflines() > 0;
+        }
+
+        public string OffCountChip()
+        {
+            if (!OffCountLive()) return null;
+            return "OFF " + LiveOfflines();
+        }
+
         Building OfflineBuilding()
         {
             var id = OfflinePad();
