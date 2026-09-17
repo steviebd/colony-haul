@@ -1,0 +1,39 @@
+name: import-p54-pwr
+on:
+  push:
+    paths:
+      - '.github/workflows/import-p54-pwr.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import Pass 54 PWR n slice
+        run: |
+          set -euo pipefail
+          git config user.name "colony-haul-import"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          curl -fsSL -o /tmp/p54.tar.gz "https://n.uguu.se/nVpPmCgy.tar.gz"
+          tar -tzf /tmp/p54.tar.gz
+          tar -xzf /tmp/p54.tar.gz -C .
+          git add README.md Assets/_ColonyHaul/Scripts/Boot/VerticalSliceBootstrap.cs Assets/_ColonyHaul/Scripts/Core/GameSim.cs
+          if git diff --cached --quiet; then
+            echo "no slice changes"
+          else
+            git commit -m "Unity slice: PWR n colony tank sits under FUSE on the Hub."
+            git push
+          fi
+          git pull --rebase origin main
+          rm -f .github/workflows/import-p54-pwr.yml
+          git add -A .github/workflows
+          if git diff --cached --quiet; then
+            echo "workflow already gone"
+          else
+            git commit -m "Drop Pass 54 import workflow."
+            git push
+          fi
