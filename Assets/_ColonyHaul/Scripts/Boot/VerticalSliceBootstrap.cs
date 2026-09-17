@@ -369,12 +369,16 @@ namespace ColonyHaul
             var fog = Color.Lerp(dusk, raid, heat);
             if (_game.Surging)
                 fog = Color.Lerp(dusk, new Color(0.18f, 0.42f, 0.52f), 0.55f + 0.12f * Mathf.Abs(Mathf.Sin(Time.time * 9f)));
+            else if (_game.RailLiveLive())
+                fog = Color.Lerp(dusk, new Color(0.1f, 0.4f, 0.38f), 0.46f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 8f)));
             RenderSettings.fogColor = fog;
             if (_cam != null)
             {
                 var bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), raid, heat * 0.7f);
                 if (_game.Surging)
                     bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.12f, 0.38f, 0.48f), 0.55f);
+                else if (_game.RailLiveLive())
+                    bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.1f, 0.36f, 0.34f), 0.48f);
                 _cam.backgroundColor = bg;
             }
         }
@@ -646,7 +650,8 @@ namespace ColonyHaul
                 var pulseW = cutRail || imminent || recovering ? 0.2f + 0.14f * Mathf.Abs(Mathf.Sin(Time.time * 9f))
                     : threat ? 0.2f + 0.08f * Mathf.Abs(Mathf.Sin(Time.time * 7f))
                     : 0.2f;
-                rail.localScale = new Vector3(pulseW, cutRail || imminent || recovering ? 0.12f : 0.08f, Vector3.Distance(pa, pb));
+                if (recovering) pulseW = 0.28f + 0.18f * Mathf.Abs(Mathf.Sin(Time.time * 10f));
+                rail.localScale = new Vector3(pulseW, cutRail || imminent ? 0.12f : recovering ? 0.16f : 0.08f, Vector3.Distance(pa, pb));
                 rail.rotation = Quaternion.LookRotation(pb - pa);
                 Color railColor;
                 if (cutRail)

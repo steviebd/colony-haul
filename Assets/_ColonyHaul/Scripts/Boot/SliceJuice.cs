@@ -69,7 +69,7 @@ namespace ColonyHaul
             _lose = Beep(95f, 0.55f);
             _surge = Beep(990f, 0.22f);
             _dry = Beep(140f, 0.2f);
-            _splice = Beep(620f, 0.16f);
+            _splice = Beep(620f, 0.28f);
             _alarm = Drone(92f, 0.42f);
             _alarmSrc = cam.gameObject.AddComponent<AudioSource>();
             _alarmSrc.playOnAwake = false;
@@ -96,16 +96,20 @@ namespace ColonyHaul
 
         public void Rolling(float x, float z)
         {
-            SpawnPip(x, z, "ROLLING", new Color(0.42f, 0.92f, 0.88f));
-            SpawnBurst(x, z, new Color(0.42f, 0.92f, 0.88f, 0.45f), 1.8f);
+            SpawnPip(x, z, "ROLLING", new Color(0.42f, 0.92f, 0.88f), 1.1f);
+            SpawnBurst(x, z, new Color(0.42f, 0.92f, 0.88f, 0.5f), 3.4f, 0.48f);
+            Spokes(x, z, 1.5f, new Color(0.42f, 0.92f, 0.88f));
+            Punch(0.32f);
         }
 
         public void RailLive(float x, float z, string tag)
         {
-            SpawnPip(x, z, string.IsNullOrEmpty(tag) ? "LIVE" : tag, new Color(0.42f, 0.92f, 0.88f));
-            Spokes(x, z, 1.6f, new Color(0.2f, 0.55f, 0.52f));
-            SpawnBurst(x, z, new Color(0.42f, 0.92f, 0.88f, 0.42f), 3.2f);
-            Punch(0.22f);
+            SpawnPip(x, z, string.IsNullOrEmpty(tag) ? "LIVE" : tag, new Color(0.42f, 0.92f, 0.88f), 1.25f);
+            Spokes(x, z, 2.3f, new Color(0.42f, 0.92f, 0.88f));
+            SpawnBurst(x, z, new Color(0.42f, 0.92f, 0.88f, 0.55f), 6.4f, 0.58f);
+            SpawnBurst(x, z, new Color(0.75f, 0.98f, 0.95f, 0.32f), 3.8f, 0.4f);
+            Punch(0.45f);
+            _audio.PlayOneShot(_splice, 0.55f);
         }
 
         public void Inbound(float x, float z, int count)
@@ -431,11 +435,12 @@ namespace ColonyHaul
                 case SimEventKind.Route:
                     if (ev.Reason == "splice")
                     {
-                        _audio.PlayOneShot(_splice, 0.8f);
-                        Punch(0.55f);
-                        SpawnPip(ev.X, ev.Z, "SPLICED", new Color(0.42f, 0.92f, 0.88f));
-                        SpawnBurst(ev.X, ev.Z, new Color(0.42f, 0.92f, 0.88f, 0.55f), 3.6f);
-                        Spokes(ev.X, ev.Z, 2.1f, new Color(0.42f, 0.92f, 0.88f));
+                        _audio.PlayOneShot(_splice, 0.92f);
+                        Punch(0.75f);
+                        SpawnPip(ev.X, ev.Z, "SPLICED", new Color(0.42f, 0.92f, 0.88f), 1.3f);
+                        SpawnBurst(ev.X, ev.Z, new Color(0.42f, 0.92f, 0.88f, 0.58f), 5.6f, 0.55f);
+                        SpawnBurst(ev.X, ev.Z, new Color(1f, 0.82f, 0.38f, 0.28f), 3.2f, 0.32f);
+                        Spokes(ev.X, ev.Z, 2.6f, new Color(0.42f, 0.92f, 0.88f));
                     }
                     else _audio.PlayOneShot(_deposit, 0.25f);
                     break;

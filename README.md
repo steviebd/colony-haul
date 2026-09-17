@@ -111,6 +111,7 @@ Tick stays one loop. Seed-7 demo still wins. Mid-game is readable, and a haul du
 61. **Pass 54 PWR n** — colony Power chips **PWR n** under FUSE on the Hub. Amber when hungry, red when dry. World chips only — GUNS LOW / GUNS DRY still own the title; FUSE still sits on the barrels; PAD STOCK still sits on the pylons. Seed-7 fires from t=0 and hits 0 on the brownout. Tick unchanged.
 62. **Pass 55 ORE n** — colony Ore chips **ORE n** under LARDER on the Hub. Amber under 16 (can't Kinetic), red under 5 (can't Barrier). World chips only — L2 READY / OPEN / SLOW still own those titles; PAD STOCK still sits on the mines. Seed-7 fires from t=0. Tick unchanged.
 63. **Pass 56 BRACE SHRUG** — a combat deposit's shield now *feels* bought. Hub goes cyan while Surging (chew-red no longer eats the pad). Shield ring + inner core breathe. Chew beams thicken ice-blue. Hits pop **SHRUG** bursts. Mesa fog washes cyan instead of blood. Juice only — Tick, Surge window, and hit math unchanged. Seed-7 still braces from raid deposits. Course-correct: gameplay feel over Hub counters.
+64. **Pass 57 SPLICE RELEASE** — clicking the orange rail now *releases* the haul. SPLICED shockwave on the snap, stuck carts pop **ROLLING**, the recovered line fattens teal, and **RAIL LIVE** blooms with a mesa wash. Juice only — Tick, sabotage chance, and splice timing unchanged. Seed-7 still fires four cuts. No new Hub counters.
 
 Folder layout: `Assets/_ColonyHaul/{Scripts,Art,Prefabs,Scenes,UI,Audio}`.
 
@@ -170,7 +171,7 @@ Do not treat the Vite client as the ship target. Keep it only when kernel parity
 
 - This cloud VM has no Unity Editor, so Editor Play is documented, not screenshot-verified here. Headless C# is what the menu item runs.
 - Runtime art is procedural low-poly, not authored FBX.
-- Pass 56 course-correct: stop growing Hub counter chips; deepen BRACE / splice / Hold peel / brownout juice instead.
+- Pass 56–57 course-correct: stop growing Hub counter chips; BRACE SHRUG and SPLICE RELEASE shipped; leftover Hold peel / brownout juice.
 - Origin `tmp-*` remote cannot be renamed with the current CLI; GitHub is the repo to open in Cursor.
 - GitHub clone is Hub/Cursor complete: `Assets/`, `Packages/manifest.json`, `ProjectSettings/`, USB C# package, `playable/`, artifacts tape including `colony-haul-run.webm`.
 - Out of scope: multiplayer, cloud meta, deep tech tree, campaign.
