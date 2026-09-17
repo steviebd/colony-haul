@@ -222,12 +222,13 @@ namespace ColonyHaul
             if (_pendingRestart)
             {
                 _pendingRestart = false;
+                _pendingDemo = false;
                 Restart(false);
             }
-            if (_pendingDemo)
+            else if (_pendingDemo)
             {
                 _pendingDemo = false;
-                _demo = new DemoPilot();
+                Restart(true);
             }
             if (_pendingManual)
             {
@@ -465,8 +466,8 @@ namespace ColonyHaul
             if (Input.GetKeyDown(KeyCode.Alpha7)) _game.SetTool(Tool.Barrier);
             if (Input.GetKeyDown(KeyCode.U)) _game.TryUpgrade(out _);
             if (Input.GetKeyDown(KeyCode.H)) _game.CycleHold(out _);
-            if (Input.GetKeyDown(KeyCode.D)) _demo = new DemoPilot();
-            if (Input.GetKeyDown(KeyCode.R)) Restart(false);
+            if (Input.GetKeyDown(KeyCode.D)) _pendingDemo = true;
+            if (Input.GetKeyDown(KeyCode.R)) _pendingRestart = true;
             if (Input.mousePosition.x < 236f) return;
             if (Input.mousePosition.y > Screen.height - 86f) return;
             if (!Input.GetMouseButtonDown(0) || _cam == null) return;
