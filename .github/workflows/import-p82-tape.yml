@@ -1,0 +1,25 @@
+name: import-p82-tape
+on:
+  push:
+    paths: ['.github/workflows/import-p82-tape.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import Pass 82 tape
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://d.uguu.se/JvPcYDvt.tar.gz" | tar -xzf - -C .
+          git add artifacts/FM-GAME-002.md
+          git config user.name "colony-haul-import"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Refresh Firstmate package for Pass 82 PUT DOWN SHAs."
+          git push
+          git pull --rebase origin main
+          git rm .github/workflows/import-p82-tape.yml
+          git commit -m "Drop Pass 82 tape import workflow"
+          git push
