@@ -523,6 +523,17 @@ namespace ColonyHaul
             }
         }
 
+        public bool LoadCountLive()
+        {
+            return Phase == Phase.Playing && HaulersLoaded > 0;
+        }
+
+        public string LoadCountChip()
+        {
+            if (!LoadCountLive()) return null;
+            return "LOAD " + HaulersLoaded;
+        }
+
         public int HaulersBlocked()
         {
             if (ActiveCut() == null) return 0;

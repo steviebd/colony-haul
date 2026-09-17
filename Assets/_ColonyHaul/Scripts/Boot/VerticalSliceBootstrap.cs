@@ -2065,6 +2065,15 @@ namespace ColonyHaul
                             _game.GunCountChip() ?? "GUN");
                         GUI.backgroundColor = Color.white;
                     }
+                    if (_game.LoadCountLive())
+                    {
+                        GUI.backgroundColor = _game.RaidLive
+                            ? new Color(0.12f, 0.42f, 0.55f, 0.92f)
+                            : new Color(0.55f, 0.42f, 0.12f, 0.88f);
+                        GUI.Box(new Rect(hx - 102f, hy + 12f, 56f, 16f),
+                            _game.LoadCountChip() ?? "LOAD");
+                        GUI.backgroundColor = Color.white;
+                    }
                     if (_game.RaidCountLive())
                     {
                         Color raidColor;
