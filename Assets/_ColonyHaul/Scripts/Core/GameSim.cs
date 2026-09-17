@@ -173,6 +173,20 @@ namespace ColonyHaul
             return "DOWN " + _waveKills;
         }
 
+        public bool LastRaiderLive()
+        {
+            return Phase == Phase.Playing
+                && WaveIndex > 0
+                && Enemies.Count == 1
+                && IncomingRaiders == 0;
+        }
+
+        public string LastRaiderChip()
+        {
+            if (!LastRaiderLive()) return null;
+            return "LAST";
+        }
+
         public bool CrewStretched()
         {
             return ProducerCount() > WorkersTotal;

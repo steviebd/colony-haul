@@ -1995,6 +1995,15 @@ namespace ColonyHaul
                     : Color.Lerp(new Color(0.85f, 0.18f, 0.16f), new Color(0.45f, 0.85f, 0.32f), pct);
                 GUI.Box(new Rect(x - w * 0.5f, y, w * pct, 7f), "");
                 GUI.backgroundColor = Color.white;
+                if (_game.LastRaiderLive())
+                {
+                    GUI.backgroundColor = _game.CoreThin
+                        ? new Color(0.72f, 0.42f, 0.08f, 0.92f)
+                        : new Color(0.55f, 0.16f, 0.12f, 0.92f);
+                    GUI.Box(new Rect(x - 28f, y - 16f, 56f, 14f),
+                        _game.LastRaiderChip() ?? "LAST");
+                    GUI.backgroundColor = Color.white;
+                }
             }
             if (_game.Nodes.TryGetValue("hub", out var hub))
             {
