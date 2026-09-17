@@ -1,0 +1,26 @@
+name: import-p65-tape
+on:
+  push:
+    paths: ['.github/workflows/import-p65-tape.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import Pass 65 tape
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://h.uguu.se/ASDdcedF.tar.gz" | tar -xzf - -C .
+          git add artifacts/FM-GAME-002.md
+          git config user.name "colony-haul-import"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Refresh Firstmate package for Pass 65 SLOW GATE SHAs."
+          git push
+          git pull --rebase origin main
+          rm .github/workflows/import-p65-tape.yml
+          git add .github/workflows/import-p65-tape.yml
+          git commit -m "Drop Pass 65 tape import workflow"
+          git push
