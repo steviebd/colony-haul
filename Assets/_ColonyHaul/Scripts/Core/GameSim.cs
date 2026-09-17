@@ -2118,25 +2118,6 @@ namespace ColonyHaul
             return "YARD " + HaulersYard();
         }
 
-        public int HaulersHome()
-        {
-            var n = 0;
-            foreach (var h in Haulers)
-                if (CargoRollLive(h)) n++;
-            return n;
-        }
-
-        public bool HomeCountLive()
-        {
-            return Phase == Phase.Playing && HaulersHome() > 0;
-        }
-
-        public string HomeCountChip()
-        {
-            if (!HomeCountLive()) return null;
-            return "HOME " + HaulersHome();
-        }
-
         public Building SittingStock()
         {
             if (Phase != Phase.Playing) return null;

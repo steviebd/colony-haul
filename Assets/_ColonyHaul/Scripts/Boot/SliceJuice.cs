@@ -20,6 +20,7 @@ namespace ColonyHaul
             public TextMesh Mesh;
             public float Until;
             public Vector3 Vel;
+            public float Life;
         }
 
         struct Burst
@@ -29,6 +30,7 @@ namespace ColonyHaul
             public float Start;
             public float Size;
             public Color Color;
+            public float Life;
         }
 
         readonly List<Tracer> _tracers = new List<Tracer>();
@@ -65,7 +67,7 @@ namespace ColonyHaul
             _wave = Beep(240f, 0.22f);
             _win = Beep(660f, 0.45f);
             _lose = Beep(95f, 0.55f);
-            _surge = Beep(990f, 0.12f);
+            _surge = Beep(990f, 0.22f);
             _dry = Beep(140f, 0.2f);
             _splice = Beep(620f, 0.16f);
             _alarm = Drone(92f, 0.42f);
@@ -285,8 +287,11 @@ namespace ColonyHaul
         {
             if (braced)
             {
-                SpawnPip(0f, 0f, "SHRUG", new Color(0.45f, 0.9f, 1f));
-                Punch(0.18f);
+                SpawnPip(0f, 0f, "SHRUG", new Color(0.45f, 0.9f, 1f), 1.25f);
+                Spokes(0f, 0f, 2.2f, new Color(0.45f, 0.9f, 1f));
+                SpawnBurst(0f, 0f, new Color(0.45f, 0.9f, 1f, 0.55f), 5.8f, 0.55f);
+                Punch(0.42f);
+                _audio.PlayOneShot(_surge, 0.55f);
             }
             else
             {
@@ -435,11 +440,12 @@ namespace ColonyHaul
                     else _audio.PlayOneShot(_deposit, 0.25f);
                     break;
                 case SimEventKind.Surge:
-                    _audio.PlayOneShot(_surge, 0.45f);
-                    Punch(0.22f);
-                    SpawnPip(0f, 0f, "BRACE", new Color(0.45f, 0.9f, 1f));
-                    Spokes(0f, 0f, 1.5f, new Color(0.45f, 0.9f, 1f));
-                    SpawnBurst(0f, 0f, new Color(0.45f, 0.9f, 1f, 0.45f), 3.6f);
+                    _audio.PlayOneShot(_surge, 0.72f);
+                    Punch(0.48f);
+                    SpawnPip(0f, 0f, "BRACE", new Color(0.45f, 0.9f, 1f), 1.35f);
+                    Spokes(0f, 0f, 2.4f, new Color(0.45f, 0.9f, 1f));
+                    SpawnBurst(0f, 0f, new Color(0.45f, 0.9f, 1f, 0.55f), 7.2f, 0.62f);
+                    SpawnBurst(0f, 0f, new Color(0.85f, 0.95f, 1f, 0.35f), 4.4f, 0.4f);
                     break;
                 case SimEventKind.Hold:
                     if (ev.Reason == "power")
@@ -482,7 +488,8 @@ namespace ColonyHaul
                 p.T.position += p.Vel * Time.deltaTime;
                 if (p.Mesh != null)
                 {
-                    var t = Mathf.Clamp01((p.Until - Time.time) / 0.85f);
+                    var life = p.Life > 0.01f ? p.Life : 0.85f;
+                    var t = Mathf.Clamp01((p.Until - Time.time) / life);
                     var c = p.Mesh.color;
                     c.a = t;
                     p.Mesh.color = c;
@@ -492,6 +499,11 @@ namespace ColonyHaul
         }
 
         void SpawnPip(float x, float z, string text, Color color)
+        {
+            SpawnPip(x, z, text, color, 0.85f);
+        }
+
+        void SpawnPip(float x, float z, string text, Color color, float life)
         {
             var go = new GameObject("pip");
             go.transform.SetParent(_root, false);
@@ -508,8 +520,9 @@ namespace ColonyHaul
             {
                 T = go.transform,
                 Mesh = tm,
-                Until = Time.time + 0.85f,
-                Vel = new Vector3(0f, 1.7f, 0f)
+                Until = Time.time + life,
+                Vel = new Vector3(0f, 1.7f, 0f),
+                Life = life
             });
         }
 
@@ -545,6 +558,11 @@ namespace ColonyHaul
 
         void SpawnBurst(float x, float z, Color color, float size)
         {
+            SpawnBurst(x, z, color, size, 0.38f);
+        }
+
+        void SpawnBurst(float x, float z, Color color, float size, float life)
+        {
             var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             go.name = "burst";
             go.transform.SetParent(_root, false);
@@ -556,10 +574,11 @@ namespace ColonyHaul
             _bursts.Add(new Burst
             {
                 T = go.transform,
-                Until = Time.time + 0.38f,
+                Until = Time.time + life,
                 Start = Time.time,
                 Size = size,
-                Color = color
+                Color = color,
+                Life = life
             });
         }
 
@@ -574,7 +593,8 @@ namespace ColonyHaul
                     _bursts.RemoveAt(i);
                     continue;
                 }
-                var t = Mathf.Clamp01((Time.time - b.Start) / 0.38f);
+                var span = b.Life > 0.01f ? b.Life : 0.38f;
+                var t = Mathf.Clamp01((Time.time - b.Start) / span);
                 var s = Mathf.Lerp(0.4f, b.Size, t);
                 b.T.localScale = new Vector3(s, 0.012f, s);
                 var c = b.Color;

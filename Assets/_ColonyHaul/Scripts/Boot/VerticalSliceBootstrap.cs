@@ -284,7 +284,7 @@ namespace ColonyHaul
                     if (ev.NodeId == "hub")
                     {
                         _hubBraceFlash = _game.Surging;
-                        _hubFlash = _game.Surging ? 0.35f : (_game.CoreThin ? 0.7f : 0.4f);
+                        _hubFlash = _game.Surging ? 0.55f : (_game.CoreThin ? 0.7f : 0.4f);
                         _juice.HubHit(_game.Surging);
                     }
                     break;
@@ -361,13 +361,22 @@ namespace ColonyHaul
             float heat = 0f;
             if (_game.Phase == Phase.Playing)
             {
-                if (_game.WaveIndex >= 5) heat = 0.5f + 0.18f * Mathf.Abs(Mathf.Sin(Time.time * 1.7f));
+                if (_game.Surging) heat = 0f;
+                else if (_game.WaveIndex >= 5) heat = 0.5f + 0.18f * Mathf.Abs(Mathf.Sin(Time.time * 1.7f));
                 else if (_game.HubChewers() > 0) heat = 0.42f + 0.12f * Mathf.Abs(Mathf.Sin(Time.time * 5f));
                 else if (_game.Enemies.Count > 0) heat = 0.16f;
             }
-            RenderSettings.fogColor = Color.Lerp(dusk, raid, heat);
+            var fog = Color.Lerp(dusk, raid, heat);
+            if (_game.Surging)
+                fog = Color.Lerp(dusk, new Color(0.18f, 0.42f, 0.52f), 0.55f + 0.12f * Mathf.Abs(Mathf.Sin(Time.time * 9f)));
+            RenderSettings.fogColor = fog;
             if (_cam != null)
-                _cam.backgroundColor = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), raid, heat * 0.7f);
+            {
+                var bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), raid, heat * 0.7f);
+                if (_game.Surging)
+                    bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.12f, 0.38f, 0.48f), 0.55f);
+                _cam.backgroundColor = bg;
+            }
         }
 
         void SyncView(bool _)
@@ -557,9 +566,11 @@ namespace ColonyHaul
                     tint = Color.Lerp(tint, new Color(0.58f, 0.9f, 0.48f), 0.45f * pulse);
                 if (b.Type == BuildingType.Hub && _game.HubRaising)
                     tint = Color.Lerp(tint, new Color(1f, 0.86f, 0.42f), 0.55f * pulse);
-                if (b.Type == BuildingType.Hub && _game.CoreThin)
+                if (b.Type == BuildingType.Hub && !_game.Surging && _game.CoreThin)
                     tint = Color.Lerp(tint, new Color(0.95f, 0.22f, 0.18f), 0.4f + 0.2f * pulse);
-                if (b.Type == BuildingType.Hub && _game.HubChewers() > 0)
+                if (b.Type == BuildingType.Hub && _game.Surging)
+                    tint = Color.Lerp(tint, new Color(0.4f, 0.9f, 1f), 0.58f + 0.22f * pulse);
+                else if (b.Type == BuildingType.Hub && _game.HubChewers() > 0)
                     tint = Color.Lerp(tint, new Color(1f, 0.18f, 0.12f), 0.45f + 0.2f * pulse);
                 else if (b.Type == BuildingType.Hub && _game.HubClosers() > 0)
                     tint = Color.Lerp(tint, new Color(1f, 0.32f, 0.16f), 0.4f + 0.2f * pulse);
@@ -585,9 +596,13 @@ namespace ColonyHaul
                         Mathf.Clamp01(_hubFlash * 2.4f));
                 MesaView.Tint(tr.gameObject, tint);
                 if (b.Type == BuildingType.Hub && _game.HubLevel >= 2)
-                    tr.localScale = _buildingScale[b.Id] * (1.18f + (_game.HubChewers() > 0 ? 0.05f * pulse : 0f));
+                    tr.localScale = _buildingScale[b.Id] * (1.18f + (_game.Surging
+                        ? 0.08f * pulse
+                        : _game.HubChewers() > 0 ? 0.05f * pulse : 0f));
                 else if (b.Type == BuildingType.Hub && _game.HubRaising)
                     tr.localScale = _buildingScale[b.Id] * (1f + 0.18f * (1f - Mathf.Clamp01(_game.HubUpgradeLeft / Balance.HubL2Time)));
+                else if (b.Type == BuildingType.Hub && _game.Surging)
+                    tr.localScale = _buildingScale[b.Id] * (1.1f + 0.08f * pulse);
                 else if (b.Type == BuildingType.Hub && _game.HubChewers() > 0)
                     tr.localScale = _buildingScale[b.Id] * (1f + 0.08f * pulse);
             }
@@ -951,8 +966,12 @@ namespace ColonyHaul
             if (_game.Surging && _game.Nodes.TryGetValue("hub", out var hubNode))
             {
                 live.Add("surge-shield");
-                var pulse = 3.6f + 0.35f * Mathf.Abs(Mathf.Sin(Time.time * 8f));
-                EnsureRing("surge-shield", hubNode, pulse, new Color(0.4f, 0.9f, 1f, 0.42f));
+                live.Add("surge-core");
+                var pulse = 4.2f + 0.55f * Mathf.Abs(Mathf.Sin(Time.time * 11f));
+                var glow = 0.55f + 0.2f * Mathf.Abs(Mathf.Sin(Time.time * 11f));
+                EnsureRing("surge-shield", hubNode, pulse, new Color(0.4f, 0.9f, 1f, glow));
+                EnsureRing("surge-core", hubNode, 2.2f + 0.25f * Mathf.Abs(Mathf.Sin(Time.time * 14f)),
+                    new Color(0.75f, 0.95f, 1f, 0.5f));
             }
             if (!_game.Surging && _game.BraceInbound() != null && _game.Nodes.TryGetValue("hub", out var inboundHub))
             {
@@ -1633,7 +1652,10 @@ namespace ColonyHaul
                 lr.SetPosition(0, new Vector3(e.X, 0.95f, e.Z));
                 lr.SetPosition(1, new Vector3(0f, 1.2f, 0f));
                 var a = 0.55f + 0.35f * Mathf.Abs(Mathf.Sin(Time.time * 11f));
-                var color = _game.Surging
+                var braced = _game.Surging;
+                lr.startWidth = braced ? 0.2f : 0.11f;
+                lr.endWidth = braced ? 0.07f : 0.03f;
+                var color = braced
                     ? new Color(0.45f, 0.9f, 1f, a)
                     : new Color(1f, 0.28f, 0.16f, a);
                 lr.startColor = color;
@@ -2137,15 +2159,6 @@ namespace ColonyHaul
                         GUI.backgroundColor = hubOre;
                         GUI.Box(new Rect(hx - 102f, hy + 60f, 56f, 16f),
                             _game.HubOreChip() ?? "ORE");
-                        GUI.backgroundColor = Color.white;
-                    }
-                    if (_game.HomeCountLive())
-                    {
-                        GUI.backgroundColor = _game.RaidLive
-                            ? new Color(0.12f, 0.42f, 0.55f, 0.92f)
-                            : new Color(0.55f, 0.42f, 0.12f, 0.88f);
-                        GUI.Box(new Rect(hx - 40f, hy + 60f, 80f, 16f),
-                            _game.HomeCountChip() ?? "HOME");
                         GUI.backgroundColor = Color.white;
                     }
                     if (_game.OpenCountLive())
