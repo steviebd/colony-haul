@@ -279,6 +279,16 @@ namespace ColonyHaul
             _audio.PlayOneShot(_deposit, 0.45f);
         }
 
+        public void PeelYank(float x, float z, float hopX, float hopZ, string reason)
+        {
+            var guns = reason == "power";
+            var color = guns ? new Color(0.4f, 0.75f, 1f) : new Color(0.5f, 0.85f, 0.48f);
+            SpawnPip(x, z, guns ? "GUNS" : "CREW", color, 1.15f);
+            SpawnBurst(x, z, new Color(color.r, color.g, color.b, 0.5f), 3.2f, 0.42f);
+            Spokes(x, z, 1.4f, color);
+            AddTracer(x, z, 0.85f, hopX, hopZ, 0.7f, color, 0.58f);
+        }
+
         public void CoreThin()
         {
             SpawnPip(0f, 0f, "THIN", new Color(1f, 0.32f, 0.22f));
@@ -455,24 +465,28 @@ namespace ColonyHaul
                 case SimEventKind.Hold:
                     if (ev.Reason == "power")
                     {
-                        _audio.PlayOneShot(_surge, 0.55f);
-                        SpawnPip(0f, 0f, "PEEL", new Color(0.4f, 0.75f, 1f));
-                        Spokes(0f, 0f, 1.8f, new Color(0.4f, 0.75f, 1f));
-                        SpawnBurst(0f, 0f, new Color(0.4f, 0.75f, 1f, 0.5f), 4.2f);
+                        _audio.PlayOneShot(_surge, 0.62f);
+                        SpawnPip(0f, 0f, "PEEL", new Color(0.4f, 0.75f, 1f), 1.3f);
+                        Spokes(0f, 0f, 2.2f, new Color(0.4f, 0.75f, 1f));
+                        SpawnBurst(0f, 0f, new Color(0.4f, 0.75f, 1f, 0.55f), 5.6f, 0.52f);
+                        SpawnBurst(0f, 0f, new Color(0.75f, 0.9f, 1f, 0.32f), 3.4f, 0.36f);
+                        Punch(0.48f);
                     }
                     else if (ev.Reason == "food")
                     {
-                        _audio.PlayOneShot(_deposit, 0.55f);
-                        SpawnPip(0f, 0f, "PEEL", new Color(0.5f, 0.85f, 0.48f));
-                        Spokes(0f, 0f, 1.8f, new Color(0.5f, 0.85f, 0.48f));
-                        SpawnBurst(0f, 0f, new Color(0.5f, 0.85f, 0.48f, 0.5f), 4.2f);
+                        _audio.PlayOneShot(_deposit, 0.62f);
+                        SpawnPip(0f, 0f, "PEEL", new Color(0.5f, 0.85f, 0.48f), 1.3f);
+                        Spokes(0f, 0f, 2.2f, new Color(0.5f, 0.85f, 0.48f));
+                        SpawnBurst(0f, 0f, new Color(0.5f, 0.85f, 0.48f, 0.55f), 5.6f, 0.52f);
+                        SpawnBurst(0f, 0f, new Color(0.78f, 0.95f, 0.7f, 0.32f), 3.4f, 0.36f);
+                        Punch(0.48f);
                     }
                     else
                     {
                         _audio.PlayOneShot(_dry, 0.35f);
                         SpawnPip(0f, 0f, "AUTO", new Color(0.85f, 0.82f, 0.7f));
+                        Punch(0.22f);
                     }
-                    Punch(0.32f);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(ev.Kind), ev.Kind, null);

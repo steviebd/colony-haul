@@ -66,6 +66,7 @@ namespace ColonyHaul
         Camera _cam;
         float _acc;
         float _hubFlash;
+        float _holdYankUntil;
         bool _hubBraceFlash;
         bool _coreAlarm;
         bool _surgeBannered;
@@ -142,6 +143,7 @@ namespace ColonyHaul
             ClearSitLine();
             ClearHomeLine();
             _hubFlash = 0f;
+            _holdYankUntil = 0f;
             _hubBraceFlash = false;
             _coreAlarm = false;
             _surgeBannered = false;
@@ -314,9 +316,27 @@ namespace ColonyHaul
                         _hud.Flash("CREW ORDER — haulers rush Food", 1.8f, new Color(0.18f, 0.5f, 0.28f, 0.95f));
                     else
                         _hud.Flash("Hold auto — hungriest stock", 1.4f, new Color(0.35f, 0.35f, 0.32f, 0.92f));
+                    YankHold(ev.Reason);
                     break;
                 default:
                     throw new System.ArgumentOutOfRangeException(nameof(ev.Kind), ev.Kind, null);
+            }
+        }
+
+        bool HoldYankLive()
+        {
+            return Time.time < _holdYankUntil && _game.HoldOrder != HoldOrder.Auto;
+        }
+
+        void YankHold(string reason)
+        {
+            if (reason != "power" && reason != "food") return;
+            _holdYankUntil = Time.time + 1.25f;
+            foreach (var h in _game.Haulers)
+            {
+                if (h.Path.Count == 0) continue;
+                if (!_game.Nodes.TryGetValue(h.Path[0], out var hop)) continue;
+                _juice.PeelYank(h.X, h.Z, hop.X, hop.Z, reason);
             }
         }
 
@@ -369,6 +389,10 @@ namespace ColonyHaul
             var fog = Color.Lerp(dusk, raid, heat);
             if (_game.Surging)
                 fog = Color.Lerp(dusk, new Color(0.18f, 0.42f, 0.52f), 0.55f + 0.12f * Mathf.Abs(Mathf.Sin(Time.time * 9f)));
+            else if (HoldYankLive() && _game.HoldOrder == HoldOrder.Power)
+                fog = Color.Lerp(dusk, new Color(0.12f, 0.32f, 0.52f), 0.48f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 10f)));
+            else if (HoldYankLive() && _game.HoldOrder == HoldOrder.Food)
+                fog = Color.Lerp(dusk, new Color(0.12f, 0.38f, 0.2f), 0.48f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 10f)));
             else if (_game.RailLiveLive())
                 fog = Color.Lerp(dusk, new Color(0.1f, 0.4f, 0.38f), 0.46f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 8f)));
             RenderSettings.fogColor = fog;
@@ -377,6 +401,10 @@ namespace ColonyHaul
                 var bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), raid, heat * 0.7f);
                 if (_game.Surging)
                     bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.12f, 0.38f, 0.48f), 0.55f);
+                else if (HoldYankLive() && _game.HoldOrder == HoldOrder.Power)
+                    bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.1f, 0.3f, 0.48f), 0.5f);
+                else if (HoldYankLive() && _game.HoldOrder == HoldOrder.Food)
+                    bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.1f, 0.34f, 0.18f), 0.5f);
                 else if (_game.RailLiveLive())
                     bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.1f, 0.36f, 0.34f), 0.48f);
                 _cam.backgroundColor = bg;
@@ -404,6 +432,8 @@ namespace ColonyHaul
                      (n.Id == "choke_n" && hotLane == "north") ||
                      (n.Id == "choke_w" && hotLane == "west"));
                 var splashWest = _game.SplashFresh() && n.Id == "choke_w";
+                var yanking = HoldYankLive();
+                var yankPulse = yanking ? 1.08f + 0.14f * Mathf.Abs(Mathf.Sin(Time.time * 11f)) : pulse;
                 var holdGuns = _game.HoldOrder == HoldOrder.Power &&
                     _game.Buildings.TryGetValue(n.Id, out var holdPwr) && holdPwr.Type == BuildingType.Power;
                 var holdCrew = _game.HoldOrder == HoldOrder.Food &&
@@ -412,8 +442,8 @@ namespace ColonyHaul
                 Color c;
                 if (inbound) c = MesaView.Spawn * pulse;
                 else if (n.Kind == NodeKind.Spawn) c = MesaView.Spawn;
-                else if (farmGlow || holdCrew) c = MesaView.PadFarm * pulse;
-                else if (holdGuns) c = new Color(0.32f * pulse, 0.68f * pulse, 0.94f);
+                else if (farmGlow || holdCrew) c = MesaView.PadFarm * (holdCrew && yanking ? yankPulse : pulse);
+                else if (holdGuns) c = new Color(0.32f * (yanking ? yankPulse : pulse), 0.68f * (yanking ? yankPulse : pulse), 0.94f);
                 else if (_game.OfflinePad() == n.Id) c = new Color(0.92f * pulse, 0.55f * pulse, 0.22f);
                 else if (_game.SittingStock() != null && _game.SittingStock().NodeId == n.Id)
                     c = new Color(0.95f * pulse, 0.78f * pulse, 0.32f);
@@ -566,6 +596,10 @@ namespace ColonyHaul
                     tint = Color.Lerp(tint, new Color(0.45f, 0.9f, 0.88f), 0.45f * pulse);
                 if (b.Type == BuildingType.Power && (_game.GunsHungry() || _game.GunsUpLive() || _game.GunsBackLive() || _game.RailLiveTouches(b.NodeId)))
                     tint = Color.Lerp(tint, new Color(0.45f, 0.9f, 1f), 0.45f * pulse);
+                if (HoldYankLive() && b.Type == BuildingType.Power && _game.HoldOrder == HoldOrder.Power)
+                    tint = Color.Lerp(tint, new Color(0.4f, 0.75f, 1f), 0.55f * pulse);
+                if (HoldYankLive() && b.Type == BuildingType.Farm && _game.HoldOrder == HoldOrder.Food)
+                    tint = Color.Lerp(tint, new Color(0.5f, 0.85f, 0.48f), 0.55f * pulse);
                 if (b.Type == BuildingType.Depot && _game.CrewUpLive())
                     tint = Color.Lerp(tint, new Color(0.58f, 0.9f, 0.48f), 0.45f * pulse);
                 if (b.Type == BuildingType.Hub && _game.HubRaising)
@@ -609,6 +643,10 @@ namespace ColonyHaul
                     tr.localScale = _buildingScale[b.Id] * (1.1f + 0.08f * pulse);
                 else if (b.Type == BuildingType.Hub && _game.HubChewers() > 0)
                     tr.localScale = _buildingScale[b.Id] * (1f + 0.08f * pulse);
+                else if (HoldYankLive() &&
+                    ((b.Type == BuildingType.Power && _game.HoldOrder == HoldOrder.Power)
+                     || (b.Type == BuildingType.Farm && _game.HoldOrder == HoldOrder.Food)))
+                    tr.localScale = _buildingScale[b.Id] * (1f + 0.16f * Mathf.Abs(Mathf.Sin(Time.time * 11f)));
             }
 
             SyncRings();
@@ -756,6 +794,8 @@ namespace ColonyHaul
                 if (inbound || feeding) waitPulse *= 1f + 0.12f * Mathf.Abs(Mathf.Sin(Time.time * 7f));
                 var crewUp = _game.CrewUpIs(h.Id);
                 if (crewUp) waitPulse *= 1f + 0.18f * Mathf.Abs(Mathf.Sin(Time.time * 8f));
+                var yanking = HoldYankLive() && h.Path.Count > 0;
+                if (yanking) waitPulse *= 1f + 0.22f * Mathf.Abs(Mathf.Sin(Time.time * 14f));
                 tr.localScale = Vector3.one * ((h.CargoAmount > 0 ? 0.5f : 0.38f) * waitPulse);
                 var cargo = h.CargoAmount <= 0 ? new Color(0.31f, 0.8f, 0.77f)
                     : h.CargoKind == Resource.Food ? new Color(0.5f, 0.85f, 0.45f)
@@ -765,6 +805,10 @@ namespace ColonyHaul
                 if (feeding) cargo = Color.Lerp(cargo, new Color(1f, 0.55f, 0.2f), 0.5f);
                 else if (inbound) cargo = Color.Lerp(cargo, new Color(0.45f, 0.9f, 1f), 0.4f);
                 else if (crewUp) cargo = Color.Lerp(cargo, new Color(0.58f, 0.9f, 0.48f), 0.55f);
+                if (yanking && _game.HoldOrder == HoldOrder.Power)
+                    cargo = Color.Lerp(cargo, new Color(0.4f, 0.75f, 1f), 0.55f);
+                else if (yanking && _game.HoldOrder == HoldOrder.Food)
+                    cargo = Color.Lerp(cargo, new Color(0.5f, 0.85f, 0.48f), 0.55f);
                 MesaView.Tint(tr.gameObject, cargo);
             }
             Prune(_haulers, live);
@@ -1004,6 +1048,36 @@ namespace ColonyHaul
                         throw new ArgumentOutOfRangeException(nameof(_game.HoldOrder), _game.HoldOrder, null);
                 }
                 EnsureRing("hold-order", holdHub, glow, holdColor);
+            }
+            if (HoldYankLive())
+            {
+                Color yankColor;
+                BuildingType yankType;
+                switch (_game.HoldOrder)
+                {
+                    case HoldOrder.Power:
+                        yankColor = new Color(0.4f, 0.75f, 1f, 0.42f);
+                        yankType = BuildingType.Power;
+                        break;
+                    case HoldOrder.Food:
+                        yankColor = new Color(0.5f, 0.85f, 0.48f, 0.42f);
+                        yankType = BuildingType.Farm;
+                        break;
+                    case HoldOrder.Auto:
+                        throw new InvalidOperationException("Hold yank is skipped on Auto");
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(_game.HoldOrder), _game.HoldOrder, null);
+                }
+                foreach (var b in _game.Buildings.Values)
+                {
+                    if (b.Type != yankType) continue;
+                    if (!_game.Nodes.TryGetValue(b.NodeId, out var pad)) continue;
+                    var id = "hold-yank-" + b.Id;
+                    live.Add(id);
+                    var yankGlow = 0.42f + 0.14f * Mathf.Abs(Mathf.Sin(Time.time * 11f));
+                    yankColor.a = yankGlow;
+                    EnsureRing(id, pad, 2.6f + 0.4f * Mathf.Abs(Mathf.Sin(Time.time * 11f)), yankColor);
+                }
             }
             Prune(_rings, live);
         }
