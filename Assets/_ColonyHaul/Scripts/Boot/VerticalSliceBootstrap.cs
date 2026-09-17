@@ -78,6 +78,8 @@ namespace ColonyHaul
         bool _firstDropJuiced;
         float _slamUntil;
         string _slamNodeId;
+        float _gateUntil;
+        string _gateNodeId;
         bool _hubBraceFlash;
         bool _coreAlarm;
         bool _surgeBannered;
@@ -165,6 +167,8 @@ namespace ColonyHaul
             _firstDropJuiced = false;
             _slamUntil = 0f;
             _slamNodeId = null;
+            _gateUntil = 0f;
+            _gateNodeId = null;
             _hubBraceFlash = false;
             _coreAlarm = false;
             _surgeBannered = false;
@@ -288,7 +292,16 @@ namespace ColonyHaul
                     _hud.Flash(_game.CutStakeFlash() ?? "HAUL CUT — splice the orange rail", 1.6f, new Color(0.95f, 0.38f, 0.18f, 0.95f));
                     break;
                 case SimEventKind.Barrier:
-                    _hud.Flash("Barrier up — spawn approach slowed", 1.8f, new Color(0.95f, 0.32f, 0.34f, 0.92f));
+                    _gateUntil = Time.time + 0.55f;
+                    _gateNodeId = ev.NodeId;
+                    foreach (var edge in _game.Neighbors(ev.NodeId))
+                    {
+                        var other = edge.A == ev.NodeId ? edge.B : edge.A;
+                        if (!_game.Nodes.TryGetValue(other, out var spawn)) continue;
+                        if (spawn.Kind != NodeKind.Spawn) continue;
+                        _juice.GateLine(ev.X, ev.Z, spawn.X, spawn.Z);
+                    }
+                    _hud.Flash("SLOW GATE — approach slowed", 2.0f, new Color(0.95f, 0.32f, 0.34f, 0.95f));
                     break;
                 case SimEventKind.Wave:
                     _hud.WaveCall(_game.WaveBannerCopy(), _game.WaveIndex >= 5 ? 4.2f : 3.2f);
@@ -932,10 +945,18 @@ namespace ColonyHaul
                 var b = _game.Nodes[e.B];
                 var pa = new Vector3(a.X, 0.85f, a.Z);
                 var pb = new Vector3(b.X, 0.85f, b.Z);
+                var dropping = Time.time < _gateUntil && (e.A == _gateNodeId || e.B == _gateNodeId);
+                var pulse = dropping ? Mathf.Abs(Mathf.Sin(Time.time * 12f)) : 0f;
                 beam.position = (pa + pb) * 0.5f;
-                beam.localScale = new Vector3(0.42f, 0.55f, Vector3.Distance(pa, pb) * 0.92f);
+                beam.localScale = new Vector3(
+                    dropping ? 0.62f + 0.16f * pulse : 0.42f,
+                    dropping ? 0.82f + 0.18f * pulse : 0.55f,
+                    Vector3.Distance(pa, pb) * 0.92f);
                 beam.rotation = Quaternion.LookRotation(pb - pa);
-                MesaView.Tint(beam.gameObject, MesaView.Barrier);
+                var tint = MesaView.Barrier;
+                if (dropping)
+                    tint = Color.Lerp(MesaView.Barrier, new Color(1f, 0.72f, 0.55f), 0.45f + 0.35f * pulse);
+                MesaView.Tint(beam.gameObject, tint);
             }
 
             SyncHaulers();

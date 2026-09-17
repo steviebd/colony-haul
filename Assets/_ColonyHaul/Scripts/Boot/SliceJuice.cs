@@ -53,6 +53,7 @@ namespace ColonyHaul
         readonly AudioClip _raise;
         readonly AudioClip _west;
         readonly AudioClip _slam;
+        readonly AudioClip _gate;
         readonly AudioClip _alarm;
         readonly AudioSource _alarmSrc;
         bool _alarmOn;
@@ -84,6 +85,7 @@ namespace ColonyHaul
             _raise = Beep(470f, 0.26f);
             _west = Beep(390f, 0.3f);
             _slam = Beep(310f, 0.24f);
+            _gate = Beep(200f, 0.26f);
             _alarm = Drone(92f, 0.42f);
             _alarmSrc = cam.gameObject.AddComponent<AudioSource>();
             _alarmSrc.playOnAwake = false;
@@ -273,6 +275,21 @@ namespace ColonyHaul
             SpawnBurst(x, z, new Color(1f, 0.82f, 0.5f, 0.32f), 3.0f, 0.34f);
             Punch(0.48f);
             _audio.PlayOneShot(_slam, 0.7f);
+        }
+
+        public void GateDrop(float x, float z)
+        {
+            SpawnPip(x, z, "GATE", new Color(0.95f, 0.28f, 0.32f), 1.2f);
+            Spokes(x, z, 2.2f, MesaView.Barrier);
+            SpawnBurst(x, z, new Color(0.95f, 0.28f, 0.32f, 0.55f), 5.2f, 0.5f);
+            SpawnBurst(x, z, new Color(1f, 0.55f, 0.42f, 0.32f), 3.0f, 0.34f);
+            Punch(0.42f);
+            _audio.PlayOneShot(_gate, 0.72f);
+        }
+
+        public void GateLine(float fromX, float fromZ, float toX, float toZ)
+        {
+            AddTracer(fromX, fromZ, 0.9f, toX, toZ, 0.7f, MesaView.Barrier, 0.62f);
         }
 
         public void MesaHold()
@@ -571,10 +588,7 @@ namespace ColonyHaul
                     SpawnBurst(ev.X, ev.Z, new Color(1f, 0.72f, 0.28f, 0.32f), 3.4f, 0.36f);
                     break;
                 case SimEventKind.Barrier:
-                    Punch(0.28f);
-                    _audio.PlayOneShot(_cut, 0.28f);
-                    SpawnPip(ev.X, ev.Z, "SLOW", MesaView.Barrier);
-                    SpawnBurst(ev.X, ev.Z, new Color(0.95f, 0.28f, 0.32f, 0.5f), 2.8f);
+                    GateDrop(ev.X, ev.Z);
                     break;
                 case SimEventKind.Hit:
                     break;
