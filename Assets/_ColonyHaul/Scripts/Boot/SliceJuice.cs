@@ -230,6 +230,16 @@ namespace ColonyHaul
             _audio.PlayOneShot(_deposit, 0.62f);
         }
 
+        public void PadDrop(float x, float z, string tag, Color color)
+        {
+            SpawnPip(x, z, tag, color, 1.2f);
+            Spokes(x, z, 1.8f, color);
+            SpawnBurst(x, z, new Color(color.r, color.g, color.b, 0.5f), 4.2f, 0.48f);
+            SpawnBurst(x, z, new Color(Mathf.Min(1f, color.r + 0.2f), Mathf.Min(1f, color.g + 0.15f), Mathf.Min(1f, color.b + 0.12f), 0.3f), 2.6f, 0.32f);
+            Punch(0.3f);
+            _audio.PlayOneShot(_deposit, 0.55f);
+        }
+
         public void RailDrop(float fromX, float fromZ, float toX, float toZ)
         {
             var mx = (fromX + toX) * 0.5f;

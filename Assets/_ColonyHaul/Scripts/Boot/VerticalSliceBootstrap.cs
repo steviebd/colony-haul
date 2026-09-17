@@ -70,6 +70,9 @@ namespace ColonyHaul
         float _hubFlash;
         float _holdYankUntil;
         float _plantUntil;
+        float _padUntil;
+        string _padNodeId;
+        BuildingType _padType;
         float _railDropUntil;
         string _railDropEdgeId;
         bool _farmPlanted;
@@ -161,6 +164,8 @@ namespace ColonyHaul
             _hubFlash = 0f;
             _holdYankUntil = 0f;
             _plantUntil = 0f;
+            _padUntil = 0f;
+            _padNodeId = null;
             _railDropUntil = 0f;
             _railDropEdgeId = null;
             _farmPlanted = false;
@@ -359,14 +364,34 @@ namespace ColonyHaul
                 case SimEventKind.WarnFood:
                     break;
                 case SimEventKind.Build:
-                    if (_farmPlanted) break;
+                {
                     if (!_game.Buildings.TryGetValue(ev.NodeId, out var planted)) break;
-                    if (planted.Type != BuildingType.Farm) break;
-                    _farmPlanted = true;
-                    _plantUntil = Time.time + 1.15f;
-                    _juice.Planted(ev.X, ev.Z);
-                    _hud.Flash("FARM UP — click the Hub to lay mag-rail", 1.8f, new Color(0.16f, 0.42f, 0.22f, 0.95f));
+                    if (planted.Type == BuildingType.Farm && !_farmPlanted)
+                    {
+                        _farmPlanted = true;
+                        _plantUntil = Time.time + 1.15f;
+                        _juice.Planted(ev.X, ev.Z);
+                        _hud.Flash("FARM UP — click the Hub to lay mag-rail", 1.8f, new Color(0.16f, 0.42f, 0.22f, 0.95f));
+                        break;
+                    }
+                    if (planted.Type == BuildingType.Mine)
+                    {
+                        _padUntil = Time.time + 1.1f;
+                        _padNodeId = planted.NodeId;
+                        _padType = BuildingType.Mine;
+                        _juice.PadDrop(ev.X, ev.Z, "MINE", new Color(0.94f, 0.64f, 0.23f));
+                        break;
+                    }
+                    if (planted.Type == BuildingType.Power)
+                    {
+                        _padUntil = Time.time + 1.1f;
+                        _padNodeId = planted.NodeId;
+                        _padType = BuildingType.Power;
+                        _juice.PadDrop(ev.X, ev.Z, "PWR", new Color(0.4f, 0.75f, 1f));
+                        break;
+                    }
                     break;
+                }
                 case SimEventKind.Win:
                     _hud.Flash("MESA HOLDS — six waves, Hub L2 still singing", 4.2f, new Color(0.18f, 0.55f, 0.32f, 0.95f));
                     break;
@@ -416,6 +441,28 @@ namespace ColonyHaul
         bool PlantLive()
         {
             return Time.time < _plantUntil;
+        }
+
+        bool PadLive()
+        {
+            return Time.time < _padUntil && !string.IsNullOrEmpty(_padNodeId);
+        }
+
+        Color PadTint()
+        {
+            switch (_padType)
+            {
+                case BuildingType.Mine: return new Color(0.94f, 0.64f, 0.23f);
+                case BuildingType.Power: return new Color(0.4f, 0.75f, 1f);
+                case BuildingType.Hub:
+                case BuildingType.Depot:
+                case BuildingType.Farm:
+                case BuildingType.Kinetic:
+                case BuildingType.Splash:
+                    return MesaView.PadIdle;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(_padType), _padType, null);
+            }
         }
 
         bool RailDropLive()
@@ -543,6 +590,10 @@ namespace ColonyHaul
                 fog = Color.Lerp(dusk, new Color(0.1f, 0.38f, 0.36f), 0.5f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 9f)));
             else if (PlantLive())
                 fog = Color.Lerp(dusk, new Color(0.12f, 0.36f, 0.16f), 0.46f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 8f)));
+            else if (PadLive())
+                fog = Color.Lerp(dusk, _padType == BuildingType.Power
+                    ? new Color(0.1f, 0.28f, 0.48f)
+                    : new Color(0.42f, 0.22f, 0.08f), 0.4f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 8f)));
             if (_game.Phase == Phase.Playing && _game.WaveIndex >= 5 && !_game.Surging)
             {
                 var ember = new Color(0.34f, 0.08f, 0.04f);
@@ -608,6 +659,10 @@ namespace ColonyHaul
                     bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.08f, 0.34f, 0.32f), 0.5f);
                 else if (PlantLive())
                     bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.1f, 0.32f, 0.14f), 0.48f);
+                else if (PadLive())
+                    bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), _padType == BuildingType.Power
+                        ? new Color(0.08f, 0.24f, 0.42f)
+                        : new Color(0.36f, 0.18f, 0.06f), 0.42f);
                 if (_game.Phase == Phase.Playing && _game.WaveIndex >= 5 && !_game.Surging)
                     bg = Color.Lerp(bg, new Color(0.32f, 0.06f, 0.04f), _game.Enemies.Count > 0 ? 0.22f : 0.1f);
                 _cam.backgroundColor = bg;
@@ -648,6 +703,8 @@ namespace ColonyHaul
                 else if (n.Kind == NodeKind.Spawn) c = MesaView.Spawn;
                 else if (farmGlow || holdCrew || (PlantLive() && n.Id == "pad_s"))
                     c = MesaView.PadFarm * (holdCrew && yanking ? yankPulse : PlantLive() ? plantPulse : pulse);
+                else if (PadLive() && n.Id == _padNodeId)
+                    c = PadTint() * (1.08f + 0.14f * Mathf.Abs(Mathf.Sin(Time.time * 11f)));
                 else if (holdGuns) c = new Color(0.32f * (yanking ? yankPulse : pulse), 0.68f * (yanking ? yankPulse : pulse), 0.94f);
                 else if (_game.OfflinePad() == n.Id) c = new Color(0.92f * pulse, 0.55f * pulse, 0.22f);
                 else if (_game.SittingStock() != null && _game.SittingStock().NodeId == n.Id)
@@ -822,6 +879,8 @@ namespace ColonyHaul
                     tint = Color.Lerp(tint, new Color(0.5f, 0.85f, 0.48f), 0.55f * pulse);
                 if (PlantLive() && b.Type == BuildingType.Farm)
                     tint = Color.Lerp(tint, new Color(0.5f, 0.85f, 0.48f), 0.55f * pulse);
+                if (PadLive() && b.NodeId == _padNodeId)
+                    tint = Color.Lerp(tint, PadTint(), 0.55f * pulse);
                 if (b.Type == BuildingType.Depot && _game.CrewUpLive())
                     tint = Color.Lerp(tint, new Color(0.58f, 0.9f, 0.48f), 0.45f * pulse);
                 if (b.Type == BuildingType.Hub && !_game.Surging && !_game.HubRaising && _game.CoreThin)
@@ -891,6 +950,8 @@ namespace ColonyHaul
                 else if ((b.Type == BuildingType.Kinetic || b.Type == BuildingType.Splash) && _game.GunsBackLive())
                     tr.localScale = _buildingScale[b.Id] * (1f + 0.14f * Mathf.Abs(Mathf.Sin(Time.time * 10f)));
                 else if (PlantLive() && b.Type == BuildingType.Farm)
+                    tr.localScale = _buildingScale[b.Id] * (1f + 0.16f * Mathf.Abs(Mathf.Sin(Time.time * 11f)));
+                else if (PadLive() && b.NodeId == _padNodeId)
                     tr.localScale = _buildingScale[b.Id] * (1f + 0.16f * Mathf.Abs(Mathf.Sin(Time.time * 11f)));
                 else if (b.Type == BuildingType.Depot && Time.time < _crewUntil)
                     tr.localScale = _buildingScale[b.Id] * (1f + 0.22f * Mathf.Abs(Mathf.Sin(Time.time * 11f)));
