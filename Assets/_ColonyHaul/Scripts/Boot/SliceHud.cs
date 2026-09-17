@@ -432,7 +432,7 @@ namespace ColonyHaul
                 GUI.backgroundColor = Color.white;
                 y += 44;
             }
-            GUI.Label(new Rect(20, y + 8, 200, 36), "1–7 tools · U Hub L2\nD demo · P take · R · H");
+            GUI.Label(new Rect(20, y + 8, 200, 36), "1–7 tools · U Hub L2\nRMB down · D · P take · R · H");
             var holdY = y + 48;
             if (game.HoldReady)
             {

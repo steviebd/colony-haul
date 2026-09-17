@@ -545,6 +545,33 @@ namespace ColonyHaul
             else _juice.Stow(0f, 0f);
         }
 
+        void PutDown()
+        {
+            if (_demo != null) return;
+            if (_game.Phase != Phase.Playing) return;
+            var gate = _game.OpeningGate();
+            if (gate == "farm" || gate == "route")
+            {
+                if (Time.time < _stayUntil) return;
+                var nodeId = gate == "farm" ? "pad_s" : "hub";
+                if (!_game.Nodes.TryGetValue(nodeId, out var mark)) return;
+                _stayUntil = Time.time + 0.45f;
+                _juice.Stay(mark.X, mark.Z, gate == "farm");
+                return;
+            }
+            if (_game.RouteFrom != null)
+            {
+                var id = _game.RouteFrom;
+                if (!_game.Nodes.TryGetValue(id, out var n)) return;
+                if (!_game.ClickNode(id, out _)) return;
+                if (_game.RouteFrom != null) return;
+                FreeAt(n.X, n.Z);
+                return;
+            }
+            if (_game.SelectedTool == Tool.None || _game.SelectedTool == Tool.Route) return;
+            ArmTool(_game.SelectedTool);
+        }
+
         void DenyHub(string why)
         {
             if (_game.Nodes.TryGetValue("hub", out var hub)) DenyAt(hub.X, hub.Z, why);
@@ -690,6 +717,11 @@ namespace ColonyHaul
             if (Input.GetKeyDown(KeyCode.P)) GrabWatch();
             if (Input.mousePosition.x < 236f) return;
             if (Input.mousePosition.y > Screen.height - 86f) return;
+            if (Input.GetMouseButtonDown(1))
+            {
+                PutDown();
+                return;
+            }
             if (!Input.GetMouseButtonDown(0) || _cam == null) return;
             var ray = _cam.ScreenPointToRay(Input.mousePosition);
             if (!Physics.Raycast(ray, out var hit, 80f)) return;
