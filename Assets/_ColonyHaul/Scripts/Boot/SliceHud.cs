@@ -91,7 +91,10 @@ namespace ColonyHaul
             GUI.Label(new Rect(24, 16, 280, 22), "COLONY HAUL");
             var sub = GUI.contentColor;
             var cut = game.ActiveCut();
-            if (cut != null) GUI.contentColor = new Color(1f, 0.55f, 0.32f);
+            if (game.Phase == Phase.Won) GUI.contentColor = new Color(0.55f, 0.9f, 0.5f);
+            else if (game.Phase == Phase.LostHub) GUI.contentColor = new Color(1f, 0.32f, 0.22f);
+            else if (game.Phase == Phase.LostStarve) GUI.contentColor = new Color(0.82f, 0.62f, 0.28f);
+            else if (cut != null) GUI.contentColor = new Color(1f, 0.55f, 0.32f);
             else if (game.HubChewers() > 0) GUI.contentColor = new Color(1f, 0.38f, 0.28f);
             else if (game.HottestRailThreat() != null) GUI.contentColor = new Color(0.95f, 0.42f, 0.78f);
             else if (game.HubClosers() > 0) GUI.contentColor = new Color(1f, 0.32f, 0.18f);
@@ -118,7 +121,13 @@ namespace ColonyHaul
             else if (game.HomeInbound() != null) GUI.contentColor = new Color(0.86f, 0.72f, 0.38f);
             else if (game.WaveIndex >= 5) GUI.contentColor = new Color(1f, 0.42f, 0.38f);
             string subCopy;
-            if (cut != null)
+            if (game.Phase == Phase.Won)
+                subCopy = "MESA HOLDS · six waves · Hub L2 still singing";
+            else if (game.Phase == Phase.LostHub)
+                subCopy = "HUB DOWN · the core cracked";
+            else if (game.Phase == Phase.LostStarve)
+                subCopy = "STARVED OUT · the larder emptied";
+            else if (cut != null)
                 subCopy = game.CutStakeTitle();
             else if (game.HubChewers() > 0)
                 subCopy = game.HubChewTitle();
@@ -183,7 +192,10 @@ namespace ColonyHaul
                     ? new Color(0.58f, 0.9f, 0.48f)
                     : game.CrewStretched() ? new Color(1f, 0.62f, 0.32f) : new Color(0.75f, 0.8f, 0.85f));
             GUI.Label(new Rect(Screen.width - 280, 18, 260, 20),
-                game.WaveIndex == 0
+                game.Phase == Phase.Won ? "MESA HOLDS"
+                : game.Phase == Phase.LostHub ? "HUB DOWN"
+                : game.Phase == Phase.LostStarve ? "STARVED OUT"
+                : game.WaveIndex == 0
                     ? $"WAVE 1 / {Balance.WavesToWin} IN {Mathf.CeilToInt(game.NextWaveIn)}S"
                     : game.WaveClearLive()
                         ? $"WAVE {game.WaveIndex} / {Balance.WavesToWin} · CLEAR · {GameSim.CeilSecs(game.NextWaveIn)}S"
@@ -522,15 +534,15 @@ namespace ColonyHaul
             {
                 case Phase.Won:
                     title = "MESA HOLDS";
-                    copy = "Six waves down and Hub Level 2 online. The mag-rail still sings.";
+                    copy = "Six waves down. Hub L2 still singing. The mag-rail is yours.";
                     break;
                 case Phase.LostHub:
                     title = "HUB DOWN";
-                    copy = "Raiders cracked the core. Splice faster, or feed the guns.";
+                    copy = "Raiders cracked the core. Next watch: BRACE the chew, keep Power rolling.";
                     break;
                 case Phase.LostStarve:
                     title = "STARVED OUT";
-                    copy = "The crew emptied the larder. Farm rail has to stay live.";
+                    copy = "The larder hit zero. Next watch: keep the farm rail live.";
                     break;
                 case Phase.Playing:
                     return;
@@ -538,8 +550,10 @@ namespace ColonyHaul
                     throw new ArgumentOutOfRangeException(nameof(game.Phase), game.Phase, null);
             }
             GUI.backgroundColor = game.Phase == Phase.Won
-                ? new Color(0.06f, 0.16f, 0.1f, 0.95f)
-                : new Color(0.14f, 0.05f, 0.05f, 0.95f);
+                ? new Color(0.06f, 0.18f, 0.1f, 0.96f)
+                : game.Phase == Phase.LostStarve
+                    ? new Color(0.16f, 0.1f, 0.04f, 0.96f)
+                    : new Color(0.16f, 0.04f, 0.04f, 0.96f);
             GUI.Box(new Rect(Screen.width / 2 - 240, Screen.height / 2 - 110, 480, 220), "");
             GUI.backgroundColor = Color.white;
             GUI.Label(new Rect(Screen.width / 2 - 220, Screen.height / 2 - 92, 440, 28), title);

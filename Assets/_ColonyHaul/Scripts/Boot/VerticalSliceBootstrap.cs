@@ -340,10 +340,12 @@ namespace ColonyHaul
                     _hud.Flash("FARM UP — click the Hub to lay mag-rail", 1.8f, new Color(0.16f, 0.42f, 0.22f, 0.95f));
                     break;
                 case SimEventKind.Win:
-                    _hud.Flash("MESA HOLDS", 3.2f, new Color(0.18f, 0.55f, 0.32f, 0.95f));
+                    _hud.Flash("MESA HOLDS — six waves, Hub L2 still singing", 4.2f, new Color(0.18f, 0.55f, 0.32f, 0.95f));
                     break;
                 case SimEventKind.Lose:
-                    _hud.Flash(_game.Phase == Phase.LostStarve ? "STARVED OUT" : "HUB DOWN", 3.2f, new Color(0.72f, 0.12f, 0.12f, 0.95f));
+                    _hud.Flash(_game.Phase == Phase.LostStarve
+                        ? "STARVED OUT — the larder emptied"
+                        : "HUB DOWN — the core cracked", 4.2f, new Color(0.72f, 0.12f, 0.12f, 0.95f));
                     break;
                 case SimEventKind.Route:
                     if (ev.Reason == "splice" || _railDropped) break;
@@ -448,7 +450,13 @@ namespace ColonyHaul
                 else if (_game.Enemies.Count > 0) heat = 0.16f;
             }
             var fog = Color.Lerp(dusk, raid, heat);
-            if (_game.Surging)
+            if (_game.Phase == Phase.Won)
+                fog = Color.Lerp(dusk, new Color(0.18f, 0.42f, 0.18f), 0.58f + 0.12f * Mathf.Abs(Mathf.Sin(Time.time * 4f)));
+            else if (_game.Phase == Phase.LostHub)
+                fog = Color.Lerp(dusk, new Color(0.38f, 0.04f, 0.04f), 0.62f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 5f)));
+            else if (_game.Phase == Phase.LostStarve)
+                fog = Color.Lerp(dusk, new Color(0.28f, 0.18f, 0.06f), 0.56f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 4f)));
+            else if (_game.Surging)
                 fog = Color.Lerp(dusk, new Color(0.18f, 0.42f, 0.52f), 0.55f + 0.12f * Mathf.Abs(Mathf.Sin(Time.time * 9f)));
             else if (HoldYankLive() && _game.HoldOrder == HoldOrder.Power)
                 fog = Color.Lerp(dusk, new Color(0.12f, 0.32f, 0.52f), 0.48f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 10f)));
@@ -472,7 +480,13 @@ namespace ColonyHaul
             if (_cam != null)
             {
                 var bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), raid, heat * 0.7f);
-                if (_game.Surging)
+                if (_game.Phase == Phase.Won)
+                    bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.14f, 0.36f, 0.16f), 0.58f);
+                else if (_game.Phase == Phase.LostHub)
+                    bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.32f, 0.04f, 0.04f), 0.62f);
+                else if (_game.Phase == Phase.LostStarve)
+                    bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.24f, 0.16f, 0.05f), 0.56f);
+                else if (_game.Surging)
                     bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.12f, 0.38f, 0.48f), 0.55f);
                 else if (HoldYankLive() && _game.HoldOrder == HoldOrder.Power)
                     bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.1f, 0.3f, 0.48f), 0.5f);
@@ -557,7 +571,13 @@ namespace ColonyHaul
                     c = Color.Lerp(new Color(0.62f, 0.52f, 0.4f), MesaView.Spawn * pulse,
                         Mathf.Clamp01(near / 4f + (chokeHot ? 0.35f : 0f)));
                 else if (n.Kind == NodeKind.Hub)
-                    c = _game.HubChewers() > 0
+                    c = _game.Phase == Phase.Won
+                        ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(0.55f, 0.9f, 0.5f), pulse)
+                        : _game.Phase == Phase.LostHub
+                        ? Color.Lerp(new Color(0.42f, 0.12f, 0.1f), new Color(1f, 0.22f, 0.16f), pulse)
+                        : _game.Phase == Phase.LostStarve
+                        ? Color.Lerp(new Color(0.42f, 0.32f, 0.16f), new Color(0.72f, 0.55f, 0.28f), pulse)
+                        : _game.HubChewers() > 0
                         ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(1f, 0.28f, 0.18f), pulse)
                         : _game.HubClosers() > 0
                         ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(1f, 0.32f, 0.18f), pulse)
@@ -595,7 +615,10 @@ namespace ColonyHaul
                 else c = MesaView.PadIdle;
                 MesaView.Tint(mark.gameObject, c);
                 if (n.Id == "hub")
-                    MesaView.SetLabel(mark, cut != null && (cut.A == n.Id || cut.B == n.Id)
+                    MesaView.SetLabel(mark, _game.Phase == Phase.Won ? "HOLD"
+                        : _game.Phase == Phase.LostHub ? "DOWN"
+                        : _game.Phase == Phase.LostStarve ? "STARVE"
+                        : cut != null && (cut.A == n.Id || cut.B == n.Id)
                         ? "SPLICE"
                         : _game.HubChewers() > 0 ? "CHEW"
                         : _game.HubClosers() > 0 ? (_game.AnyCloseImminent() ? "PAD" : "IN")
@@ -699,7 +722,15 @@ namespace ColonyHaul
                     tint = Color.Lerp(tint, new Color(0.58f, 0.9f, 0.48f), 0.45f * pulse);
                 if (b.Type == BuildingType.Hub && !_game.Surging && !_game.HubRaising && _game.CoreThin)
                     tint = Color.Lerp(tint, new Color(0.95f, 0.22f, 0.18f), 0.4f + 0.2f * pulse);
-                if (b.Type == BuildingType.Hub && _game.Surging)
+                if (b.Type == BuildingType.Farm && _game.Phase == Phase.LostStarve)
+                    tint = Color.Lerp(tint, new Color(0.42f, 0.32f, 0.14f), 0.55f);
+                if (b.Type == BuildingType.Hub && _game.Phase == Phase.Won)
+                    tint = Color.Lerp(tint, new Color(0.55f, 0.9f, 0.5f), 0.58f + 0.22f * pulse);
+                else if (b.Type == BuildingType.Hub && _game.Phase == Phase.LostHub)
+                    tint = Color.Lerp(tint, new Color(0.85f, 0.12f, 0.1f), 0.62f + 0.18f * pulse);
+                else if (b.Type == BuildingType.Hub && _game.Phase == Phase.LostStarve)
+                    tint = Color.Lerp(tint, new Color(0.55f, 0.4f, 0.16f), 0.52f + 0.16f * pulse);
+                else if (b.Type == BuildingType.Hub && _game.Surging)
                     tint = Color.Lerp(tint, new Color(0.4f, 0.9f, 1f), 0.58f + 0.22f * pulse);
                 else if (b.Type == BuildingType.Hub && _game.HubRaising)
                     tint = Color.Lerp(tint, new Color(1f, 0.86f, 0.42f), 0.58f + 0.22f * pulse);
@@ -723,12 +754,18 @@ namespace ColonyHaul
                     tint = Color.Lerp(tint, new Color(0.92f, 0.78f, 0.42f), 0.4f + 0.18f * pulse);
                 else if (b.Type == BuildingType.Hub && _game.GunsUpWorld())
                     tint = Color.Lerp(tint, new Color(0.45f, 0.9f, 0.88f), 0.4f + 0.18f * pulse);
-                if (b.Type == BuildingType.Hub && _hubFlash > 0f)
+                if (b.Type == BuildingType.Hub && _hubFlash > 0f && _game.Phase == Phase.Playing)
                     tint = Color.Lerp(tint,
                         _hubBraceFlash ? new Color(0.4f, 0.9f, 1f) : new Color(1f, 0.22f, 0.18f),
                         Mathf.Clamp01(_hubFlash * 2.4f));
                 MesaView.Tint(tr.gameObject, tint);
-                if (b.Type == BuildingType.Hub && _game.HubLevel >= 2)
+                if (b.Type == BuildingType.Hub && _game.Phase == Phase.Won)
+                    tr.localScale = _buildingScale[b.Id] * (1.24f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 4f)));
+                else if (b.Type == BuildingType.Hub && _game.Phase == Phase.LostHub)
+                    tr.localScale = _buildingScale[b.Id] * (0.84f + 0.08f * Mathf.Abs(Mathf.Sin(Time.time * 14f)));
+                else if (b.Type == BuildingType.Hub && _game.Phase == Phase.LostStarve)
+                    tr.localScale = _buildingScale[b.Id] * 0.94f;
+                else if (b.Type == BuildingType.Hub && _game.HubLevel >= 2)
                     tr.localScale = _buildingScale[b.Id] * (1.18f + (_game.Surging
                         ? 0.08f * pulse
                         : _game.HubChewers() > 0 ? 0.05f * pulse : 0f));
@@ -803,6 +840,12 @@ namespace ColonyHaul
                     railColor = Color.Lerp(MesaView.RailLive, new Color(0.95f, 0.42f, 0.78f), 0.55f + 0.35f * Mathf.Abs(Mathf.Sin(Time.time * 6f)));
                 else if (recovering || dropping)
                     railColor = Color.Lerp(MesaView.RailLive, new Color(0.42f, 0.92f, 0.88f), 0.55f + 0.4f * Mathf.Abs(Mathf.Sin(Time.time * 8f)));
+                else if (_game.Phase == Phase.Won)
+                    railColor = Color.Lerp(MesaView.RailLive, new Color(0.55f, 0.9f, 0.5f), 0.55f + 0.3f * Mathf.Abs(Mathf.Sin(Time.time * 4f)));
+                else if (_game.Phase == Phase.LostHub)
+                    railColor = Color.Lerp(MesaView.RailLive, new Color(0.55f, 0.12f, 0.1f), 0.7f);
+                else if (_game.Phase == Phase.LostStarve)
+                    railColor = Color.Lerp(MesaView.RailLive, new Color(0.42f, 0.32f, 0.14f), 0.55f);
                 else
                     railColor = MesaView.RailLive;
                 MesaView.Tint(rail.gameObject, railColor);
@@ -1135,6 +1178,28 @@ namespace ColonyHaul
                     : Balance.KineticRange;
                 var gunsGlow = 0.38f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 7f));
                 EnsureRing("guns-up", gunsUpNode, gunsRange, new Color(0.45f, 0.9f, 0.88f, gunsGlow));
+            }
+            if (_game.Phase == Phase.Won && _game.Nodes.TryGetValue("hub", out var holdHubEnd))
+            {
+                live.Add("mesa-hold");
+                live.Add("mesa-hold-core");
+                var holdGlow = 0.5f + 0.18f * Mathf.Abs(Mathf.Sin(Time.time * 4f));
+                EnsureRing("mesa-hold", holdHubEnd, 4.6f + 0.45f * Mathf.Abs(Mathf.Sin(Time.time * 4f)),
+                    new Color(0.55f, 0.9f, 0.5f, holdGlow));
+                EnsureRing("mesa-hold-core", holdHubEnd, 2.3f + 0.22f * Mathf.Abs(Mathf.Sin(Time.time * 6f)),
+                    new Color(0.9f, 0.86f, 0.5f, 0.42f));
+            }
+            else if (_game.Phase == Phase.LostHub && _game.Nodes.TryGetValue("hub", out var downHub))
+            {
+                live.Add("hub-down");
+                var downPulse = 2.2f + 0.55f * Mathf.Abs(Mathf.Sin(Time.time * 10f));
+                EnsureRing("hub-down", downHub, downPulse, new Color(1f, 0.22f, 0.14f, 0.48f));
+            }
+            else if (_game.Phase == Phase.LostStarve && _game.Nodes.TryGetValue("hub", out var starveHub))
+            {
+                live.Add("starve-ring");
+                var starvePulse = 3.0f + 0.28f * Mathf.Abs(Mathf.Sin(Time.time * 5f));
+                EnsureRing("starve-ring", starveHub, starvePulse, new Color(0.72f, 0.52f, 0.22f, 0.36f));
             }
             if (_game.Surging && _game.Nodes.TryGetValue("hub", out var hubNode))
             {

@@ -69,8 +69,8 @@ namespace ColonyHaul
             _shot = Beep(420f, 0.05f);
             _cut = Beep(180f, 0.16f);
             _wave = Beep(240f, 0.22f);
-            _win = Beep(660f, 0.45f);
-            _lose = Beep(95f, 0.55f);
+            _win = Beep(660f, 0.62f);
+            _lose = Beep(95f, 0.62f);
             _surge = Beep(990f, 0.22f);
             _dry = Beep(140f, 0.2f);
             _splice = Beep(620f, 0.28f);
@@ -238,6 +238,40 @@ namespace ColonyHaul
             AddTracer(0f, 0f, 0.9f, x, z, 0.85f, new Color(0.94f, 0.63f, 0.38f), 0.7f);
             Punch(0.42f);
             _audio.PlayOneShot(_west, 0.7f);
+        }
+
+        public void MesaHold()
+        {
+            SpawnPip(0f, 0f, "HOLD", new Color(0.55f, 0.9f, 0.5f), 1.45f);
+            Spokes(0f, 0f, 2.8f, new Color(0.55f, 0.9f, 0.5f));
+            SpawnBurst(0f, 0f, new Color(0.5f, 0.85f, 0.48f, 0.55f), 9.2f, 0.7f);
+            SpawnBurst(0f, 0f, new Color(0.9f, 0.86f, 0.5f, 0.4f), 6.4f, 0.52f);
+            SpawnBurst(0f, 0f, new Color(0.82f, 0.95f, 0.7f, 0.28f), 3.8f, 0.36f);
+            Punch(0.72f);
+            _audio.PlayOneShot(_win, 0.95f);
+            _audio.PlayOneShot(_raise, 0.5f);
+        }
+
+        public void HubDown()
+        {
+            SpawnPip(0f, 0f, "DOWN", new Color(1f, 0.32f, 0.22f), 1.45f);
+            Spokes(0f, 0f, 2.8f, new Color(1f, 0.28f, 0.16f));
+            SpawnBurst(0f, 0f, new Color(0.85f, 0.16f, 0.14f, 0.58f), 8.6f, 0.68f);
+            SpawnBurst(0f, 0f, new Color(1f, 0.42f, 0.22f, 0.35f), 5.2f, 0.45f);
+            Punch(1.15f);
+            _audio.PlayOneShot(_lose, 0.95f);
+            _audio.PlayOneShot(_cut, 0.55f);
+        }
+
+        public void StarvedOut()
+        {
+            SpawnPip(0f, 0f, "STARVED", new Color(0.72f, 0.55f, 0.28f), 1.45f);
+            Spokes(0f, 0f, 2.4f, new Color(0.72f, 0.52f, 0.22f));
+            SpawnBurst(0f, 0f, new Color(0.55f, 0.38f, 0.14f, 0.52f), 7.4f, 0.62f);
+            SpawnBurst(0f, 0f, new Color(0.82f, 0.62f, 0.28f, 0.3f), 4.2f, 0.4f);
+            Punch(0.78f);
+            _audio.PlayOneShot(_dry, 0.82f);
+            _audio.PlayOneShot(_lose, 0.55f);
         }
 
         public void BraceComing(float x, float z)
@@ -522,17 +556,11 @@ namespace ColonyHaul
                 case SimEventKind.Upgrade:
                     break;
                 case SimEventKind.Win:
-                    _audio.PlayOneShot(_win, 0.9f);
-                    Punch(0.85f);
-                    SpawnBurst(0f, 0f, new Color(0.5f, 0.85f, 0.48f, 0.55f), 7f);
-                    SpawnBurst(0f, 0f, new Color(0.9f, 0.86f, 0.5f, 0.4f), 10f);
-                    SpawnPip(0f, 0f, "HOLD", new Color(0.55f, 0.9f, 0.5f));
+                    MesaHold();
                     break;
                 case SimEventKind.Lose:
-                    _audio.PlayOneShot(_lose, 0.9f);
-                    Punch(1.35f);
-                    SpawnBurst(0f, 0f, new Color(0.85f, 0.16f, 0.14f, 0.55f), 8f);
-                    SpawnPip(0f, 0f, ev.Reason == "starve" ? "STARVED" : "DOWN", new Color(1f, 0.35f, 0.3f));
+                    if (ev.Reason == "starve") StarvedOut();
+                    else HubDown();
                     break;
                 case SimEventKind.Route:
                     if (ev.Reason == "splice")
