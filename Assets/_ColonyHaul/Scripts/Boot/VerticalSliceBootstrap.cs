@@ -2103,6 +2103,17 @@ namespace ColonyHaul
                             _game.GunFuseChip() ?? "FUSE");
                         GUI.backgroundColor = Color.white;
                     }
+                    if (_game.LarderLive())
+                    {
+                        Color hubLarder;
+                        if (_game.StarveTimer > 0.2f) hubLarder = new Color(0.72f, 0.18f, 0.1f, 0.92f);
+                        else if (_game.Food < 11f) hubLarder = new Color(0.72f, 0.42f, 0.08f, 0.92f);
+                        else hubLarder = new Color(0.18f, 0.42f, 0.16f, 0.88f);
+                        GUI.backgroundColor = hubLarder;
+                        GUI.Box(new Rect(hx - 102f, hy + 44f, 56f, 16f),
+                            _game.LarderChip() ?? "LARDER");
+                        GUI.backgroundColor = Color.white;
+                    }
                     if (_game.OpenCountLive())
                     {
                         GUI.backgroundColor = new Color(0.62f, 0.18f, 0.1f, 0.92f);
