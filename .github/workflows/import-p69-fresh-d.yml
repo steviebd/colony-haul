@@ -1,0 +1,28 @@
+name: import-p69-fresh-d
+on:
+  push:
+    paths: ['.github/workflows/import-p69-fresh-d.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import FRESH D slice
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://d.uguu.se/JkaEdMQR.tar.gz" | tar -xzf - -C .
+          git add \
+            Assets/_ColonyHaul/Scripts/Boot/VerticalSliceBootstrap.cs \
+            README.md
+          git config user.name "colony-haul-import"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Unity slice: FRESH D -- D starts a new demo watch."
+          git push
+          git pull --rebase origin main
+          rm .github/workflows/import-p69-fresh-d.yml
+          git add .github/workflows/import-p69-fresh-d.yml
+          git commit -m "Drop Pass 69 import workflow"
+          git push
