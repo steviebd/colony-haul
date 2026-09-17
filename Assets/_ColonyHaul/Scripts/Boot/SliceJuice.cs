@@ -58,6 +58,7 @@ namespace ColonyHaul
         readonly AudioClip _gate;
         readonly AudioClip _crew;
         readonly AudioClip _watch;
+        readonly AudioClip _let;
         readonly AudioClip _alarm;
         readonly AudioSource _alarmSrc;
         bool _alarmOn;
@@ -92,6 +93,7 @@ namespace ColonyHaul
             _gate = Beep(200f, 0.26f);
             _crew = Beep(580f, 0.28f);
             _watch = Beep(440f, 0.26f);
+            _let = Beep(360f, 0.24f);
             _alarm = Drone(92f, 0.42f);
             _alarmSrc = cam.gameObject.AddComponent<AudioSource>();
             _alarmSrc.playOnAwake = false;
@@ -536,6 +538,24 @@ namespace ColonyHaul
             JuiceLine(x, z, hopX, hopZ, color);
         }
 
+        public void HoldLet()
+        {
+            var color = new Color(0.86f, 0.82f, 0.62f);
+            SpawnPip(0f, 0f, "LET", color, 1.15f);
+            Spokes(0f, 0f, 2.2f, color);
+            SpawnBurst(0f, 0f, new Color(0.86f, 0.82f, 0.62f, 0.5f), 5.2f, 0.5f);
+            SpawnBurst(0f, 0f, new Color(0.96f, 0.92f, 0.74f, 0.3f), 3.0f, 0.32f);
+            Punch(0.36f);
+            _audio.PlayOneShot(_let, 0.58f);
+        }
+
+        public void LetYank(float x, float z, float hopX, float hopZ)
+        {
+            var color = new Color(0.86f, 0.82f, 0.62f);
+            SpawnBurst(x, z, new Color(color.r, color.g, color.b, 0.42f), 2.4f, 0.32f);
+            JuiceLine(x, z, hopX, hopZ, color);
+        }
+
         public void CoreThin()
         {
             SpawnPip(0f, 0f, "THIN", new Color(1f, 0.32f, 0.22f));
@@ -723,9 +743,7 @@ namespace ColonyHaul
                     }
                     else
                     {
-                        _audio.PlayOneShot(_dry, 0.35f);
-                        SpawnPip(0f, 0f, "AUTO", new Color(0.85f, 0.82f, 0.7f));
-                        Punch(0.22f);
+                        HoldLet();
                     }
                     break;
                 default:

@@ -69,6 +69,7 @@ namespace ColonyHaul
         float _acc;
         float _hubFlash;
         float _holdYankUntil;
+        float _holdLetUntil;
         float _plantUntil;
         float _padUntil;
         string _padNodeId;
@@ -167,6 +168,7 @@ namespace ColonyHaul
             ClearWestLine();
             _hubFlash = 0f;
             _holdYankUntil = 0f;
+            _holdLetUntil = 0f;
             _plantUntil = 0f;
             _padUntil = 0f;
             _padNodeId = null;
@@ -451,6 +453,7 @@ namespace ColonyHaul
                     else
                         _hud.Flash("Hold auto — hungriest stock", 1.4f, new Color(0.35f, 0.35f, 0.32f, 0.92f));
                     YankHold(ev.Reason);
+                    if (ev.Reason == "auto") LetHold();
                     break;
                 default:
                     throw new System.ArgumentOutOfRangeException(nameof(ev.Kind), ev.Kind, null);
@@ -460,6 +463,11 @@ namespace ColonyHaul
         bool HoldYankLive()
         {
             return Time.time < _holdYankUntil && _game.HoldOrder != HoldOrder.Auto;
+        }
+
+        bool HoldLetLive()
+        {
+            return Time.time < _holdLetUntil && _game.HoldOrder == HoldOrder.Auto;
         }
 
         bool PlantLive()
@@ -574,6 +582,17 @@ namespace ColonyHaul
             }
         }
 
+        void LetHold()
+        {
+            _holdLetUntil = Time.time + 0.9f;
+            foreach (var h in _game.Haulers)
+            {
+                if (h.Path.Count == 0) continue;
+                if (!_game.Nodes.TryGetValue(h.Path[0], out var hop)) continue;
+                _juice.LetYank(h.X, h.Z, hop.X, hop.Z);
+            }
+        }
+
         void HandleInput()
         {
             if (Input.GetKeyDown(KeyCode.Alpha1)) _game.SetTool(Tool.Farm);
@@ -641,6 +660,8 @@ namespace ColonyHaul
                 fog = Color.Lerp(dusk, new Color(0.12f, 0.32f, 0.52f), 0.48f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 10f)));
             else if (HoldYankLive() && _game.HoldOrder == HoldOrder.Food)
                 fog = Color.Lerp(dusk, new Color(0.12f, 0.38f, 0.2f), 0.48f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 10f)));
+            else if (HoldLetLive())
+                fog = Color.Lerp(dusk, new Color(0.36f, 0.32f, 0.16f), 0.42f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 8f)));
             else if (_game.GunsDry())
                 fog = Color.Lerp(dusk, new Color(0.38f, 0.1f, 0.06f), 0.5f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 8f)));
             else if (_game.GunsBackLive())
@@ -714,6 +735,8 @@ namespace ColonyHaul
                     bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.1f, 0.3f, 0.48f), 0.5f);
                 else if (HoldYankLive() && _game.HoldOrder == HoldOrder.Food)
                     bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.1f, 0.34f, 0.18f), 0.5f);
+                else if (HoldLetLive())
+                    bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.3f, 0.26f, 0.12f), 0.42f);
                 else if (_game.GunsDry())
                     bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.32f, 0.08f, 0.04f), 0.52f);
                 else if (_game.GunsBackLive())
@@ -851,6 +874,8 @@ namespace ColonyHaul
                         ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(1f, 0.86f, 0.4f), pulse)
                         : GrabLive()
                         ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(0.86f, 0.82f, 0.55f), pulse)
+                        : HoldLetLive()
+                        ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(0.86f, 0.82f, 0.62f), pulse)
                         : new Color(0.9f, 0.78f, 0.58f);
                 else if (n.Kind == NodeKind.Depot && _game.CrewUpLive())
                     c = new Color(0.58f * pulse, 0.9f * pulse, 0.48f);
@@ -1002,6 +1027,8 @@ namespace ColonyHaul
                     tint = Color.Lerp(tint, new Color(0.45f, 0.9f, 0.88f), 0.4f + 0.18f * pulse);
                 else if (b.Type == BuildingType.Hub && GrabLive())
                     tint = Color.Lerp(tint, new Color(0.86f, 0.82f, 0.55f), 0.45f + 0.18f * pulse);
+                else if (b.Type == BuildingType.Hub && HoldLetLive())
+                    tint = Color.Lerp(tint, new Color(0.86f, 0.82f, 0.62f), 0.45f + 0.18f * pulse);
                 if (b.Type == BuildingType.Hub && _hubFlash > 0f && _game.Phase == Phase.Playing)
                     tint = Color.Lerp(tint,
                         _hubBraceFlash ? new Color(0.4f, 0.9f, 1f) : new Color(1f, 0.22f, 0.18f),
@@ -1016,6 +1043,9 @@ namespace ColonyHaul
                 else if (b.Type == BuildingType.Hub && GrabLive())
                     tr.localScale = _buildingScale[b.Id] * ((_game.HubLevel >= 2 ? 1.18f : 1f)
                         + 0.16f * Mathf.Abs(Mathf.Sin(Time.time * 11f)));
+                else if (b.Type == BuildingType.Hub && HoldLetLive())
+                    tr.localScale = _buildingScale[b.Id] * ((_game.HubLevel >= 2 ? 1.18f : 1f)
+                        + 0.14f * Mathf.Abs(Mathf.Sin(Time.time * 11f)));
                 else if (b.Type == BuildingType.Hub && _game.HubLevel >= 2)
                     tr.localScale = _buildingScale[b.Id] * (1.18f + (_game.Surging
                         ? 0.08f * pulse
@@ -1211,7 +1241,9 @@ namespace ColonyHaul
                 if (arriving) waitPulse *= 1.32f + 0.2f * Mathf.Abs(Mathf.Sin(Time.time * 14f));
                 else if (crewUp) waitPulse *= 1f + 0.18f * Mathf.Abs(Mathf.Sin(Time.time * 8f));
                 var yanking = HoldYankLive() && h.Path.Count > 0;
+                var letting = HoldLetLive() && h.Path.Count > 0;
                 if (yanking) waitPulse *= 1f + 0.22f * Mathf.Abs(Mathf.Sin(Time.time * 14f));
+                else if (letting) waitPulse *= 1f + 0.18f * Mathf.Abs(Mathf.Sin(Time.time * 12f));
                 tr.localScale = Vector3.one * ((h.CargoAmount > 0 ? 0.5f : 0.38f) * waitPulse);
                 var cargo = h.CargoAmount <= 0 ? new Color(0.31f, 0.8f, 0.77f)
                     : h.CargoKind == Resource.Food ? new Color(0.5f, 0.85f, 0.45f)
@@ -1226,6 +1258,8 @@ namespace ColonyHaul
                     cargo = Color.Lerp(cargo, new Color(0.4f, 0.75f, 1f), 0.55f);
                 else if (yanking && _game.HoldOrder == HoldOrder.Food)
                     cargo = Color.Lerp(cargo, new Color(0.5f, 0.85f, 0.48f), 0.55f);
+                else if (letting)
+                    cargo = Color.Lerp(cargo, new Color(0.86f, 0.82f, 0.62f), 0.45f);
                 MesaView.Tint(tr.gameObject, cargo);
             }
             Prune(_haulers, live);
