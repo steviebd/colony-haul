@@ -41,6 +41,7 @@ namespace ColonyHaul
         string _railLiveA;
         string _railLiveB;
         float _surgeUntil;
+        int _waveKills;
         readonly float[] _waveGap = { 42f, 28f, 28f, 27f, 26f, 26f };
 
         public float LastBrownoutAt => _brownoutAt;
@@ -156,6 +157,20 @@ namespace ColonyHaul
         {
             if (!RaidPendingLive()) return null;
             return "IN +" + IncomingRaiders;
+        }
+
+        public bool WaveDownLive()
+        {
+            return Phase == Phase.Playing
+                && WaveIndex > 0
+                && _waveKills > 0
+                && !PackInLive();
+        }
+
+        public string WaveDownChip()
+        {
+            if (!WaveDownLive()) return null;
+            return "DOWN " + _waveKills;
         }
 
         public bool CrewStretched()
@@ -2967,6 +2982,7 @@ namespace ColonyHaul
 
         void QueueWave(int index)
         {
+            _waveKills = 0;
             var t = T;
             void Pack(EnemyType type, int count, string spawn, float stagger)
             {
@@ -3170,6 +3186,7 @@ namespace ColonyHaul
             Emit(SimEventKind.Hit, e.NodeId, e.X, e.Z, amount: amount, enemyId: e.Id);
             if (e.Hp <= 0)
             {
+                _waveKills++;
                 var scrap = e.Type == EnemyType.Brute ? 8 : e.Type == EnemyType.Runner ? 4 : 3;
                 Ore += scrap;
                 Emit(SimEventKind.Death, e.NodeId, e.X, e.Z, amount: scrap, resource: Resource.Ore, enemyId: e.Id);

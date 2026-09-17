@@ -394,7 +394,8 @@ namespace ColonyHaul
                 case SimEventKind.Hit:
                     break;
                 case SimEventKind.Death:
-                    SpawnPip(ev.X, ev.Z, "+" + Mathf.RoundToInt(ev.Amount) + " scrap", new Color(0.94f, 0.64f, 0.23f));
+                    SpawnPip(ev.X, ev.Z, "DOWN", new Color(0.92f, 0.28f, 0.22f));
+                    SpawnPip(ev.X + 0.45f, ev.Z, "+" + Mathf.RoundToInt(ev.Amount) + " scrap", new Color(0.94f, 0.64f, 0.23f));
                     AddTracer(ev.X, ev.Z + 0.4f, 1.6f, ev.X, ev.Z, 0.55f, new Color(1f, 0.82f, 0.35f), 0.16f);
                     Punch(0.55f);
                     _audio.PlayOneShot(_shot, 0.28f);
