@@ -315,9 +315,9 @@ namespace ColonyHaul
                 GUI.Box(new Rect(Screen.width / 2 - 250, 88, 500, 58), "");
                 GUI.backgroundColor = Color.white;
                 GUI.Label(new Rect(Screen.width / 2 - 234, 92, 468, 22),
-                    "HUB L2 RAISING — Splash unlocks in " + GameSim.CeilSecs(game.HubUpgradeLeft) + "s");
+                    "HUB LIFT — Splash unlocks in " + GameSim.CeilSecs(game.HubUpgradeLeft) + "s");
                 GUI.Label(new Rect(Screen.width / 2 - 234, 114, 468, 22),
-                    "Keep the farm rail live. West choke is next.");
+                    "Keep the farm rail live. West choke blooms next.");
                 return;
             }
             var watch = game.MidWatch();

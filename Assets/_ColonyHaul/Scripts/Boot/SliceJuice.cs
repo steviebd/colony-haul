@@ -50,6 +50,8 @@ namespace ColonyHaul
         readonly AudioClip _splice;
         readonly AudioClip _back;
         readonly AudioClip _rail;
+        readonly AudioClip _raise;
+        readonly AudioClip _west;
         readonly AudioClip _alarm;
         readonly AudioSource _alarmSrc;
         bool _alarmOn;
@@ -74,6 +76,8 @@ namespace ColonyHaul
             _splice = Beep(620f, 0.28f);
             _back = Beep(760f, 0.28f);
             _rail = Beep(540f, 0.22f);
+            _raise = Beep(470f, 0.26f);
+            _west = Beep(390f, 0.3f);
             _alarm = Drone(92f, 0.42f);
             _alarmSrc = cam.gameObject.AddComponent<AudioSource>();
             _alarmSrc.playOnAwake = false;
@@ -203,6 +207,37 @@ namespace ColonyHaul
             SpawnBurst(0f, 0f, new Color(0.5f, 0.85f, 0.48f, 0.5f), 5.2f, 0.5f);
             Punch(0.32f);
             _audio.PlayOneShot(_deposit, 0.55f);
+        }
+
+        public void HubRaise()
+        {
+            SpawnPip(0f, 0f, "RAISE", new Color(1f, 0.86f, 0.42f), 1.2f);
+            Spokes(0f, 0f, 2.0f, new Color(1f, 0.86f, 0.42f));
+            SpawnBurst(0f, 0f, new Color(1f, 0.82f, 0.38f, 0.52f), 5.2f, 0.5f);
+            SpawnBurst(0f, 0f, new Color(1f, 0.92f, 0.62f, 0.3f), 3.0f, 0.34f);
+            Punch(0.4f);
+            _audio.PlayOneShot(_raise, 0.65f);
+        }
+
+        public void HubLand()
+        {
+            SpawnPip(0f, 0f, "L2", new Color(1f, 0.86f, 0.42f), 1.3f);
+            Spokes(0f, 0f, 2.4f, new Color(1f, 0.86f, 0.42f));
+            SpawnBurst(0f, 0f, new Color(1f, 0.82f, 0.38f, 0.55f), 6.8f, 0.58f);
+            SpawnBurst(0f, 0f, new Color(1f, 0.94f, 0.7f, 0.32f), 4.0f, 0.4f);
+            Punch(0.52f);
+            _audio.PlayOneShot(_raise, 0.82f);
+        }
+
+        public void SplashWest(float x, float z)
+        {
+            SpawnPip(x, z, "WEST", new Color(0.94f, 0.63f, 0.38f), 1.3f);
+            Spokes(x, z, 2.4f, new Color(0.94f, 0.63f, 0.38f));
+            SpawnBurst(x, z, new Color(0.94f, 0.63f, 0.38f, 0.55f), 6.4f, 0.58f);
+            SpawnBurst(x, z, new Color(1f, 0.82f, 0.5f, 0.32f), 3.8f, 0.4f);
+            AddTracer(0f, 0f, 0.9f, x, z, 0.85f, new Color(0.94f, 0.63f, 0.38f), 0.7f);
+            Punch(0.42f);
+            _audio.PlayOneShot(_west, 0.7f);
         }
 
         public void BraceComing(float x, float z)
@@ -485,9 +520,6 @@ namespace ColonyHaul
                     _audio.PlayOneShot(_deposit, 0.2f);
                     break;
                 case SimEventKind.Upgrade:
-                    _audio.PlayOneShot(_wave, 0.4f);
-                    Punch(0.35f);
-                    SpawnBurst(0f, 0f, new Color(0.9f, 0.78f, 0.5f, 0.55f), 4.2f);
                     break;
                 case SimEventKind.Win:
                     _audio.PlayOneShot(_win, 0.9f);

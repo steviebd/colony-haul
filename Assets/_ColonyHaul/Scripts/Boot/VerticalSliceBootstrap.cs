@@ -43,6 +43,7 @@ namespace ColonyHaul
         LineRenderer _offlineLine;
         LineRenderer _sitLine;
         LineRenderer _homeLine;
+        LineRenderer _westLine;
         bool _chewPinged;
         bool _closePinged;
         bool _atPadPinged;
@@ -150,6 +151,7 @@ namespace ColonyHaul
             ClearOfflineLine();
             ClearSitLine();
             ClearHomeLine();
+            ClearWestLine();
             _hubFlash = 0f;
             _holdYankUntil = 0f;
             _plantUntil = 0f;
@@ -293,8 +295,19 @@ namespace ColonyHaul
                     }
                     break;
                 case SimEventKind.Upgrade:
-                    if (_game.HubLevel >= 2) _hud.Flash("Hub Level 2 — Splash unlocked · WEST choke", 2.6f, new Color(0.94f, 0.63f, 0.38f, 0.95f));
-                    else _hud.Flash("Hub L2 raising", 1.6f, new Color(0.9f, 0.78f, 0.5f, 0.94f));
+                    if (_game.HubLevel >= 2)
+                    {
+                        _juice.HubLand();
+                        if (_game.Nodes.TryGetValue("choke_w", out var westUnlock))
+                            _juice.SplashWest(westUnlock.X, westUnlock.Z);
+                        _hud.Flash("Hub Level 2 — Splash unlocked · WEST choke", 2.6f, new Color(0.94f, 0.63f, 0.38f, 0.95f));
+                    }
+                    else
+                    {
+                        _juice.HubRaise();
+                        _hud.Flash("HUB LIFT — Splash unlocks in " + GameSim.CeilSecs(_game.HubUpgradeLeft) + "s", 1.8f,
+                            new Color(0.9f, 0.78f, 0.5f, 0.94f));
+                    }
                     break;
                 case SimEventKind.Shot:
                 case SimEventKind.Splash:
@@ -447,6 +460,10 @@ namespace ColonyHaul
                 fog = Color.Lerp(dusk, new Color(0.12f, 0.4f, 0.18f), 0.48f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 8f)));
             else if (_game.RailLiveLive())
                 fog = Color.Lerp(dusk, new Color(0.1f, 0.4f, 0.38f), 0.46f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 8f)));
+            else if (_game.HubRaising)
+                fog = Color.Lerp(dusk, new Color(0.42f, 0.3f, 0.1f), 0.54f + 0.12f * Mathf.Abs(Mathf.Sin(Time.time * 7f)));
+            else if (_game.SplashFresh())
+                fog = Color.Lerp(dusk, new Color(0.42f, 0.2f, 0.08f), 0.5f + 0.12f * Mathf.Abs(Mathf.Sin(Time.time * 7f)));
             else if (RailDropLive())
                 fog = Color.Lerp(dusk, new Color(0.1f, 0.38f, 0.36f), 0.5f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 9f)));
             else if (PlantLive())
@@ -467,6 +484,10 @@ namespace ColonyHaul
                     bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.1f, 0.36f, 0.16f), 0.5f);
                 else if (_game.RailLiveLive())
                     bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.1f, 0.36f, 0.34f), 0.48f);
+                else if (_game.HubRaising)
+                    bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.38f, 0.26f, 0.08f), 0.52f);
+                else if (_game.SplashFresh())
+                    bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.38f, 0.18f, 0.06f), 0.5f);
                 else if (RailDropLive())
                     bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.08f, 0.34f, 0.32f), 0.5f);
                 else if (PlantLive())
@@ -518,7 +539,11 @@ namespace ColonyHaul
                 else if (_game.RailLiveTouches(n.Id) && n.Kind != NodeKind.Hub)
                     c = new Color(0.42f * pulse, 0.92f * pulse, 0.88f);
                 else if (hubGlow || routeGlow) c = MesaView.PadRoute * pulse;
-                else if (splashWest) c = new Color(0.94f * pulse, 0.63f * pulse, 0.38f);
+                else if (splashWest)
+                {
+                    var westPulse = 1.08f + 0.16f * Mathf.Abs(Mathf.Sin(Time.time * 8f));
+                    c = new Color(0.94f * westPulse, 0.63f * westPulse, 0.38f);
+                }
                 else if (_game.OpenChokeId() == n.Id)
                     c = Color.Lerp(new Color(0.62f, 0.52f, 0.4f), new Color(1f * pulse, 0.38f * pulse, 0.22f), 0.7f);
                 else if (_game.SlowChokeId() == n.Id)
@@ -672,12 +697,12 @@ namespace ColonyHaul
                     tint = Color.Lerp(tint, new Color(0.5f, 0.85f, 0.48f), 0.55f * pulse);
                 if (b.Type == BuildingType.Depot && _game.CrewUpLive())
                     tint = Color.Lerp(tint, new Color(0.58f, 0.9f, 0.48f), 0.45f * pulse);
-                if (b.Type == BuildingType.Hub && _game.HubRaising)
-                    tint = Color.Lerp(tint, new Color(1f, 0.86f, 0.42f), 0.55f * pulse);
-                if (b.Type == BuildingType.Hub && !_game.Surging && _game.CoreThin)
+                if (b.Type == BuildingType.Hub && !_game.Surging && !_game.HubRaising && _game.CoreThin)
                     tint = Color.Lerp(tint, new Color(0.95f, 0.22f, 0.18f), 0.4f + 0.2f * pulse);
                 if (b.Type == BuildingType.Hub && _game.Surging)
                     tint = Color.Lerp(tint, new Color(0.4f, 0.9f, 1f), 0.58f + 0.22f * pulse);
+                else if (b.Type == BuildingType.Hub && _game.HubRaising)
+                    tint = Color.Lerp(tint, new Color(1f, 0.86f, 0.42f), 0.58f + 0.22f * pulse);
                 else if (b.Type == BuildingType.Hub && _game.HubChewers() > 0)
                     tint = Color.Lerp(tint, new Color(1f, 0.18f, 0.12f), 0.45f + 0.2f * pulse);
                 else if (b.Type == BuildingType.Hub && _game.HubClosers() > 0)
@@ -708,7 +733,8 @@ namespace ColonyHaul
                         ? 0.08f * pulse
                         : _game.HubChewers() > 0 ? 0.05f * pulse : 0f));
                 else if (b.Type == BuildingType.Hub && _game.HubRaising)
-                    tr.localScale = _buildingScale[b.Id] * (1f + 0.18f * (1f - Mathf.Clamp01(_game.HubUpgradeLeft / Balance.HubL2Time)));
+                    tr.localScale = _buildingScale[b.Id] * (1f + 0.22f * (1f - Mathf.Clamp01(_game.HubUpgradeLeft / Balance.HubL2Time))
+                        + 0.05f * Mathf.Abs(Mathf.Sin(Time.time * 8f)));
                 else if (b.Type == BuildingType.Hub && _game.Surging)
                     tr.localScale = _buildingScale[b.Id] * (1.1f + 0.08f * pulse);
                 else if (b.Type == BuildingType.Hub && _game.HubChewers() > 0)
@@ -815,6 +841,7 @@ namespace ColonyHaul
             SyncHomeLine();
             SyncOfflineLine();
             SyncSitLine();
+            SyncWestLine();
             SyncForecasts();
             SyncEnemies();
             SyncShadows();
@@ -1003,8 +1030,23 @@ namespace ColonyHaul
             if (_game.SplashFresh() && _game.Nodes.TryGetValue("choke_w", out var west))
             {
                 live.Add("teach-splash-w");
-                var glow = 0.18f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 5f));
-                EnsureRing("teach-splash-w", west, Balance.SplashRange, new Color(0.94f, 0.63f, 0.38f, glow));
+                live.Add("teach-splash-core");
+                var glow = 0.42f + 0.18f * Mathf.Abs(Mathf.Sin(Time.time * 7f));
+                var fat = 1.08f + 0.06f * Mathf.Abs(Mathf.Sin(Time.time * 7f));
+                EnsureRing("teach-splash-w", west, Balance.SplashRange * fat, new Color(0.94f, 0.63f, 0.38f, glow));
+                EnsureRing("teach-splash-core", west, 2.15f + 0.28f * Mathf.Abs(Mathf.Sin(Time.time * 9f)),
+                    new Color(1f, 0.82f, 0.5f, 0.4f));
+            }
+            if (_game.HubRaising && _game.Nodes.TryGetValue("hub", out var raiseHub))
+            {
+                live.Add("l2-raise");
+                live.Add("l2-raise-core");
+                var t = 1f - Mathf.Clamp01(_game.HubUpgradeLeft / Balance.HubL2Time);
+                var raiseGlow = 0.45f + 0.16f * Mathf.Abs(Mathf.Sin(Time.time * 7f));
+                EnsureRing("l2-raise", raiseHub, 2.4f + 2.2f * t + 0.25f * Mathf.Abs(Mathf.Sin(Time.time * 8f)),
+                    new Color(1f, 0.86f, 0.42f, raiseGlow));
+                EnsureRing("l2-raise-core", raiseHub, 1.5f + 0.9f * t,
+                    new Color(1f, 0.92f, 0.62f, 0.42f));
             }
             var openId = _game.OpenChokeId();
             if (openId != null && _game.Nodes.TryGetValue(openId, out var openNode))
@@ -1980,6 +2022,25 @@ namespace ColonyHaul
             _homeLine.endColor = color;
         }
 
+        void SyncWestLine()
+        {
+            if (!_game.SplashFresh() || !_game.Nodes.TryGetValue("choke_w", out var west))
+            {
+                if (_westLine != null) _westLine.enabled = false;
+                return;
+            }
+            if (_westLine == null)
+                _westLine = MesaView.MakeLine(_root, "west-line", 0.12f, 0.04f);
+            _westLine.enabled = true;
+            _westLine.positionCount = 2;
+            _westLine.SetPosition(0, new Vector3(0f, 0.92f, 0f));
+            _westLine.SetPosition(1, new Vector3(west.X, 0.82f, west.Z));
+            var pulse = 0.58f + 0.32f * Mathf.Abs(Mathf.Sin(Time.time * 8f));
+            var color = new Color(0.94f, 0.63f, 0.38f, pulse);
+            _westLine.startColor = color;
+            _westLine.endColor = color;
+        }
+
         static Color HomeCargoColor(Resource? kind, float pulse)
         {
             var k = kind ?? Resource.Ore;
@@ -2197,6 +2258,15 @@ namespace ColonyHaul
             {
                 Destroy(_homeLine.gameObject);
                 _homeLine = null;
+            }
+        }
+
+        void ClearWestLine()
+        {
+            if (_westLine != null)
+            {
+                Destroy(_westLine.gameObject);
+                _westLine = null;
             }
         }
 
