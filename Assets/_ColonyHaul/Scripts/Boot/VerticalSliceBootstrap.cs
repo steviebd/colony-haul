@@ -80,6 +80,8 @@ namespace ColonyHaul
         string _slamNodeId;
         float _gateUntil;
         string _gateNodeId;
+        float _crewUntil;
+        string _crewHaulerId;
         bool _hubBraceFlash;
         bool _coreAlarm;
         bool _surgeBannered;
@@ -169,6 +171,8 @@ namespace ColonyHaul
             _slamNodeId = null;
             _gateUntil = 0f;
             _gateNodeId = null;
+            _crewUntil = 0f;
+            _crewHaulerId = null;
             _hubBraceFlash = false;
             _coreAlarm = false;
             _surgeBannered = false;
@@ -865,6 +869,8 @@ namespace ColonyHaul
                     tr.localScale = _buildingScale[b.Id] * (1f + 0.14f * Mathf.Abs(Mathf.Sin(Time.time * 10f)));
                 else if (PlantLive() && b.Type == BuildingType.Farm)
                     tr.localScale = _buildingScale[b.Id] * (1f + 0.16f * Mathf.Abs(Mathf.Sin(Time.time * 11f)));
+                else if (b.Type == BuildingType.Depot && Time.time < _crewUntil)
+                    tr.localScale = _buildingScale[b.Id] * (1f + 0.22f * Mathf.Abs(Mathf.Sin(Time.time * 11f)));
             }
 
             SyncRings();
@@ -1026,8 +1032,10 @@ namespace ColonyHaul
                     _juice.Rolling(h.X, h.Z);
                 var waitPulse = h.Wait > 0 || blocked ? 1f + 0.16f * Mathf.Abs(Mathf.Sin(Time.time * 9f)) : 1f;
                 if (inbound || feeding) waitPulse *= 1f + 0.12f * Mathf.Abs(Mathf.Sin(Time.time * 7f));
+                var arriving = Time.time < _crewUntil && h.Id == _crewHaulerId;
                 var crewUp = _game.CrewUpIs(h.Id);
-                if (crewUp) waitPulse *= 1f + 0.18f * Mathf.Abs(Mathf.Sin(Time.time * 8f));
+                if (arriving) waitPulse *= 1.32f + 0.2f * Mathf.Abs(Mathf.Sin(Time.time * 14f));
+                else if (crewUp) waitPulse *= 1f + 0.18f * Mathf.Abs(Mathf.Sin(Time.time * 8f));
                 var yanking = HoldYankLive() && h.Path.Count > 0;
                 if (yanking) waitPulse *= 1f + 0.22f * Mathf.Abs(Mathf.Sin(Time.time * 14f));
                 tr.localScale = Vector3.one * ((h.CargoAmount > 0 ? 0.5f : 0.38f) * waitPulse);
@@ -1038,6 +1046,7 @@ namespace ColonyHaul
                 if (blocked) cargo = Color.Lerp(cargo, new Color(1f, 0.5f, 0.22f), 0.62f);
                 if (feeding) cargo = Color.Lerp(cargo, new Color(1f, 0.55f, 0.2f), 0.5f);
                 else if (inbound) cargo = Color.Lerp(cargo, new Color(0.45f, 0.9f, 1f), 0.4f);
+                else if (arriving) cargo = Color.Lerp(cargo, new Color(0.7f, 1f, 0.62f), 0.7f);
                 else if (crewUp) cargo = Color.Lerp(cargo, new Color(0.58f, 0.9f, 0.48f), 0.55f);
                 if (yanking && _game.HoldOrder == HoldOrder.Power)
                     cargo = Color.Lerp(cargo, new Color(0.4f, 0.75f, 1f), 0.55f);
@@ -1969,9 +1978,35 @@ namespace ColonyHaul
             {
                 _crewUpJuiced = key;
                 var h = _game.CrewUpHauler();
-                if (h != null) _juice.CrewUp(h.X, h.Z);
-                else if (_game.Nodes.TryGetValue("depot", out var yard))
-                    _juice.CrewUp(yard.X, yard.Z);
+                float fromX = 0f, fromZ = 0f, toX = 0f, toZ = 0f;
+                if (_game.Nodes.TryGetValue("depot", out var yard))
+                {
+                    fromX = yard.X;
+                    fromZ = yard.Z;
+                }
+                else if (h != null)
+                {
+                    fromX = h.X;
+                    fromZ = h.Z;
+                }
+                toX = fromX;
+                toZ = fromZ;
+                if (h != null)
+                {
+                    _crewUntil = Time.time + 0.7f;
+                    _crewHaulerId = h.Id;
+                    if (h.Path.Count > 0 && _game.Nodes.TryGetValue(h.Path[0], out var hop))
+                    {
+                        toX = hop.X;
+                        toZ = hop.Z;
+                    }
+                    else if (_game.Nodes.TryGetValue("hub", out var hub))
+                    {
+                        toX = hub.X;
+                        toZ = hub.Z;
+                    }
+                }
+                _juice.CrewArrive(fromX, fromZ, toX, toZ);
             }
             if (_crewUpPinged == key) return;
             if (_game.ActiveCut() != null) return;
@@ -1980,7 +2015,7 @@ namespace ColonyHaul
             if (_game.RailLiveLive()) return;
             if (_game.GunsBackLive()) return;
             _crewUpPinged = key;
-            _hud.Flash(_game.CrewUpFlash() ?? "CREW UP — extra haul from the yard", 2.0f,
+            _hud.Flash("CREW UP — third haul rolled out", 2.2f,
                 new Color(0.16f, 0.42f, 0.18f, 0.95f));
         }
 

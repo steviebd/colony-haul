@@ -54,6 +54,7 @@ namespace ColonyHaul
         readonly AudioClip _west;
         readonly AudioClip _slam;
         readonly AudioClip _gate;
+        readonly AudioClip _crew;
         readonly AudioClip _alarm;
         readonly AudioSource _alarmSrc;
         bool _alarmOn;
@@ -86,6 +87,7 @@ namespace ColonyHaul
             _west = Beep(390f, 0.3f);
             _slam = Beep(310f, 0.24f);
             _gate = Beep(200f, 0.26f);
+            _crew = Beep(580f, 0.28f);
             _alarm = Drone(92f, 0.42f);
             _alarmSrc = cam.gameObject.AddComponent<AudioSource>();
             _alarmSrc.playOnAwake = false;
@@ -443,11 +445,18 @@ namespace ColonyHaul
 
         public void CrewUp(float x, float z)
         {
-            SpawnPip(x, z, "CREW", new Color(0.58f, 0.9f, 0.48f));
-            Spokes(x, z, 1.6f, new Color(0.58f, 0.9f, 0.48f));
-            SpawnBurst(x, z, new Color(0.58f, 0.9f, 0.48f, 0.42f), 3.2f);
-            Punch(0.22f);
-            _audio.PlayOneShot(_deposit, 0.4f);
+            CrewArrive(x, z, x, z);
+        }
+
+        public void CrewArrive(float fromX, float fromZ, float toX, float toZ)
+        {
+            SpawnPip(fromX, fromZ, "OUT", new Color(0.58f, 0.9f, 0.48f), 1.25f);
+            Spokes(fromX, fromZ, 2.0f, new Color(0.58f, 0.9f, 0.48f));
+            SpawnBurst(fromX, fromZ, new Color(0.58f, 0.9f, 0.48f, 0.55f), 5.2f, 0.5f);
+            SpawnBurst(fromX, fromZ, new Color(0.82f, 0.95f, 0.7f, 0.32f), 3.0f, 0.34f);
+            AddTracer(fromX, fromZ, 0.9f, toX, toZ, 0.7f, new Color(0.58f, 0.9f, 0.48f), 0.7f);
+            Punch(0.42f);
+            _audio.PlayOneShot(_crew, 0.72f);
         }
 
         public void HoldReady()
