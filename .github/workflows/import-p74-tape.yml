@@ -1,0 +1,26 @@
+name: import-p74-tape
+on:
+  push:
+    paths: ['.github/workflows/import-p74-tape.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import Pass 74 tape
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://n.uguu.se/ONbuGfyX.tar.gz" | tar -xzf - -C .
+          git add artifacts/FM-GAME-002.md
+          git config user.name "colony-haul-import"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Refresh Firstmate package for Pass 74 GUN SET SHAs."
+          git push
+          git pull --rebase origin main
+          rm .github/workflows/import-p74-tape.yml
+          git add .github/workflows/import-p74-tape.yml
+          git commit -m "Drop Pass 74 tape import workflow"
+          git push
