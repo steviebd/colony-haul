@@ -2114,6 +2114,17 @@ namespace ColonyHaul
                             _game.LarderChip() ?? "LARDER");
                         GUI.backgroundColor = Color.white;
                     }
+                    if (_game.HubPowerLive())
+                    {
+                        Color hubPwr;
+                        if (_game.GunsDry()) hubPwr = new Color(0.72f, 0.18f, 0.1f, 0.92f);
+                        else if (_game.GunsHungry()) hubPwr = new Color(0.72f, 0.42f, 0.08f, 0.92f);
+                        else hubPwr = new Color(0.12f, 0.38f, 0.4f, 0.88f);
+                        GUI.backgroundColor = hubPwr;
+                        GUI.Box(new Rect(hx + 44f, hy + 60f, 56f, 16f),
+                            _game.HubPowerChip() ?? "PWR");
+                        GUI.backgroundColor = Color.white;
+                    }
                     if (_game.OpenCountLive())
                     {
                         GUI.backgroundColor = new Color(0.62f, 0.18f, 0.1f, 0.92f);

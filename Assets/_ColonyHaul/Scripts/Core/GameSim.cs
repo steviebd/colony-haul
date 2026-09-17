@@ -2342,6 +2342,17 @@ namespace ColonyHaul
             return "GUN " + LiveTowers();
         }
 
+        public bool HubPowerLive()
+        {
+            return Phase == Phase.Playing;
+        }
+
+        public string HubPowerChip()
+        {
+            if (!HubPowerLive()) return null;
+            return "PWR " + CeilSecs(Power);
+        }
+
         public int StaffedFarms()
         {
             var n = 0;
