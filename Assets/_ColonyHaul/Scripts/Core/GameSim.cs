@@ -147,6 +147,17 @@ namespace ColonyHaul
             return "RAID " + Enemies.Count;
         }
 
+        public bool RaidPendingLive()
+        {
+            return Phase == Phase.Playing && IncomingRaiders > 0;
+        }
+
+        public string RaidPendingChip()
+        {
+            if (!RaidPendingLive()) return null;
+            return "IN +" + IncomingRaiders;
+        }
+
         public bool CrewStretched()
         {
             return ProducerCount() > WorkersTotal;
