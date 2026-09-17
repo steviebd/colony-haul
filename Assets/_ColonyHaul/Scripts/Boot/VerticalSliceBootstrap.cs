@@ -2117,6 +2117,13 @@ namespace ColonyHaul
                             _game.StuckCountChip() ?? "STUCK");
                         GUI.backgroundColor = Color.white;
                     }
+                    if (_game.RollCountLive())
+                    {
+                        GUI.backgroundColor = new Color(0.12f, 0.42f, 0.4f, 0.92f);
+                        GUI.Box(new Rect(hx - 40f, hy - 68f, 80f, 16f),
+                            _game.RollCountChip() ?? "ROLL");
+                        GUI.backgroundColor = Color.white;
+                    }
                     if (_game.SlowCountLive())
                     {
                         GUI.backgroundColor = new Color(0.12f, 0.48f, 0.62f, 0.92f);

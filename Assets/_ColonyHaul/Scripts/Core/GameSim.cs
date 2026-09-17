@@ -236,6 +236,17 @@ namespace ColonyHaul
             return "STUCK " + HaulersBlocked();
         }
 
+        public bool RollCountLive()
+        {
+            return Phase == Phase.Playing && HaulersRolling() > 0;
+        }
+
+        public string RollCountChip()
+        {
+            if (!RollCountLive()) return null;
+            return "ROLL " + HaulersRolling();
+        }
+
         public bool RaiderSlowed(Enemy e)
         {
             if (e == null) return false;
@@ -518,6 +529,15 @@ namespace ColonyHaul
             var n = 0;
             foreach (var h in Haulers)
                 if (h.Path.Count == 0 && h.Wait <= 0) n++;
+            return n;
+        }
+
+        public int HaulersRolling()
+        {
+            if (ActiveCut() == null) return 0;
+            var n = 0;
+            foreach (var h in Haulers)
+                if (h.Path.Count > 0) n++;
             return n;
         }
 
