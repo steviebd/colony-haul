@@ -79,6 +79,7 @@ namespace ColonyHaul
         bool _gunSplash;
         float _grabUntil;
         float _nopeUntil;
+        float _stayUntil;
         float _railDropUntil;
         string _railDropEdgeId;
         bool _farmPlanted;
@@ -178,6 +179,7 @@ namespace ColonyHaul
             _gunSplash = false;
             _grabUntil = 0f;
             _nopeUntil = 0f;
+            _stayUntil = 0f;
             _railDropUntil = 0f;
             _railDropEdgeId = null;
             _farmPlanted = false;
@@ -501,6 +503,30 @@ namespace ColonyHaul
             _juice.WatchGrab();
         }
 
+        void ArmTool(Tool tool)
+        {
+            var gate = _game.OpeningGate();
+            _game.SetTool(tool);
+            if (Time.time < _stayUntil) return;
+            if (tool == Tool.None) return;
+            string nodeId;
+            bool farmFirst;
+            if (gate == "farm" && tool != Tool.Farm)
+            {
+                nodeId = "pad_s";
+                farmFirst = true;
+            }
+            else if (gate == "route" && tool != Tool.Route)
+            {
+                nodeId = "hub";
+                farmFirst = false;
+            }
+            else return;
+            if (!_game.Nodes.TryGetValue(nodeId, out var mark)) return;
+            _stayUntil = Time.time + 0.45f;
+            _juice.Stay(mark.X, mark.Z, farmFirst);
+        }
+
         void DenyHub(string why)
         {
             if (_game.Nodes.TryGetValue("hub", out var hub)) DenyAt(hub.X, hub.Z, why);
@@ -619,13 +645,13 @@ namespace ColonyHaul
 
         void HandleInput()
         {
-            if (Input.GetKeyDown(KeyCode.Alpha1)) _game.SetTool(Tool.Farm);
-            if (Input.GetKeyDown(KeyCode.Alpha2)) _game.SetTool(Tool.Mine);
-            if (Input.GetKeyDown(KeyCode.Alpha3)) _game.SetTool(Tool.Power);
-            if (Input.GetKeyDown(KeyCode.Alpha4)) _game.SetTool(Tool.Route);
-            if (Input.GetKeyDown(KeyCode.Alpha5)) _game.SetTool(Tool.Kinetic);
-            if (Input.GetKeyDown(KeyCode.Alpha6)) _game.SetTool(Tool.Splash);
-            if (Input.GetKeyDown(KeyCode.Alpha7)) _game.SetTool(Tool.Barrier);
+            if (Input.GetKeyDown(KeyCode.Alpha1)) ArmTool(Tool.Farm);
+            if (Input.GetKeyDown(KeyCode.Alpha2)) ArmTool(Tool.Mine);
+            if (Input.GetKeyDown(KeyCode.Alpha3)) ArmTool(Tool.Power);
+            if (Input.GetKeyDown(KeyCode.Alpha4)) ArmTool(Tool.Route);
+            if (Input.GetKeyDown(KeyCode.Alpha5)) ArmTool(Tool.Kinetic);
+            if (Input.GetKeyDown(KeyCode.Alpha6)) ArmTool(Tool.Splash);
+            if (Input.GetKeyDown(KeyCode.Alpha7)) ArmTool(Tool.Barrier);
             if (Input.GetKeyDown(KeyCode.U))
             {
                 if (!_game.TryUpgrade(out var upWhy)) DenyHub(upWhy);
@@ -3345,7 +3371,7 @@ namespace ColonyHaul
             {
                 if (!_game.TryUpgrade(out var upWhy)) DenyHub(upWhy);
             }
-            else if (_hud.ClickedTool.HasValue) _game.SetTool(_hud.ClickedTool.Value);
+            else if (_hud.ClickedTool.HasValue) ArmTool(_hud.ClickedTool.Value);
             if (_hud.ConsumeBootDemo) _pendingDemo = true;
             if (_hud.ConsumeBootPlay) _pendingManual = true;
             if (_hud.ConsumeRestart) _pendingRestart = true;
