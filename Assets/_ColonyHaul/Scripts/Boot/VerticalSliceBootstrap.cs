@@ -376,13 +376,17 @@ namespace ColonyHaul
                         : "HUB DOWN — the core cracked", 4.2f, new Color(0.72f, 0.12f, 0.12f, 0.95f));
                     break;
                 case SimEventKind.Route:
-                    if (ev.Reason == "splice" || _railDropped) break;
+                {
+                    if (ev.Reason == "splice") break;
+                    var firstLine = !_railDropped;
                     _railDropped = true;
                     _railDropUntil = Time.time + 1.25f;
                     _railDropEdgeId = ev.EdgeId;
                     _juice.RailDrop(ev.FromX, ev.FromZ, ev.ToX, ev.ToZ);
-                    _hud.Flash("LINE DOWN — first haul is rolling", 1.8f, new Color(0.12f, 0.4f, 0.38f, 0.95f));
+                    if (firstLine)
+                        _hud.Flash("LINE DOWN — first haul is rolling", 1.8f, new Color(0.12f, 0.4f, 0.38f, 0.95f));
                     break;
+                }
                 case SimEventKind.Surge:
                     if (!_surgeBannered)
                     {
