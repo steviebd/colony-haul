@@ -76,6 +76,7 @@ namespace ColonyHaul
         float _gunUntil;
         string _gunNodeId;
         bool _gunSplash;
+        float _grabUntil;
         float _railDropUntil;
         string _railDropEdgeId;
         bool _farmPlanted;
@@ -172,6 +173,7 @@ namespace ColonyHaul
             _gunUntil = 0f;
             _gunNodeId = null;
             _gunSplash = false;
+            _grabUntil = 0f;
             _railDropUntil = 0f;
             _railDropEdgeId = null;
             _farmPlanted = false;
@@ -467,6 +469,20 @@ namespace ColonyHaul
             return Time.time < _gunUntil && !string.IsNullOrEmpty(_gunNodeId);
         }
 
+        bool GrabLive()
+        {
+            return Time.time < _grabUntil;
+        }
+
+        void GrabWatch()
+        {
+            if (_demo == null || _game.Phase != Phase.Playing) return;
+            _demo = null;
+            AutoDemo = false;
+            _grabUntil = Time.time + 0.9f;
+            _juice.WatchGrab();
+        }
+
         Color GunTint()
         {
             return _gunSplash ? new Color(0.94f, 0.63f, 0.38f) : new Color(0.45f, 0.9f, 0.88f);
@@ -543,6 +559,7 @@ namespace ColonyHaul
             if (Input.GetKeyDown(KeyCode.H)) _game.CycleHold(out _);
             if (Input.GetKeyDown(KeyCode.D)) _pendingDemo = true;
             if (Input.GetKeyDown(KeyCode.R)) _pendingRestart = true;
+            if (Input.GetKeyDown(KeyCode.P)) GrabWatch();
             if (Input.mousePosition.x < 236f) return;
             if (Input.mousePosition.y > Screen.height - 86f) return;
             if (!Input.GetMouseButtonDown(0) || _cam == null) return;
@@ -622,6 +639,8 @@ namespace ColonyHaul
                 fog = Color.Lerp(dusk, _gunSplash
                     ? new Color(0.42f, 0.18f, 0.08f)
                     : new Color(0.1f, 0.36f, 0.38f), 0.4f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 9f)));
+            else if (GrabLive())
+                fog = Color.Lerp(dusk, new Color(0.38f, 0.32f, 0.14f), 0.4f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 8f)));
             if (_game.Phase == Phase.Playing && _game.WaveIndex >= 5 && !_game.Surging)
             {
                 var ember = new Color(0.34f, 0.08f, 0.04f);
@@ -695,6 +714,8 @@ namespace ColonyHaul
                     bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), _gunSplash
                         ? new Color(0.36f, 0.16f, 0.06f)
                         : new Color(0.08f, 0.32f, 0.34f), 0.42f);
+                else if (GrabLive())
+                    bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.32f, 0.28f, 0.12f), 0.42f);
                 if (_game.Phase == Phase.Playing && _game.WaveIndex >= 5 && !_game.Surging)
                     bg = Color.Lerp(bg, new Color(0.32f, 0.06f, 0.04f), _game.Enemies.Count > 0 ? 0.22f : 0.1f);
                 _cam.backgroundColor = bg;
@@ -804,6 +825,8 @@ namespace ColonyHaul
                             ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(0.5f, 0.85f, 0.48f), pulse)
                         : _game.HubRaising
                         ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(1f, 0.86f, 0.4f), pulse)
+                        : GrabLive()
+                        ? Color.Lerp(new Color(0.9f, 0.78f, 0.58f), new Color(0.86f, 0.82f, 0.55f), pulse)
                         : new Color(0.9f, 0.78f, 0.58f);
                 else if (n.Kind == NodeKind.Depot && _game.CrewUpLive())
                     c = new Color(0.58f * pulse, 0.9f * pulse, 0.48f);
@@ -953,6 +976,8 @@ namespace ColonyHaul
                     tint = Color.Lerp(tint, new Color(0.92f, 0.78f, 0.42f), 0.4f + 0.18f * pulse);
                 else if (b.Type == BuildingType.Hub && _game.GunsUpWorld())
                     tint = Color.Lerp(tint, new Color(0.45f, 0.9f, 0.88f), 0.4f + 0.18f * pulse);
+                else if (b.Type == BuildingType.Hub && GrabLive())
+                    tint = Color.Lerp(tint, new Color(0.86f, 0.82f, 0.55f), 0.45f + 0.18f * pulse);
                 if (b.Type == BuildingType.Hub && _hubFlash > 0f && _game.Phase == Phase.Playing)
                     tint = Color.Lerp(tint,
                         _hubBraceFlash ? new Color(0.4f, 0.9f, 1f) : new Color(1f, 0.22f, 0.18f),
@@ -964,6 +989,9 @@ namespace ColonyHaul
                     tr.localScale = _buildingScale[b.Id] * (0.84f + 0.08f * Mathf.Abs(Mathf.Sin(Time.time * 14f)));
                 else if (b.Type == BuildingType.Hub && _game.Phase == Phase.LostStarve)
                     tr.localScale = _buildingScale[b.Id] * 0.94f;
+                else if (b.Type == BuildingType.Hub && GrabLive())
+                    tr.localScale = _buildingScale[b.Id] * ((_game.HubLevel >= 2 ? 1.18f : 1f)
+                        + 0.16f * Mathf.Abs(Mathf.Sin(Time.time * 11f)));
                 else if (b.Type == BuildingType.Hub && _game.HubLevel >= 2)
                     tr.localScale = _buildingScale[b.Id] * (1.18f + (_game.Surging
                         ? 0.08f * pulse
