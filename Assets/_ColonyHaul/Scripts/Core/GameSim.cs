@@ -236,6 +236,35 @@ namespace ColonyHaul
             return "STUCK " + HaulersBlocked();
         }
 
+        public bool RaiderSlowed(Enemy e)
+        {
+            if (e == null) return false;
+            if (e.SlowUntil > T) return true;
+            if (e.Type == EnemyType.Runner) return false;
+            if (e.Path.Count == 0) return false;
+            var edge = EdgeBetween(e.NodeId, e.Path[0]);
+            return edge != null && edge.Barrier;
+        }
+
+        public int LiveSlowed()
+        {
+            var n = 0;
+            foreach (var e in Enemies)
+                if (RaiderSlowed(e)) n++;
+            return n;
+        }
+
+        public bool SlowCountLive()
+        {
+            return Phase == Phase.Playing && LiveSlowed() > 0;
+        }
+
+        public string SlowCountChip()
+        {
+            if (!SlowCountLive()) return null;
+            return "SLOW " + LiveSlowed();
+        }
+
         public bool CrewStretched()
         {
             return ProducerCount() > WorkersTotal;

@@ -772,7 +772,7 @@ namespace ColonyHaul
                 var c = MesaView.EnemyColor(e.Type);
                 if (e.Type == EnemyType.Runner)
                     c = Color.Lerp(c, new Color(1f, 0.82f, 0.45f), 0.35f * Mathf.Abs(Mathf.Sin(Time.time * 14f)));
-                if (e.SlowUntil > _game.T)
+                if (_game.RaiderSlowed(e))
                     c = Color.Lerp(c, new Color(0.35f, 0.88f, 1f), 0.62f);
                 if (_game.LockedOn(e))
                     c = Color.Lerp(c, Color.white, 0.28f + 0.12f * Mathf.Abs(Mathf.Sin(Time.time * 11f)));
@@ -1990,7 +1990,7 @@ namespace ColonyHaul
                 var pct = Mathf.Clamp01(e.Hp / Mathf.Max(1f, e.MaxHp));
                 GUI.backgroundColor = new Color(0f, 0f, 0f, 0.65f);
                 GUI.Box(new Rect(x - w * 0.5f, y, w, 7f), "");
-                GUI.backgroundColor = e.SlowUntil > _game.T
+                GUI.backgroundColor = _game.RaiderSlowed(e)
                     ? Color.Lerp(new Color(0.2f, 0.55f, 0.85f), new Color(0.45f, 0.9f, 1f), pct)
                     : Color.Lerp(new Color(0.85f, 0.18f, 0.16f), new Color(0.45f, 0.85f, 0.32f), pct);
                 GUI.Box(new Rect(x - w * 0.5f, y, w * pct, 7f), "");
@@ -2115,6 +2115,13 @@ namespace ColonyHaul
                         GUI.backgroundColor = new Color(0.72f, 0.42f, 0.08f, 0.92f);
                         GUI.Box(new Rect(hx - 102f, hy - 68f, 56f, 16f),
                             _game.StuckCountChip() ?? "STUCK");
+                        GUI.backgroundColor = Color.white;
+                    }
+                    if (_game.SlowCountLive())
+                    {
+                        GUI.backgroundColor = new Color(0.12f, 0.48f, 0.62f, 0.92f);
+                        GUI.Box(new Rect(hx + 44f, hy - 68f, 56f, 16f),
+                            _game.SlowCountChip() ?? "SLOW");
                         GUI.backgroundColor = Color.white;
                     }
                     var chewers = _game.HubChewers();
