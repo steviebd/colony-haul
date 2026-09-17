@@ -569,8 +569,10 @@ namespace ColonyHaul
             GUI.Label(new Rect(Screen.width / 2 - 220, Screen.height / 2 + 4, 440, 40),
                 GameSim.CeilSecs(game.T) + "s  ·  Hub " + Mathf.CeilToInt(game.HubHp) + " HP  ·  L" + game.HubLevel +
                 "  ·  wave " + game.WaveIndex + "/" + Balance.WavesToWin);
-            if (GUI.Button(new Rect(Screen.width / 2 - 90, Screen.height / 2 + 52, 180, 36), "Run it back"))
+            if (GUI.Button(new Rect(Screen.width / 2 - 210, Screen.height / 2 + 52, 200, 36), "Run it back"))
                 ConsumeRestart = true;
+            if (GUI.Button(new Rect(Screen.width / 2 + 10, Screen.height / 2 + 52, 200, 36), "Watch a run"))
+                ConsumeBootDemo = true;
         }
     }
 }
