@@ -8,9 +8,9 @@ GitHub (cold-open / Hub / Cursor): **https://github.com/steviebd/colony-haul**
 | --- | --- |
 | Hub-ready | **Yes** |
 | Origin Unity | `98f97efedfda3d478c05b86f0e7732fd0bf9e333` |
-| Origin HEAD | `7f847049782838d5a471223d9d0960bea959bb63` |
+| Origin HEAD | `273d00bda059acbfc361c79cc0a5ea4e7642a7d3` |
 | GitHub Unity | `10bcd1688cb1e2eeead6a443be0e9728438c6ea6` |
-| GitHub HEAD | *(stamped after GitHub import)* |
+| GitHub HEAD | `23009f72051fe9ae00ac4ff14b71ff2a43f7f063` |
 | Kernel | seed-7 playtest **win** (`phase=won`, t≈184.45, Hub L2, minHp≈50.4, sabotages=4, brownouts=1, deposits=115, kills=42, minFood≈32.84) |
 | Nested opening | **pass** (Farm → Route → Hub still deposits) |
 | Hold order | **pass** (locked until wave 4 + L2; then GUNS chase Power) |
