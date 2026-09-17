@@ -12,6 +12,8 @@ namespace ColonyHaul
             public Vector3 B;
             public Color Color;
             public float Until;
+            public float StartWidth;
+            public float EndWidth;
         }
 
         struct Pip
@@ -101,7 +103,7 @@ namespace ColonyHaul
 
         public void JuiceLine(float fromX, float fromZ, float toX, float toZ, Color color)
         {
-            AddTracer(fromX, fromZ, 0.9f, toX, toZ, 0.7f, color, 0.66f);
+            AddTracer(fromX, fromZ, 0.9f, toX, toZ, 0.7f, color, 0.66f, 0.28f, 0.11f);
         }
 
         public void SetClose(float amount) => _closeTarget = Mathf.Clamp01(amount);
@@ -572,6 +574,8 @@ namespace ColonyHaul
                 }
                 var t = _tracers[i];
                 lr.enabled = true;
+                lr.startWidth = t.StartWidth;
+                lr.endWidth = t.EndWidth;
                 lr.startColor = t.Color;
                 lr.endColor = t.Color;
                 lr.SetPosition(0, t.A);
@@ -826,12 +830,19 @@ namespace ColonyHaul
 
         void AddTracer(float ax, float az, float ay, float bx, float bz, float by, Color color, float life)
         {
+            AddTracer(ax, az, ay, bx, bz, by, color, life, 0.14f, 0.04f);
+        }
+
+        void AddTracer(float ax, float az, float ay, float bx, float bz, float by, Color color, float life, float startWidth, float endWidth)
+        {
             _tracers.Add(new Tracer
             {
                 A = new Vector3(ax, ay, az),
                 B = new Vector3(bx, by, bz),
                 Color = color,
-                Until = Time.time + life
+                Until = Time.time + life,
+                StartWidth = startWidth,
+                EndWidth = endWidth
             });
         }
 

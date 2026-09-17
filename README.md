@@ -31,7 +31,7 @@ Scenes are thin on purpose. `VerticalSliceBootstrap` builds the dusk mesa, pads,
 
 ### Play in the Editor
 
-- Place a **Farm** on the south mesa pad (it blooms **FARM**), then click the **Hub** to lay mag-rail (**RAIL** drop, line fattens). The first cart pops **HAUL** and the first drop blooms **HOME**. Haulers only move on live rails.
+- Place a **Farm** on the south mesa pad (it blooms **FARM**), then click the **Hub** to lay mag-rail (**RAIL** drop, a fat teach stroke). The first cart pops **HAUL** and the first drop blooms **HOME**. Haulers only move on live rails. Gun shots stay thin bolts.
 - Keys `1–7`: Farm, Mine, Power, Route, Kinetic, Splash, Barrier. `U` Hub L2. `H` Hold order (wave 4 + Hub L2). `D` demo (fresh seed-7 watch). `R` restart (clears leftover juice so FIRST LINE can land again).
 - Left tray is clickable. Splash stays locked until Hub L2.
 - Top-right logistics strip: loaded vs idle haulers, E/N/W lane counts (hottest marked `*`), next-wave copy, gun-fire fuse, and a larder clock (`~Ns of food`). HAUL CUT names the stake (BRACE / Power / farm / ore) plus splice countdown.
@@ -124,6 +124,7 @@ Tick stays one loop. Seed-7 demo still wins. Mid-game is readable, and a haul du
 74. **Pass 67 ONE LINE** — RAIL / WEST / GATE / OUT / HOLD YANK tracers now share one stroke. FIRST LINE HAUL beeps; HOME dual-bursts. GATE and OUT wash the mesa like FARM / RAIL. WEST LIFT still outranks CREW fog. Juice only — Tick unchanged. No new Hub counters. Kill punch skipped.
 75. **Pass 68 FRESH R** — pressing R now *forgets* the last watch. GATE / OUT / SLAM pips, tracers, bursts, the cut alarm, dusk close, and banners clear so the opening is FIRST LINE again, not leftover juice. Juice only — Tick unchanged. No new Hub counters. Kill punch skipped.
 76. **Pass 69 FRESH D** — D now *starts a new demo watch*. It no longer bolts the autopilot onto a live or ended mesa (after HOLD / FALL the sim was frozen, so D did nothing). Juice clears like R. Tick unchanged. Seed-7 still wins. No new Hub counters. Kill punch skipped.
+77. **Pass 70 STROKE** — RAIL / WEST / GATE / OUT / HOLD YANK now *stroke* a corridor. Gun shots, Splash bolts, death ticks, and deposit spokes stay thin. Juice only — Tick unchanged. No new Hub counters. Kill punch skipped.
 
 Folder layout: `Assets/_ColonyHaul/{Scripts,Art,Prefabs,Scenes,UI,Audio}`.
 
@@ -183,7 +184,7 @@ Do not treat the Vite client as the ship target. Keep it only when kernel parity
 
 - This cloud VM has no Unity Editor, so Editor Play is documented, not screenshot-verified here. Headless C# is what the menu item runs.
 - Runtime art is procedural low-poly, not authored FBX.
-- Pass 56–69 course-correct: stop growing Hub counter chips; BRACE SHRUG, SPLICE RELEASE, HOLD YANK, DRY→BACK, FIRST LINE, WEST LIFT, HOLD / FALL, DUSK CLOSE, SPLASH SLAM, SLOW GATE, CREW OUT, ONE LINE, FRESH R, and FRESH D shipped.
+- Pass 56–70 course-correct: stop growing Hub counter chips; BRACE SHRUG, SPLICE RELEASE, HOLD YANK, DRY→BACK, FIRST LINE, WEST LIFT, HOLD / FALL, DUSK CLOSE, SPLASH SLAM, SLOW GATE, CREW OUT, ONE LINE, FRESH R, FRESH D, and STROKE shipped.
 - Origin `tmp-*` remote cannot be renamed with the current CLI; GitHub is the repo to open in Cursor.
 - GitHub clone is Hub/Cursor complete: `Assets/`, `Packages/manifest.json`, `ProjectSettings/`, USB C# package, `playable/`, artifacts tape including `colony-haul-run.webm`.
 - Out of scope: multiplayer, cloud meta, deep tech tree, campaign.
