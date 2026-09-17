@@ -59,6 +59,7 @@ namespace ColonyHaul
         readonly AudioClip _crew;
         readonly AudioClip _watch;
         readonly AudioClip _let;
+        readonly AudioClip _nope;
         readonly AudioClip _alarm;
         readonly AudioSource _alarmSrc;
         bool _alarmOn;
@@ -94,6 +95,7 @@ namespace ColonyHaul
             _crew = Beep(580f, 0.28f);
             _watch = Beep(440f, 0.26f);
             _let = Beep(360f, 0.24f);
+            _nope = Beep(160f, 0.12f);
             _alarm = Drone(92f, 0.42f);
             _alarmSrc = cam.gameObject.AddComponent<AudioSource>();
             _alarmSrc.playOnAwake = false;
@@ -220,6 +222,27 @@ namespace ColonyHaul
             SpawnBurst(0f, 0f, new Color(0.98f, 0.94f, 0.72f, 0.3f), 3.0f, 0.32f);
             Punch(0.36f);
             _audio.PlayOneShot(_watch, 0.62f);
+        }
+
+        public void Nope(float x, float z, string tag)
+        {
+            Color color;
+            switch (tag)
+            {
+                case "NEED":
+                    color = new Color(1f, 0.72f, 0.28f);
+                    break;
+                case "LOCK":
+                    color = new Color(0.78f, 0.68f, 0.42f);
+                    break;
+                default:
+                    color = new Color(1f, 0.42f, 0.28f);
+                    break;
+            }
+            SpawnPip(x, z, string.IsNullOrEmpty(tag) ? "NOPE" : tag, color, 0.85f);
+            SpawnBurst(x, z, new Color(color.r, color.g, color.b, 0.42f), 2.6f, 0.32f);
+            Punch(0.18f);
+            _audio.PlayOneShot(_nope, 0.48f);
         }
 
         public void GunsClick(float x, float z)

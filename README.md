@@ -31,7 +31,7 @@ Scenes are thin on purpose. `VerticalSliceBootstrap` builds the dusk mesa, pads,
 
 ### Play in the Editor
 
-- Place a **Farm** on the south mesa pad (it blooms **FARM**), then click the **Hub** to lay mag-rail (**RAIL** drop, a fat teach stroke). Later pads stroke the same way when you click Hub — splice still owns RAIL LIVE. The first cart pops **HAUL** and the first drop blooms **HOME**. Planting a Mine or Power blooms **MINE** / **PWR** on that pad (FARM UP / LINE DOWN stay the opening). A later Farm sows **SOW** — FARM / FARM UP stay the opening. Kinetic / Splash click **SET**s the barrel — **GUNS UP** still names going live. Haulers only move on live rails. Gun shots stay thin bolts.
+- Place a **Farm** on the south mesa pad (it blooms **FARM**), then click the **Hub** to lay mag-rail (**RAIL** drop, a fat teach stroke). Later pads stroke the same way when you click Hub — splice still owns RAIL LIVE. The first cart pops **HAUL** and the first drop blooms **HOME**. Planting a Mine or Power blooms **MINE** / **PWR** on that pad (FARM UP / LINE DOWN stay the opening). A later Farm sows **SOW** — FARM / FARM UP stay the opening. Kinetic / Splash click **SET**s the barrel — **GUNS UP** still names going live. A dead click *refuses* — **NOPE** on the pad, **NEED** when it's stock, **LOCK** when U/H/Splash is early. Haulers only move on live rails. Gun shots stay thin bolts.
 - Keys `1–7`: Farm, Mine, Power, Route, Kinetic, Splash, Barrier. `U` Hub L2. `H` Hold order (wave 4 + Hub L2). `D` demo (fresh seed-7 watch). `P` takes the live mesa from a demo (TAKE bloom; boot Play stays silent). `R` restart (clears leftover juice so FIRST LINE can land again). After HOLD / FALL, `P` does not steal `R`.
 - Left tray is clickable. Splash stays locked until Hub L2.
 - Top-right logistics strip: loaded vs idle haulers, E/N/W lane counts (hottest marked `*`), next-wave copy, gun-fire fuse, and a larder clock (`~Ns of food`). HAUL CUT names the stake (BRACE / Power / farm / ore) plus splice countdown.
@@ -132,6 +132,7 @@ Tick stays one loop. Seed-7 demo still wins. Mid-game is readable, and a haul du
 82. **Pass 75 TAKE WATCH** — `P` during a demo now *takes* the live mesa. Autopilot drops, the Hub blooms **TAKE**, pale-gold fog, and you keep playing from that tick. Boot Play stays silent. After HOLD / FALL, `P` does not steal `R`. Juice only — Tick unchanged. Seed-7 still wins on Auto. No new Hub counters. Kill punch skipped.
 83. **Pass 76 SOW** — a later Farm now *sows*. **SOW** bloom on that pad, green wash, cube fattens. FIRST LINE still owns FARM / FARM UP / PlantLive. PAD DROP still owns MINE / PWR. No banner steal. Juice only — Tick unchanged. No new Hub counters. Kill punch skipped.
 84. **Pass 77 HOLD LET** — cycling Hold back to Auto now *lets* the carts go. Hub blooms **LET**, carts stroke to their next hop, pale wash. HOLD YANK still owns GUNS / CREW peel. Demo stays Auto so seed-7 never fires LET. Juice only — Tick and Hold replan unchanged. No new Hub counters. Kill punch skipped.
+85. **Pass 78 NOPE** — a dead click now *refuses*. Wrong pad pops **NOPE**, short stock pops **NEED**, early U / H / Splash pops **LOCK**. No banner steal. Demo Auto never fires it. Juice only — Tick unchanged. No new Hub counters. Kill punch skipped.
 
 Folder layout: `Assets/_ColonyHaul/{Scripts,Art,Prefabs,Scenes,UI,Audio}`.
 
@@ -191,7 +192,7 @@ Do not treat the Vite client as the ship target. Keep it only when kernel parity
 
 - This cloud VM has no Unity Editor, so Editor Play is documented, not screenshot-verified here. Headless C# is what the menu item runs.
 - Runtime art is procedural low-poly, not authored FBX.
-- Pass 56–77 course-correct: stop growing Hub counter chips; BRACE SHRUG, SPLICE RELEASE, HOLD YANK, DRY→BACK, FIRST LINE, WEST LIFT, HOLD / FALL, DUSK CLOSE, SPLASH SLAM, SLOW GATE, CREW OUT, ONE LINE, FRESH R, FRESH D, STROKE, END PAIR, LINE OUT, PAD DROP, GUN SET, TAKE WATCH, SOW, and HOLD LET shipped.
+- Pass 56–78 course-correct: stop growing Hub counter chips; BRACE SHRUG, SPLICE RELEASE, HOLD YANK, DRY→BACK, FIRST LINE, WEST LIFT, HOLD / FALL, DUSK CLOSE, SPLASH SLAM, SLOW GATE, CREW OUT, ONE LINE, FRESH R, FRESH D, STROKE, END PAIR, LINE OUT, PAD DROP, GUN SET, TAKE WATCH, SOW, HOLD LET, and NOPE shipped.
 - Origin `tmp-*` remote cannot be renamed with the current CLI; GitHub is the repo to open in Cursor.
 - GitHub clone is Hub/Cursor complete: `Assets/`, `Packages/manifest.json`, `ProjectSettings/`, USB C# package, `playable/`, artifacts tape including `colony-haul-run.webm`.
 - Out of scope: multiplayer, cloud meta, deep tech tree, campaign.

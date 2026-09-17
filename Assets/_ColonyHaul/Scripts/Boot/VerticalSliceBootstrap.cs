@@ -78,6 +78,7 @@ namespace ColonyHaul
         string _gunNodeId;
         bool _gunSplash;
         float _grabUntil;
+        float _nopeUntil;
         float _railDropUntil;
         string _railDropEdgeId;
         bool _farmPlanted;
@@ -176,6 +177,7 @@ namespace ColonyHaul
             _gunNodeId = null;
             _gunSplash = false;
             _grabUntil = 0f;
+            _nopeUntil = 0f;
             _railDropUntil = 0f;
             _railDropEdgeId = null;
             _farmPlanted = false;
@@ -499,6 +501,28 @@ namespace ColonyHaul
             _juice.WatchGrab();
         }
 
+        void DenyHub(string why)
+        {
+            if (_game.Nodes.TryGetValue("hub", out var hub)) DenyAt(hub.X, hub.Z, why);
+            else DenyAt(0f, 0f, why);
+        }
+
+        void DenyAt(float x, float z, string why)
+        {
+            if (Time.time < _nopeUntil) return;
+            if (string.IsNullOrEmpty(why)) return;
+            if (why == "match over" || why == "missing" || why == "select a build tool"
+                || why == "already L2" || why == "upgrading") return;
+            string tag;
+            if (why.StartsWith("need", StringComparison.Ordinal)) tag = "NEED";
+            else if (why.IndexOf("unlock", StringComparison.Ordinal) >= 0
+                     || why.IndexOf("needs Hub", StringComparison.Ordinal) >= 0)
+                tag = "LOCK";
+            else tag = "NOPE";
+            _nopeUntil = Time.time + 0.4f;
+            _juice.Nope(x, z, tag);
+        }
+
         Color GunTint()
         {
             return _gunSplash ? new Color(0.94f, 0.63f, 0.38f) : new Color(0.45f, 0.9f, 0.88f);
@@ -602,8 +626,14 @@ namespace ColonyHaul
             if (Input.GetKeyDown(KeyCode.Alpha5)) _game.SetTool(Tool.Kinetic);
             if (Input.GetKeyDown(KeyCode.Alpha6)) _game.SetTool(Tool.Splash);
             if (Input.GetKeyDown(KeyCode.Alpha7)) _game.SetTool(Tool.Barrier);
-            if (Input.GetKeyDown(KeyCode.U)) _game.TryUpgrade(out _);
-            if (Input.GetKeyDown(KeyCode.H)) _game.CycleHold(out _);
+            if (Input.GetKeyDown(KeyCode.U))
+            {
+                if (!_game.TryUpgrade(out var upWhy)) DenyHub(upWhy);
+            }
+            if (Input.GetKeyDown(KeyCode.H))
+            {
+                if (!_game.CycleHold(out var holdWhy)) DenyHub(holdWhy);
+            }
             if (Input.GetKeyDown(KeyCode.D)) _pendingDemo = true;
             if (Input.GetKeyDown(KeyCode.R)) _pendingRestart = true;
             if (Input.GetKeyDown(KeyCode.P)) GrabWatch();
@@ -613,7 +643,9 @@ namespace ColonyHaul
             var ray = _cam.ScreenPointToRay(Input.mousePosition);
             if (!Physics.Raycast(ray, out var hit, 80f)) return;
             var id = Nearest(hit.point);
-            if (id != null) _game.ClickNode(id, out _);
+            if (id == null) return;
+            if (!_game.ClickNode(id, out var clickWhy) && _game.Nodes.TryGetValue(id, out var n))
+                DenyAt(n.X, n.Z, clickWhy);
         }
 
         string Nearest(Vector3 p)
@@ -3309,12 +3341,18 @@ namespace ColonyHaul
             if (_hud == null || _game == null) return;
             _hud.Draw(_game);
             DrawWorldBars();
-            if (_hud.ClickedTool == Tool.Upgrade) _game.TryUpgrade(out _);
+            if (_hud.ClickedTool == Tool.Upgrade)
+            {
+                if (!_game.TryUpgrade(out var upWhy)) DenyHub(upWhy);
+            }
             else if (_hud.ClickedTool.HasValue) _game.SetTool(_hud.ClickedTool.Value);
             if (_hud.ConsumeBootDemo) _pendingDemo = true;
             if (_hud.ConsumeBootPlay) _pendingManual = true;
             if (_hud.ConsumeRestart) _pendingRestart = true;
-            if (_hud.ConsumeHold) _game.CycleHold(out _);
+            if (_hud.ConsumeHold)
+            {
+                if (!_game.CycleHold(out var holdWhy)) DenyHub(holdWhy);
+            }
         }
     }
 }
