@@ -382,6 +382,14 @@ namespace ColonyHaul
                         _hud.Flash("FARM UP — click the Hub to lay mag-rail", 1.8f, new Color(0.16f, 0.42f, 0.22f, 0.95f));
                         break;
                     }
+                    if (planted.Type == BuildingType.Farm)
+                    {
+                        _padUntil = Time.time + 1.1f;
+                        _padNodeId = planted.NodeId;
+                        _padType = BuildingType.Farm;
+                        _juice.PadDrop(ev.X, ev.Z, "SOW", new Color(0.5f, 0.85f, 0.48f));
+                        break;
+                    }
                     if (planted.Type == BuildingType.Mine)
                     {
                         _padUntil = Time.time + 1.1f;
@@ -494,12 +502,32 @@ namespace ColonyHaul
             {
                 case BuildingType.Mine: return new Color(0.94f, 0.64f, 0.23f);
                 case BuildingType.Power: return new Color(0.4f, 0.75f, 1f);
+                case BuildingType.Farm: return new Color(0.5f, 0.85f, 0.48f);
                 case BuildingType.Hub:
                 case BuildingType.Depot:
-                case BuildingType.Farm:
                 case BuildingType.Kinetic:
                 case BuildingType.Splash:
                     return MesaView.PadIdle;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(_padType), _padType, null);
+            }
+        }
+
+        Color PadWash(bool sky)
+        {
+            switch (_padType)
+            {
+                case BuildingType.Mine:
+                    return sky ? new Color(0.36f, 0.18f, 0.06f) : new Color(0.42f, 0.22f, 0.08f);
+                case BuildingType.Power:
+                    return sky ? new Color(0.08f, 0.24f, 0.42f) : new Color(0.1f, 0.28f, 0.48f);
+                case BuildingType.Farm:
+                    return sky ? new Color(0.1f, 0.32f, 0.14f) : new Color(0.12f, 0.36f, 0.16f);
+                case BuildingType.Hub:
+                case BuildingType.Depot:
+                case BuildingType.Kinetic:
+                case BuildingType.Splash:
+                    return sky ? new Color(0.36f, 0.18f, 0.06f) : new Color(0.42f, 0.22f, 0.08f);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(_padType), _padType, null);
             }
@@ -632,9 +660,7 @@ namespace ColonyHaul
             else if (PlantLive())
                 fog = Color.Lerp(dusk, new Color(0.12f, 0.36f, 0.16f), 0.46f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 8f)));
             else if (PadLive())
-                fog = Color.Lerp(dusk, _padType == BuildingType.Power
-                    ? new Color(0.1f, 0.28f, 0.48f)
-                    : new Color(0.42f, 0.22f, 0.08f), 0.4f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 8f)));
+                fog = Color.Lerp(dusk, PadWash(false), 0.4f + 0.1f * Mathf.Abs(Mathf.Sin(Time.time * 8f)));
             else if (GunLive())
                 fog = Color.Lerp(dusk, _gunSplash
                     ? new Color(0.42f, 0.18f, 0.08f)
@@ -707,9 +733,7 @@ namespace ColonyHaul
                 else if (PlantLive())
                     bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), new Color(0.1f, 0.32f, 0.14f), 0.48f);
                 else if (PadLive())
-                    bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), _padType == BuildingType.Power
-                        ? new Color(0.08f, 0.24f, 0.42f)
-                        : new Color(0.36f, 0.18f, 0.06f), 0.42f);
+                    bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), PadWash(true), 0.42f);
                 else if (GunLive())
                     bg = Color.Lerp(new Color(0.05f, 0.16f, 0.20f), _gunSplash
                         ? new Color(0.36f, 0.16f, 0.06f)
