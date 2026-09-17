@@ -5,15 +5,15 @@ GitHub (cold-open / Hub / Cursor): **https://github.com/steviebd/colony-haul**
 | Field | Value |
 | --- | --- |
 | Hub-ready | **Yes** |
-| Origin SHA | `898d09176de5879ac94b32e2006b1e7a96881f83` |
-| GitHub SHA | `c0f1e4b70a6cb41e5d02475f96def62591453cfb` |
+| Origin SHA | `66cf2f7e3ba275feb2d141966c0f22fde0265e8c` |
+| GitHub SHA | `7290d2b53a97ed00233c1a382a629f0efd598052` |
 | Kernel | seed-7 playtest **win** (`phase=won`, t≈184.45, Hub L2, minHp≈50.4, sabotages=4, brownouts=1) |
 | Nested opening | **pass** (Farm → Route → Hub still deposits) |
 | Hold order | **pass** (locked until wave 4 + L2; then GUNS chase Power) |
 | Product | Unity 2022.3.50f1 URP under `Assets/_ColonyHaul` — not Vite |
 | Feature freeze | **No** — **course-correct:** exquisite gameplay / juice until **~16:30 AEST** (no more Hub counter chips), then lock SHAs for the 17:00 captain package. |
 
-Pass 79 trees match on the three edited paths (byte-identical, 48/10). Pass 56–78 kept (BRACE SHRUG, SPLICE RELEASE, HOLD YANK, DRY→BACK, FIRST LINE, WEST LIFT, HOLD / FALL, DUSK CLOSE, SPLASH SLAM, SLOW GATE, CREW OUT, ONE LINE, FRESH R, FRESH D, STROKE, END PAIR, LINE OUT, PAD DROP, GUN SET, TAKE WATCH, SOW, HOLD LET, NOPE). HOME n stays aborted. Hub counter family frozen. Cold clone still has `Assets/`, `Packages/`, `ProjectSettings/`, USB, `playable/`, artifacts tape. Import workflows self-delete.
+Pass 80 trees match on the three edited paths (byte-identical, 34/5). Pass 56–79 kept (BRACE SHRUG, SPLICE RELEASE, HOLD YANK, DRY→BACK, FIRST LINE, WEST LIFT, HOLD / FALL, DUSK CLOSE, SPLASH SLAM, SLOW GATE, CREW OUT, ONE LINE, FRESH R, FRESH D, STROKE, END PAIR, LINE OUT, PAD DROP, GUN SET, TAKE WATCH, SOW, HOLD LET, NOPE, STAY). HOME n stays aborted. Hub counter family frozen. Cold clone still has `Assets/`, `Packages/`, `ProjectSettings/`, USB, `playable/`, artifacts tape. Import workflows self-delete.
 
 ## Unity feature list
 
@@ -339,9 +339,13 @@ One Game tick. Demo stays on Hold **Auto**, so seed-7 is the same run as Pass 4/
 
 87. **NOPE** — a dead click now *refuses*. Wrong pad pops **NOPE**, short stock pops **NEED**, early U / H / Splash pops **LOCK**. No banner steal. Demo Auto never fires it. Juice only — Tick unchanged. No new Hub counters. Kill punch skipped.
 
-**Pass 79 — this beat**
+**Pass 79 — kept**
 
 88. **STAY** — mashing 2–7 before Farm / Hub now *holds* the opening. South pad pops **STAY** until the Farm lands; Hub pops **STAY** until the first rail. FIRST LINE still owns FARM / LINE DOWN. NOPE still owns dead plants. Demo Auto never fires it. Juice only — Tick unchanged. No new Hub counters. Kill punch skipped.
+
+**Pass 80 — this beat**
+
+89. **FREE** — clicking the armed Route pad again now *frees* the stake. Pad pops **FREE** (desaturated rail), Hint still says Route cancelled. LINE OUT still owns click-Hub **RAIL**. First-click RouteFrom stays silent so demo rails do not spam. Demo Auto never cancels. Juice only — Tick unchanged. No new Hub counters. Kill punch skipped.
 
 ## How to play (Editor)
 
@@ -351,7 +355,7 @@ git clone https://github.com/steviebd/colony-haul.git
 
 Unity Hub → Open that folder → `Assets/_ColonyHaul/Scenes/Boot.unity` or `Game_VerticalSlice.unity` → Play.
 
-- **Colony Haul → Play Vertical Slice** — you take the watch (Farm first). South Farm blooms **FARM**, Hub click drops **RAIL** as a fat teach stroke, first cart pops **HAUL**. Mash 2–7 too early and the pad pops **STAY**. Later pads stroke **RAIL** the same way. Planting a Mine or Power blooms **MINE** / **PWR**. A later Farm sows **SOW** — FARM / FARM UP stay the opening. Kinetic / Splash click **SET**s the barrel — **GUNS UP** still names going live. A dead click *refuses* (**NOPE** / **NEED** / **LOCK**). Press **U** for **WEST LIFT**. The extra cart pops **OUT** of the yard. West Splash **SLAMS**. Barrier spends drop a **GATE**. Last raids **DUSK CLOSE** onto the Hub. Survive six waves and the mesa *holds* — the card offers **Run it back** or **Watch a run**. Press **P** on a demo to **TAKE** the mesa. Gun shots stay thin bolts.
+- **Colony Haul → Play Vertical Slice** — you take the watch (Farm first). South Farm blooms **FARM**, Hub click drops **RAIL** as a fat teach stroke, first cart pops **HAUL**. Mash 2–7 too early and the pad pops **STAY**. Click the armed Route pad again and it pops **FREE**. Later pads stroke **RAIL** the same way. Planting a Mine or Power blooms **MINE** / **PWR**. A later Farm sows **SOW** — FARM / FARM UP stay the opening. Kinetic / Splash click **SET**s the barrel — **GUNS UP** still names going live. A dead click *refuses* (**NOPE** / **NEED** / **LOCK**). Press **U** for **WEST LIFT**. The extra cart pops **OUT** of the yard. West Splash **SLAMS**. Barrier spends drop a **GATE**. Last raids **DUSK CLOSE** onto the Hub. Survive six waves and the mesa *holds* — the card offers **Run it back** or **Watch a run**. Press **P** on a demo to **TAKE** the mesa. Gun shots stay thin bolts.
 - **Colony Haul → Play Demo (autopilot)** — seed-7 demo (Hold stays Auto). `D` in Play also starts a **fresh** seed-7 watch (clears leftover juice, does not bolt onto a frozen mesa). `P` takes the live mesa from a running demo (**TAKE** bloom). After HOLD / FALL, `P` does not steal `R`.
 - **Colony Haul → Run Headless Sim** — expect `win=True` on seed 7.
 
@@ -365,14 +369,14 @@ Win: 6 waves **and** Hub L2. Lose: Hub HP 0, or food stays at 0 for 14s.
 
 ## Fun call
 
-Plant the south Farm and the mesa answers — FARM bloom, RAIL snap, first HAUL home. Drop a Mine or Power and that pad *answers* **MINE** / **PWR** — FARM UP still owns the opening. Sow a later Farm and it *answers* **SOW**, not another FARM UP. Click a choke and the barrel **SET**s, then **GUNS UP** names it live. Click the wrong pad and the mesa *refuses* — **NOPE** / **NEED** / **LOCK**. Mash 2–7 before Farm / Hub and it *holds* you — **STAY**. Click Hub on the next pad and that rail *strokes* too. RAIL / WEST / GATE / OUT / yank *stroke* a corridor; gun shots stay bolts. Press R and leftover juice *leaves* so the opening can land again. Press D after a win and a new seed-7 watch *starts* — the end card now offers both **Run it back** and **Watch a run**. Press P on a demo and the mesa is yours — **TAKE** bloom, autopilot drops. Press U and the Hub lifts gold, then WEST blooms on the choke and a third cart pops **OUT** of the yard. West Splash slams the bunch. Five ore on a choke drops a **GATE**, not a cut beep. Guns click empty and the mesa goes dark, then they bloom FIRE. Press H and carts yank. Flip back to Auto and they *let* go — **LET** bloom, settle strokes. Click the orange rail and it lets go. Dump a haul into the chew and the Hub shrugs cyan. Last raids pull the camera in and the dusk goes ember. Hold six waves and the mesa *holds* gold-green — crack the core and it *falls*. That is the watch, not another Hub number. Existing Hub chips stay; that family is frozen. CLEAR still owns the intermission. CREW UP still names the extra haul after L2. SLOW still names the Barrier spend.
+Plant the south Farm and the mesa answers — FARM bloom, RAIL snap, first HAUL home. Drop a Mine or Power and that pad *answers* **MINE** / **PWR** — FARM UP still owns the opening. Sow a later Farm and it *answers* **SOW**, not another FARM UP. Click a choke and the barrel **SET**s, then **GUNS UP** names it live. Click the wrong pad and the mesa *refuses* — **NOPE** / **NEED** / **LOCK**. Mash 2–7 before Farm / Hub and it *holds* you — **STAY**. Click the armed Route pad again and it *frees* — **FREE**, not a silent disarm. Click Hub on the next pad and that rail *strokes* too. RAIL / WEST / GATE / OUT / yank *stroke* a corridor; gun shots stay bolts. Press R and leftover juice *leaves* so the opening can land again. Press D after a win and a new seed-7 watch *starts* — the end card now offers both **Run it back** and **Watch a run**. Press P on a demo and the mesa is yours — **TAKE** bloom, autopilot drops. Press U and the Hub lifts gold, then WEST blooms on the choke and a third cart pops **OUT** of the yard. West Splash slams the bunch. Five ore on a choke drops a **GATE**, not a cut beep. Guns click empty and the mesa goes dark, then they bloom FIRE. Press H and carts yank. Flip back to Auto and they *let* go — **LET** bloom, settle strokes. Click the orange rail and it lets go. Dump a haul into the chew and the Hub shrugs cyan. Last raids pull the camera in and the dusk goes ember. Hold six waves and the mesa *holds* gold-green — crack the core and it *falls*. That is the watch, not another Hub number. Existing Hub chips stay; that family is frozen. CLEAR still owns the intermission. CREW UP still names the extra haul after L2. SLOW still names the Barrier spend.
 
 ## Gaps
 
 - This VM has no Unity Editor — Play Mode is documented, not screenshot-verified.
 - Runtime art is procedural low-poly, not authored FBX.
 - Origin remote stays `tmp-*`. GitHub is the Hub/Cursor clone.
-- GitHub SHA ≠ Origin SHA (parallel history); pass-79 file bytes match.
-- Course-correct: no new Hub counter chips. Named leftovers plus ONE LINE, FRESH R, FRESH D, STROKE, END PAIR, LINE OUT, PAD DROP, GUN SET, TAKE WATCH, SOW, HOLD LET, NOPE, and STAY polish shipped. Kill punch skipped (42 deaths would spam). Freeze still open until ~16:30 for polish if crisp.
+- GitHub SHA ≠ Origin SHA (parallel history); pass-80 file bytes match.
+- Course-correct: no new Hub counter chips. Named leftovers plus ONE LINE, FRESH R, FRESH D, STROKE, END PAIR, LINE OUT, PAD DROP, GUN SET, TAKE WATCH, SOW, HOLD LET, NOPE, STAY, and FREE polish shipped. Kill punch skipped (42 deaths would spam). Freeze still open until ~16:30 for polish if crisp.
 - Hold order on Auto still lets loaded carts finish the trip (demo / default). GUNS / CREW peel them the same tick; yank juice only fires on those orders.
 - Out of scope: multiplayer, cloud meta, deep tech tree, campaign.
