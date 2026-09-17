@@ -80,6 +80,7 @@ namespace ColonyHaul
         float _grabUntil;
         float _nopeUntil;
         float _stayUntil;
+        float _freeUntil;
         float _railDropUntil;
         string _railDropEdgeId;
         bool _farmPlanted;
@@ -180,6 +181,7 @@ namespace ColonyHaul
             _grabUntil = 0f;
             _nopeUntil = 0f;
             _stayUntil = 0f;
+            _freeUntil = 0f;
             _railDropUntil = 0f;
             _railDropEdgeId = null;
             _farmPlanted = false;
@@ -533,6 +535,13 @@ namespace ColonyHaul
             else DenyAt(0f, 0f, why);
         }
 
+        void FreeAt(float x, float z)
+        {
+            if (Time.time < _freeUntil) return;
+            _freeUntil = Time.time + 0.45f;
+            _juice.Free(x, z);
+        }
+
         void DenyAt(float x, float z, string why)
         {
             if (Time.time < _nopeUntil) return;
@@ -670,8 +679,16 @@ namespace ColonyHaul
             if (!Physics.Raycast(ray, out var hit, 80f)) return;
             var id = Nearest(hit.point);
             if (id == null) return;
-            if (!_game.ClickNode(id, out var clickWhy) && _game.Nodes.TryGetValue(id, out var n))
-                DenyAt(n.X, n.Z, clickWhy);
+            var armed = _game.RouteFrom;
+            if (!_game.ClickNode(id, out var clickWhy))
+            {
+                if (_game.Nodes.TryGetValue(id, out var n))
+                    DenyAt(n.X, n.Z, clickWhy);
+                return;
+            }
+            if (armed != id || _game.RouteFrom != null) return;
+            if (!_game.Nodes.TryGetValue(id, out var freed)) return;
+            FreeAt(freed.X, freed.Z);
         }
 
         string Nearest(Vector3 p)
