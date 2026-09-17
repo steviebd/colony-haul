@@ -1,0 +1,39 @@
+name: import-p51-yard
+on:
+  push:
+    paths:
+      - '.github/workflows/import-p51-yard.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import Pass 51 YARD n slice
+        run: |
+          set -euo pipefail
+          git config user.name "colony-haul-import"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          curl -fsSL -o /tmp/p51.tar.gz "https://d.uguu.se/RlYBXAMM.tar.gz"
+          tar -tzf /tmp/p51.tar.gz
+          tar -xzf /tmp/p51.tar.gz -C .
+          git add README.md Assets/_ColonyHaul/Scripts/Core/GameSim.cs Assets/_ColonyHaul/Scripts/Boot/VerticalSliceBootstrap.cs
+          if git diff --cached --quiet; then
+            echo "no slice changes"
+          else
+            git commit -m "Unity slice: YARD n idle haulers sit under SIT."
+            git push
+          fi
+          git pull --rebase origin main
+          rm -f .github/workflows/import-p51-yard.yml
+          git add -A .github/workflows
+          if git diff --cached --quiet; then
+            echo "workflow already gone"
+          else
+            git commit -m "Drop Pass 51 import workflow."
+            git push
+          fi
