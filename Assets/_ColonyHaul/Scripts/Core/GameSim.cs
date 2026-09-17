@@ -206,6 +206,25 @@ namespace ColonyHaul
             return "RUN " + LiveRunners();
         }
 
+        public int LiveCuts()
+        {
+            var n = 0;
+            foreach (var e in Edges.Values)
+                if (e.Routed && e.SabotagedUntil > T) n++;
+            return n;
+        }
+
+        public bool CutCountLive()
+        {
+            return Phase == Phase.Playing && LiveCuts() > 0;
+        }
+
+        public string CutCountChip()
+        {
+            if (!CutCountLive()) return null;
+            return "CUT " + LiveCuts();
+        }
+
         public bool CrewStretched()
         {
             return ProducerCount() > WorkersTotal;
