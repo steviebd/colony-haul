@@ -1,4 +1,7 @@
-**Unity Editor / USB harness: not verified.** See `FM-GAME-003.md` — verdict **B (built wrong / harness mismatch)**. License is now Unity Personal; the project **fails UPM** because `Packages/manifest.json` asks for `com.gamenami.unity-semantic-bridge` while the vendored USB `package.json` `"name"` is `com.gamenami.unity-scemantic-bridge`. Listener `:1073` never starts. Log: `fm-game-003-unity-cli-package-fail.txt`. No Editor Play video.
+**Unity Editor Play Mode ran on this Linux VM** (2022.3.50f1 Personal, Game view). See `FM-GAME-003.md`. Proof type: **interactive Play**, not CLI headless, not Vite.
+
+- `colony-haul-unity-watch-a-run.mp4` + `fm-game-003-demo-wave5.png` — seed-7 **Watch a run**: Farm/rail/hauls, Hub L2, Wave 5. Intro card stays stuck over the mesa.
+- `colony-haul-unity-play-mode.mp4` + `fm-game-003-play-hub-down.png` — **Play Vertical Slice** with no input: HUB DOWN at 81s.
 
 Vite client below is the spare harness only (FM-GAME-002). Do not treat it as Unity-verified.
 

@@ -344,7 +344,7 @@ def main() -> None:
     PKG.mkdir(parents=True, exist_ok=True)
 
     (PS / "ProjectVersion.txt").write_text(
-        "m_EditorVersion: 2022.3.50f1\nm_EditorVersionWithRevision: 2022.3.50f1 (c3db7f8c9b10)\n"
+        "m_EditorVersion: 2022.3.50f1\nm_EditorVersionWithRevision: 2022.3.50f1 (c3db7f8bf9b1)\n"
     )
 
     (PKG / "manifest.json").write_text(
