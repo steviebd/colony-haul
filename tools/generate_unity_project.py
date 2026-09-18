@@ -344,7 +344,7 @@ def main() -> None:
     PKG.mkdir(parents=True, exist_ok=True)
 
     (PS / "ProjectVersion.txt").write_text(
-        "m_EditorVersion: 2022.3.50f1\nm_EditorVersionWithRevision: 2022.3.50f1 (c3db7f8c9b10)\n"
+        "m_EditorVersion: 2022.3.50f1\nm_EditorVersionWithRevision: 2022.3.50f1 (c3db7f8bf9b1)\n"
     )
 
     (PKG / "manifest.json").write_text(
@@ -355,7 +355,7 @@ def main() -> None:
     "com.unity.nuget.newtonsoft-json": "3.2.2",
     "com.unity.render-pipelines.universal": "14.0.11",
     "com.unity.ugui": "1.0.0",
-    "com.gamenami.unity-semantic-bridge": "file:../ThirdParty/unity-semantic-bridge/com.gamenami.unity-semantic-bridge",
+    "com.gamenami.unity-scemantic-bridge": "file:../ThirdParty/unity-semantic-bridge/com.gamenami.unity-semantic-bridge",
     "com.unity.modules.audio": "1.0.0",
     "com.unity.modules.imgui": "1.0.0",
     "com.unity.modules.particlesystem": "1.0.0",

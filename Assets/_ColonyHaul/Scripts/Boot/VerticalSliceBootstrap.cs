@@ -1279,16 +1279,16 @@ namespace ColonyHaul
                 var pa = new Vector3(a.X, 0.85f, a.Z);
                 var pb = new Vector3(b.X, 0.85f, b.Z);
                 var dropping = Time.time < _gateUntil && (e.A == _gateNodeId || e.B == _gateNodeId);
-                var pulse = dropping ? Mathf.Abs(Mathf.Sin(Time.time * 12f)) : 0f;
+                var gatePulse = dropping ? Mathf.Abs(Mathf.Sin(Time.time * 12f)) : 0f;
                 beam.position = (pa + pb) * 0.5f;
                 beam.localScale = new Vector3(
-                    dropping ? 0.62f + 0.16f * pulse : 0.42f,
-                    dropping ? 0.82f + 0.18f * pulse : 0.55f,
+                    dropping ? 0.62f + 0.16f * gatePulse : 0.42f,
+                    dropping ? 0.82f + 0.18f * gatePulse : 0.55f,
                     Vector3.Distance(pa, pb) * 0.92f);
                 beam.rotation = Quaternion.LookRotation(pb - pa);
                 var tint = MesaView.Barrier;
                 if (dropping)
-                    tint = Color.Lerp(MesaView.Barrier, new Color(1f, 0.72f, 0.55f), 0.45f + 0.35f * pulse);
+                    tint = Color.Lerp(MesaView.Barrier, new Color(1f, 0.72f, 0.55f), 0.45f + 0.35f * gatePulse);
                 MesaView.Tint(beam.gameObject, tint);
             }
 

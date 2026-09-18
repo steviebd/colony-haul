@@ -1,0 +1,94 @@
+Unity Editor version:    2022.3.50f1 (c3db7f8bf9b1)
+Branch:                  2022.3/staging
+Build type:              Release
+Batch mode:              YES
+System name:             Linux
+Distro version:          #1 SMP PREEMPT_DYNAMIC Thu Sep 17 16:20:42 UTC 2026
+Kernel version:          6.12.94+
+Architecture:            x86_64
+Available memory:        16014 MB
+[Licensing::Module] Trying to connect to existing licensing client channel...
+[Licensing::IpcConnector] Connection attempt to the License Client on channel: "LicenseClient-ubuntu" failed because channel doesn't exist; code: "0x80000002"
+[Licensing::Module] Successfully launched the LicensingClient (PId: 15676)
+[Licensing::IpcConnector] Successfully connected to the License Client on channel: "LicenseClient-ubuntu" at "2026-09-18T08:31:11.14211Z"
+[SignatureVerifier] Application signature verification not supported on this platform.
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.15.5+a2f8afb
+  Session Id:              9831d3a9eccd45c8bc8b91fbad13f817
+  Correlation Id:          465151e66f7c7f4b3008da0e3136ef53
+  External correlation Id: 7601618102388824322
+  Machine Id:              R1WEiT4JwppUB1roNRHarjD74DE=
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-ubuntu" (connect: 0.36s, validation: 0.04s, handshake: 0.00s)
+[Licensing::IpcConnector] Successfully connected to the License Notification on channel: "LicenseClient-ubuntu-notifications" at "2026-09-18T08:31:11.179719Z"
+[Licensing::Module] Connected to LicensingClient (PId: 15676, launch time: 0.00, total connection time: 0.40s)
+[Licensing::Module] Error: Access token is unavailable; failed to update
+[Licensing::Client] Error: Code 500 while processing request (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)
+[Licensing::Client] Error: Code 500 while updating license in client (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] Serial number assigned to: "16767881234125-UnityPersXXXX"
+Pro License: NO
+Initialize udev device monitor.
+[Licensing::Client] Successfully resolved entitlement details
+
+COMMAND LINE ARGUMENTS:
+/home/ubuntu/Unity/Hub/Editor/2022.3.50f1/Editor/Unity
+-batchmode
+-nographics
+-quit
+-accept-apiupdate
+-projectPath
+/workspace
+-executeMethod
+ColonyHaul.EditorTools.ColonyHaulMenus.Headless
+-logFile
+/tmp/unity-cli/headless.log
+Successfully changed project path to: /workspace
+/workspace
+[UnityMemory] Configuration Parameters - Can be set up in boot.config
+    "memorysetup-bucket-allocator-granularity=16"
+    "memorysetup-bucket-allocator-bucket-count=8"
+    "memorysetup-bucket-allocator-block-size=33554432"
+    "memorysetup-bucket-allocator-block-count=8"
+    "memorysetup-main-allocator-block-size=16777216"
+    "memorysetup-thread-allocator-block-size=16777216"
+    "memorysetup-gfx-main-allocator-block-size=16777216"
+    "memorysetup-gfx-thread-allocator-block-size=16777216"
+    "memorysetup-cache-allocator-block-size=4194304"
+    "memorysetup-typetree-allocator-block-size=2097152"
+    "memorysetup-profiler-bucket-allocator-granularity=16"
+    "memorysetup-profiler-bucket-allocator-bucket-count=8"
+    "memorysetup-profiler-bucket-allocator-block-size=33554432"
+    "memorysetup-profiler-bucket-allocator-block-count=8"
+    "memorysetup-profiler-allocator-block-size=16777216"
+    "memorysetup-profiler-editor-allocator-block-size=1048576"
+    "memorysetup-temp-allocator-size-main=16777216"
+    "memorysetup-job-temp-allocator-block-size=2097152"
+    "memorysetup-job-temp-allocator-block-size-background=1048576"
+    "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+    "memorysetup-allocator-temp-initial-block-size-main=262144"
+    "memorysetup-allocator-temp-initial-block-size-worker=262144"
+    "memorysetup-temp-allocator-size-background-worker=32768"
+    "memorysetup-temp-allocator-size-job-worker=262144"
+    "memorysetup-temp-allocator-size-preload-manager=33554432"
+    "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+    "memorysetup-temp-allocator-size-audio-worker=65536"
+    "memorysetup-temp-allocator-size-cloud-worker=32768"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gfx=262144"
+Player connection [139977208157184]  Target information:
+
+Player connection [139977208157184]  * "[IP] 172.30.0.2 [Port] 55504 [Flags] 2 [Guid] 2981935394 [EditorId] 2981935394 [Version] 1048832 [Id] LinuxEditor(16,172.30.0.2) [Debug] 1 [PackageName] LinuxEditor [ProjectName] Editor" 
+
+Player connection [139977208157184]  * "[IP] 172.17.0.1 [Port] 55504 [Flags] 2 [Guid] 2981935394 [EditorId] 2981935394 [Version] 1048832 [Id] LinuxEditor(16,172.30.0.2) [Debug] 1 [PackageName] LinuxEditor [ProjectName] Editor" 
+
+Player connection [139977208157184] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [139977208157184] Host joined alternative multi-casting on [225.0.0.222:34997]...
+[PhysX] Initialized MultithreadedTaskDispatcher with 4 workers.
+Error opening a HTTP REST server port between 38000 and 38100
+[Package Manager] UpmClient::Connect -- Connected to IPC stream "Upm-15670" after 0.2 seconds.
+Rebuilding Library because the asset database could not be found!
+[Package Manager] Done resolving packages in 17.05 seconds
+[Licensing::Client] Successfully resolved entitlement details
+An error occurred while resolving packages:
+  Project has invalid dependencies:
+    com.gamenami.unity-semantic-bridge: The requested dependency 'com.gamenami.unity-semantic-bridge' does not match the `name` 'com.gamenami.unity-scemantic-bridge' specified in the package manifest of [com.gamenami.unity-semantic-bridge@file:../ThirdParty/unity-semantic-bridge/com.gamenami.unity-semantic-bridge]
