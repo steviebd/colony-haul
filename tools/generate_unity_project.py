@@ -355,7 +355,7 @@ def main() -> None:
     "com.unity.nuget.newtonsoft-json": "3.2.2",
     "com.unity.render-pipelines.universal": "14.0.11",
     "com.unity.ugui": "1.0.0",
-    "com.gamenami.unity-semantic-bridge": "file:../ThirdParty/unity-semantic-bridge/com.gamenami.unity-semantic-bridge",
+    "com.gamenami.unity-scemantic-bridge": "file:../ThirdParty/unity-semantic-bridge/com.gamenami.unity-semantic-bridge",
     "com.unity.modules.audio": "1.0.0",
     "com.unity.modules.imgui": "1.0.0",
     "com.unity.modules.particlesystem": "1.0.0",

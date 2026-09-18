@@ -147,7 +147,7 @@ Folder layout: `Assets/_ColonyHaul/{Scripts,Art,Prefabs,Scenes,UI,Audio}`.
 
 Vendored from https://github.com/Programalyst/unity-semantic-bridge at commit `41e8bca`. Do not move the package path.
 
-- Unity package: `ThirdParty/unity-semantic-bridge/com.gamenami.unity-semantic-bridge` (manifest id `com.gamenami.unity-semantic-bridge` via `file:`). Upstream `package.json` still spells `com.gamenami.unity-scemantic-bridge`. Do not "fix" that in place unless you are updating the vendor.
+- Unity package: `ThirdParty/unity-semantic-bridge/com.gamenami.unity-semantic-bridge`. UPM id is the vendor `package.json` `"name"`: `com.gamenami.unity-scemantic-bridge` (typo, as shipped). Manifest uses that id via `file:`; do not invent a differently spelled id or UPM will refuse the project.
 - Python MCP: `ThirdParty/unity-semantic-bridge/mcp-editor-bridge`
 
 ### Listener
