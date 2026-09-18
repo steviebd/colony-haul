@@ -1,4 +1,4 @@
-**Unity Editor Play Mode is not verified.** See `FM-GAME-003.md`: Linux Editor **2022.3.50f1** installed and launched; Play Mode **FAIL** on `No valid Unity Editor license found`. Screenshots: `fm-game-003-license-error.png`, `fm-game-003-hub-signin.png`. No Editor gameplay video.
+**Unity Editor / USB harness: not verified.** See `FM-GAME-003.md` — verdict **B (built wrong / harness mismatch)**. License is now Unity Personal; the project **fails UPM** because `Packages/manifest.json` asks for `com.gamenami.unity-semantic-bridge` while the vendored USB `package.json` `"name"` is `com.gamenami.unity-scemantic-bridge`. Listener `:1073` never starts. Log: `fm-game-003-unity-cli-package-fail.txt`. No Editor Play video.
 
 Vite client below is the spare harness only (FM-GAME-002). Do not treat it as Unity-verified.
 

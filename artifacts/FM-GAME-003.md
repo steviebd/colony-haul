@@ -1,164 +1,117 @@
-# FM-GAME-003 — Unity Editor Linux install + Play Mode attempt
+# FM-GAME-003 — Unity Linux + USB harness
 
-**FEATURE FREEZE = Yes.** No game/code churn. This is an install-and-prove tape, not a slice change.
+**Captain verdict: B) Built wrong / harness mismatch**
 
-GitHub: **https://github.com/steviebd/colony-haul**
+Colony Haul does **not** open in Unity 2022.3.50f1 because the vendored Unity Semantic Bridge package is wired under the wrong UPM id. USB’s documented Editor listener / MCP / `set_play_mode` path never starts. License is active. Interactive Play Mode was **not** reached. This is **not** Unity-verified. Vite `playable/` is not a substitute.
 
 | Field | Value |
 | --- | --- |
-| Repo tip used | `d81c5b4ee8460b05c51d0510217c5f7ef6cafc1f` (`d81c5b4 Drop freeze SHA import workflow`) on `main` |
-| Project pin | `ProjectSettings/ProjectVersion.txt` → **2022.3.50f1** (`c3db7f8c9b10` in-file) |
-| Official changeset | **`c3db7f8bf9b1`** (Unity archive / tarball). The in-file revision string does not fetch. |
-| Editor installed | **Yes** — Unity **2022.3.50f1** Linux (`c3db7f8bf9b1`), reports `2022.3.50f1` |
-| Hub installed | **Yes** — `unityhub` **3.21.3** via official apt repo |
-| Play Mode | **FAIL** — license, before project import / Play |
-| Video | **None** — Play Mode never started. Not replaced by Vite / TS sim. |
-| GPU | None. Mesa **llvmpipe** OpenGL 4.5 software (untested for Play; license blocked first) |
-| Display | **Yes** — TigerVNC `:1` 1920×1200 XFCE |
+| Verdict | **B — built wrong / harness mismatch** |
+| Unity | **2022.3.50f1** (`c3db7f8bf9b1`) Linux Editor, Hub 3.21.3 |
+| License | **Unity Personal** (`16767881234125-UnityPersXXXX`, Pro: NO). Hub signed in. |
+| Repo SHA used | `9872c1a6cd93b47e477ca3be0979aaad4c997224` (branch); game tip behind that is `d81c5b4ee8460b05c51d0510217c5f7ef6cafc1f` |
+| USB upstream read | `https://github.com/Programalyst/unity-semantic-bridge` clone `6cfbee6` |
+| USB vendored | `ThirdParty/unity-semantic-bridge` (README claims `41e8bca`) |
+| Interactive Play Mode | **Not reached** |
+| Video | **None** |
+| HTTPS gameplay | **None** |
 
-## Verdict (captain)
+## USB source of truth (what the harness actually says)
 
-Editor **downloads and launches on this Linux VM**. Play Mode does **not**. Exact blocker:
+From Programalyst/unity-semantic-bridge README (same in the vendored copy):
+
+1. Unity **2022.3 LTS–6.3** + **uv**.
+2. Add `/com.gamenami.unity-semantic-bridge` **from disk**. Unity uses `package.json` `"name"`.
+3. Register Python MCP: `uv --directory …/mcp-editor-bridge run main.py` (stdio). Python POSTs JSON-RPC to `http://127.0.0.1:1073/rpc`. That URL is **not** an MCP server.
+4. In the **live Editor**: **Tools → Unity Semantic Bridge**, start HTTP listener **1073**. Health: `GET http://127.0.0.1:1073/health`.
+5. Then agent tools: `get_scene_hierarchy`, `set_play_mode`, `get_screenshot`, etc.
+
+USB is a **live Editor MCP**, not a batchmode test runner. Listener auto-starts only if EditorPrefs `UnitySemanticBridge_AutoConnect` is true (default **false**). `docs/UNITY_SEMANTIC_BRIDGE_NOTES.md` in the vendor tree is **stale** (old `ws://127.0.0.1:8765` / `Server/` layout). Current code is HTTP JSON-RPC on **1073** (`EditorBridge.cs`, `mcp-editor-bridge/`).
+
+## Exact gap vs USB (fatal)
+
+Unity Package Manager:
 
 ```
-No valid Unity Editor license found. Please activate your license.
+An error occurred while resolving packages:
+  Project has invalid dependencies:
+    com.gamenami.unity-semantic-bridge: The requested dependency 'com.gamenami.unity-semantic-bridge'
+    does not match the `name` 'com.gamenami.unity-scemantic-bridge' specified in the package
+    manifest of [com.gamenami.unity-semantic-bridge@file:../ThirdParty/unity-semantic-bridge/com.gamenami.unity-semantic-bridge]
 ```
 
-LicensingClient extras: `No ULF license found`, `Token not found in cache`, `Access token is unavailable`, `Found 0 entitlement groups and 0 free entitlements`, `com.unity.editor.ui` / `com.unity.editor.headless` not found, `Pro License: NO`.
-
-Hub then requires **Sign in**. No Unity ID / serial / ULF was present in the environment. Did not invent credentials.
-
-**This is not Unity-verified Play Mode.** Spare `playable/` Vite / headless TS sim were not used as a substitute.
-
-## Disk (before → after)
-
-| | Size | Used | Avail |
-| --- | --- | --- | --- |
-| Start | 252G overlay | 9.8G (5%) | **230G** |
-| After Hub + Editor | 252G overlay | 22G (10%) | **218G** |
-
-No Unity bits existed at start (`which unityhub` empty; no `/opt/Unity`, no `~/.local/share/unity3d` license).
-
-| Artifact | Size |
+| Piece | Value |
 | --- | --- |
-| Official tarball `Unity-2022.3.50f1.tar.xz` | **3.9G** (4,125,472,828 bytes) |
-| Tarball sha256 | `62b4e41fb49830645b3403c3b917ac507b6094e1cb0ad95d63a79fb6d045ba84` |
-| Extracted Editor | **7.2G** |
-| Hub deb install | 166 MB download → ~553 MB on disk (`/usr/lib/unityhub` ~528M) |
-| Unity tree total | **~12G** under `/home/ubuntu/Unity` |
+| USB `package.json` `"name"` (upstream **and** vendor) | `com.gamenami.unity-scemantic-bridge` (typo, shipped) |
+| Colony Haul `Packages/manifest.json` key | `com.gamenami.unity-semantic-bridge` (correct spelling) |
+| `Packages/packages-lock.json` | **No USB entry at all** |
+| Baked by | `tools/generate_unity_project.py` |
+| Project README | Documents the mismatch and says **do not fix vendor in place** unless updating the vendor |
 
-Disk was **not** the blocker.
+USB “add from disk” would register the **typo** id. Colony Haul remapped the id in the game manifest. UPM requires they match. The Editor never imports USB, never compiles `EditorBridge`, never offers **Tools → Unity Semantic Bridge**, never binds **:1073**.
 
-## Commands (what actually ran)
+Did **not** silently rename the package to paper this over.
 
-Hub (official Ubuntu repo; AppImage CDN 404):
+## Other USB gaps (would still remain after the id fix)
 
-```bash
-sudo install -d /etc/apt/keyrings
-curl -fsSL https://hub.unity3d.com/linux/keys/public | sudo gpg --dearmor -o /etc/apt/keyrings/unityhub.gpg
-echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/unityhub.gpg] https://hub.unity3d.com/linux/repos/deb stable main" | sudo tee /etc/apt/sources.list.d/unityhub.list
-sudo apt-get update
-sudo apt-get install -y unityhub mesa-utils libglu1-mesa
-# unityhub 3.21.3  /usr/bin/unityhub -> /usr/lib/unityhub/unityhub
-```
+- **`uv` is not installed** on this VM. USB lists it as a prerequisite.
+- **No MCP registration** (no `.cursor/mcp.json` pointing at `ThirdParty/unity-semantic-bridge/mcp-editor-bridge`).
+- Listener **not running**: `curl http://127.0.0.1:1073/health` → connection refused.
+- Colony Haul CLI `ColonyHaul.EditorTools.ColonyHaulMenus.Headless` is **not** the USB harness. USB Play is `set_play_mode` after the listener is up in a GUI Editor.
+- `executeMethod` **Headless never ran** — UPM failed first (`CLI_EXIT=1`).
 
-Editor tarball (project changeset `c3db7f8c9b10` → **404**; official `c3db7f8bf9b1` → **200**):
+## Commands run
 
 ```bash
-curl -L -o /home/ubuntu/Unity/downloads/Unity-2022.3.50f1.tar.xz \
-  https://download.unity3d.com/download_unity/c3db7f8bf9b1/LinuxEditorInstaller/Unity.tar.xz
-# 07:52:35 → 07:58:47 UTC, CURL_EXIT=0
-tar -xJf /home/ubuntu/Unity/downloads/Unity-2022.3.50f1.tar.xz \
-  -C /home/ubuntu/Unity/Hub/Editor/2022.3.50f1
-/home/ubuntu/Unity/Hub/Editor/2022.3.50f1/Editor/Unity -version
-# → 2022.3.50f1
+# USB docs
+git clone --depth 1 https://github.com/Programalyst/unity-semantic-bridge.git /tmp/unity-semantic-bridge
+# HEAD 6cfbee6; package.json name = com.gamenami.unity-scemantic-bridge
+
+# License-active Editor CLI (Colony Haul executeMethod — blocked before USB/listener)
+/home/ubuntu/Unity/Hub/Editor/2022.3.50f1/Editor/Unity \
+  -batchmode -nographics -quit -accept-apiupdate \
+  -projectPath /workspace \
+  -executeMethod ColonyHaul.EditorTools.ColonyHaulMenus.Headless \
+  -logFile /tmp/unity-cli/headless.log
+# CLI_START 2026-09-18T08:31:10Z  CLI_EXIT=1  CLI_DONE 2026-09-18T08:31:28Z
+
+curl -sS -m 2 http://127.0.0.1:1073/health
+# Failed to connect to 127.0.0.1 port 1073
 ```
 
-Hub already listed that path as installed:
-
-```text
-[{ "version": "2022.3.50f1", "architecture": "x86_64",
-   "location": "/home/ubuntu/Unity/Hub/Editor/2022.3.50f1/Editor/Unity" }]
-```
-
-Batchmode (no GUI) and GUI Play both died on license before `-projectPath` imported `Assets/_ColonyHaul`:
-
-```bash
-DISPLAY=:1 /home/ubuntu/Unity/Hub/Editor/2022.3.50f1/Editor/Unity \
-  -batchmode -nographics -quit -logFile /tmp/unity-batch.log -projectPath /workspace
-# BATCH_EXIT=1
-
-DISPLAY=:1 LIBGL_ALWAYS_SOFTWARE=1 \
-  /home/ubuntu/Unity/Hub/Editor/2022.3.50f1/Editor/Unity \
-  -projectPath /workspace -logFile /tmp/unity-gui.log -force-glcore
-# GUI: License error dialog, then handed off to Hub
-```
-
-Manual activation request file **was** generated (not committed; machine-local `.alf`):
-
-```bash
-Unity -batchmode -nographics -quit -createManualActivationFile
-# → /tmp/Unity_v2022.3.50f1.alf
-```
-
-That file still has to be exchanged at license.unity3d.com with a Unity account. Not done.
-
-Hub CLI (`unityhub --no-sandbox -- --headless help`) works; it can list/install editors. It cannot skip sign-in.
-
-## Play Mode
-
-**Pass / fail:** **FAIL**
-
-**Exact error:** `No valid Unity Editor license found. Please activate your license.`
-
-Did **not** reach:
-
-- Package resolve (URP 14.0.11 / USB file: package)
-- `Assets/_ColonyHaul/Scenes/Game_VerticalSlice.unity` or `Boot.unity`
-- Menu **Colony Haul → Play Vertical Slice** / **Play Demo (autopilot)**
-- Any mesa / Farm→rail loop
-
-Display existed. Editor process drew windows. Failure is **license / Hub auth**, not “no display”.
-
-## Proof (Unity-side, not Vite)
-
-- `artifacts/fm-game-003-license-error.png` — Editor **License error** over Hub EULA: *No valid Unity Editor license found. Please activate your license.* Open Hub / Exit.
-- `artifacts/fm-game-003-hub-signin.png` — After EULA Agree: **Welcome to Unity Hub** / **Sign in** / Create account. Stopped here.
-- Batch log (full):
+Log excerpt (license OK, then UPM):
 
 ```
 Unity Editor version:    2022.3.50f1 (c3db7f8bf9b1)
-Batch mode:              YES
-[Licensing::Module] Error: Access token is unavailable; failed to update
-[Licensing::Client] Error: Code 500 while processing request (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)
-[Licensing::Client] Error: Code 404 while processing request (status: Found 0 entitlement groups and 0 free entitlements matching requested entitlement ids)
-[Licensing::Module] Error: 'com.unity.editor.headless' was not found.
+[Licensing::Module] Serial number assigned to: "16767881234125-UnityPersXXXX"
 Pro License: NO
-No valid Unity Editor license found. Please activate your license.
+Rebuilding Library because the asset database could not be found!
+[Package Manager] Done resolving packages in 17.05 seconds
+An error occurred while resolving packages:
+  Project has invalid dependencies:
+    com.gamenami.unity-semantic-bridge: The requested dependency 'com.gamenami.unity-semantic-bridge'
+    does not match the `name` 'com.gamenami.unity-scemantic-bridge' ...
 ```
 
-GUI log same error with `com.unity.editor.ui` and `Desktop is 1920 x 1200 @ 60 Hz`, then Hub spawn:
+Full log: `artifacts/fm-game-003-unity-cli-package-fail.txt`
 
-```
-'/usr/bin/unityhub' '--' '--silent' '--' '-projectPath' '/workspace' '-logFile' '/tmp/unity-gui.log' '-force-glcore'
-```
+## Proof type (honest labels)
 
-## Video
+| Claim | Status |
+| --- | --- |
+| Unity Editor installed on this Linux VM | Yes |
+| Unity Personal license active | Yes |
+| USB harness (listener 1073 + MCP `set_play_mode` / `get_screenshot`) | **No — project will not resolve USB** |
+| Editor Play Mode / vertical slice video | **No** |
+| CLI `Run Headless Sim` in Editor | **No — never reached executeMethod** |
+| Vite / TS sim | Spare harness only — **not** this proof |
 
-**None.** Play Mode did not run, so there is no Editor gameplay mp4/webm. Existing `artifacts/colony-haul-run.webm` is the **Vite spare harness** (FM-GAME-002) and must not be cited as Unity Play Mode.
+## Remaining captain blocker
 
-Durable HTTPS: n/a.
+**Align the UPM id** with USB `package.json` `"name"` (`com.gamenami.unity-scemantic-bridge`) *or* change the vendor `"name"` to the spelled-correct id (Colony Haul README currently forbids an in-place vendor “fix”). Then: install `uv`, register the Python MCP, open the project in the GUI Editor, **Tools → Unity Semantic Bridge → Connect**, `GET :1073/health`, `set_play_mode`. Until the id matches, USB cannot run.
 
-## Honest critique
+## Phase A history (superseded)
 
-Install is the easy part on this VM: 230G free, Hub apt repo live, official Linux tarball live, Editor binary runs, X11 + llvmpipe are present. Unity still will not open the project without a signed-in Hub / Personal (or Pro) ULF. That is an account entitlement, not a missing download.
+Earlier this run: Editor installed; first GUI/batchmode died on **no license**. Captain signed into Hub. Personal entitlement landed at 08:29 UTC (`UnityEntitlementLicense.xml`). That wall is cleared. Current wall is the USB package id.
 
-If a license lands later, the **next** unproven risks are still real: software GL (no GPU), 15G RAM / 4 CPU, first-import package resolve from `packages.unity.com`, and whether URP Play Mode is stable under llvmpipe. None of those were reached.
-
-`ProjectVersion.txt` ships a changeset (`c3db7f8c9b10`) that 404s; the matching public 2022.3.50f1 Linux editor is `c3db7f8bf9b1`. Harmless for Hub-on-a-dev-machine; painful for a scripted tarball.
-
-## One remaining captain blocker
-
-**Unity Hub login (or a Personal/Pro `.ulf` / serial) on this VM.** Until that exists, Editor Play Mode cannot start, and the vertical slice cannot be Unity-verified here.
-
-Do not treat Vite `playable/` or `Colony Haul → Run Headless Sim` as a stand-in for that watch.
+Screenshots from that phase: `fm-game-003-license-error.png`, `fm-game-003-hub-signin.png`, `fm-game-003-signin-ready.png`.
